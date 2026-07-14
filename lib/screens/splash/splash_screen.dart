@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_strings.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_text_styles.dart';
-import '../../widgets/branding/app_logo.dart';
-import '../../widgets/loading/app_loading.dart';
+import 'package:appets/core/constants/app_strings.dart';
+import 'package:appets/core/routes/app_routes.dart';
+import 'package:appets/core/theme/app_colors.dart';
+import 'package:appets/core/theme/app_text_styles.dart';
+import 'package:appets/widgets/branding/app_logo.dart';
+import 'package:appets/widgets/loading/app_loading.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,7 +38,10 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     // TODO:
-    // Navigator.pushReplacement(...)
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.login,
+    );
   }
 
   @override

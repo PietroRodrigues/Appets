@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 
 class AppLoading extends StatefulWidget {
   const AppLoading({
@@ -48,7 +48,7 @@ class _AppLoadingState extends State<AppLoading>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (_, __) {
+      builder: (_, _) {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(3, (index) {

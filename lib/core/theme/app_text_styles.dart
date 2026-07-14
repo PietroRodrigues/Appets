@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'app_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 
 class AppTextStyles {
   AppTextStyles._();
@@ -40,4 +40,6 @@ class AppTextStyles {
       color: Colors.white70,
       letterSpacing: .3,
     );
+
+    
 }
