@@ -12,6 +12,12 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
+  static final subtitle = GoogleFonts.poppins(
+    fontSize: 20,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+  );
+
   static final heading = GoogleFonts.poppins(
     fontSize: 22,
     fontWeight: FontWeight.w600,
@@ -39,7 +45,7 @@ class AppTextStyles {
       fontWeight: FontWeight.w400,
       color: Colors.white70,
       letterSpacing: .3,
-    );
+  );
 
     
 }

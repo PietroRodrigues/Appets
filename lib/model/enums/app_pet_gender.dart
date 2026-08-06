@@ -1,0 +1,4 @@
+enum AppPetGender {
+  male,
+  female,
+}

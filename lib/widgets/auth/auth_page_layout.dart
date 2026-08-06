@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/widgets/layout/app_scaffold.dart';
+import 'package:appets/widgets/common/app_scaffold.dart';
 
 class AuthPageLayout extends StatelessWidget {
   const AuthPageLayout({

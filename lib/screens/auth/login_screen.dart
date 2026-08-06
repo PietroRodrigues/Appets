@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'package:appets/core/routes/app_routes.dart';
 import 'package:appets/core/theme/app_text_styles.dart';
-import 'package:appets/widgets/branding/app_auth_header.dart';
-import 'package:appets/widgets/buttons/app_button.dart';
-import 'package:appets/widgets/buttons/app_outlined_button.dart';
-import 'package:appets/widgets/form/app_text_field.dart';
-import 'package:appets/widgets/layout/auth_page_layout.dart';
+import 'package:appets/widgets/auth/app_auth_header.dart';
+import 'package:appets/widgets/common/app_button.dart';
+import 'package:appets/widgets/common/app_outlined_button.dart';
+import 'package:appets/widgets/common/app_text_field.dart';
+import 'package:appets/widgets/auth/auth_page_layout.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -104,6 +104,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login() {
 
+    //============================================================
+    // MODO DESENVOLVIMENTO
+    //
+    // Enquanto o Firebase não estiver integrado,
+    // qualquer clique em "Entrar" levará para a Home.
+    //============================================================
+
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.home,
+    );
+    
     // TODO:
     // Implementar autenticação utilizando Firebase.
 
