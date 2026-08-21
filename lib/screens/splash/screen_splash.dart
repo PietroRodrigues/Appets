@@ -5,7 +5,7 @@ import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/branding/widget_logo.dart';
-import 'package:appets/widgets/common/widget_loading.dart';
+import 'package:appets/widgets/common/feedback/widget_loading.dart';
 
 /// Tela inicial que prepara o app e encaminha o usuário para o fluxo correto.
 class SplashScreen extends StatefulWidget {
@@ -35,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: ThemeColors.primary,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -52,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 Text(
                   AppStrings.slogan,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.slogan,
+                  style: ThemeTextStyles.slogan,
                 ),
 
                 const Spacer(),

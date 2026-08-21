@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class AppColors {
-  AppColors._();
+class ThemeColors {
+  ThemeColors._();
 
   // =========================
   // Brand
@@ -47,7 +47,10 @@ class AppColors {
   // =========================
 
   /// Ícones e textos NÃO selecionados sobre fundo primário.
-  static const Color navigationInactive = Color.fromARGB(255, 83, 83, 82);
+  ///
+  /// Tom escuro o suficiente para contraste WCAG-AA (~6:1)
+  /// sobre a cor primária.
+  static const Color navigationInactive = Color(0xFF3A3A37);
 
   /// Ícones e textos selecionados.
   static const Color navigationActive = Color.fromARGB(255, 240, 230, 211);

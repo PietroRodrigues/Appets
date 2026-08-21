@@ -9,31 +9,37 @@ class AppPageHeader extends StatelessWidget {
   const AppPageHeader.user({
     super.key,
     required String this.userName,
+    this.description,
     this.hintText,
     this.onSearchChanged,
     this.onFilterPressed,
+    this.showSearchBar = true,
   }) : title = null;
 
   const AppPageHeader.title({
     super.key,
     required String this.title,
+    this.description,
     this.hintText,
     this.onSearchChanged,
     this.onFilterPressed,
+    this.showSearchBar = true,
   }) : userName = null;
 
   final String? title;
   final String? userName;
+  final String? description;
   final String? hintText;
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback? onFilterPressed;
+  final bool showSearchBar;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: AppColors.primary,
+        color: ThemeColors.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       child: SafeArea(
@@ -45,17 +51,28 @@ class AppPageHeader extends StatelessWidget {
             children: [
               Text(
                 userName != null ? 'Olá, $userName' : title!,
-                style: AppTextStyles.heading.copyWith(
-                  color: AppColors.white,
+                style: ThemeTextStyles.heading.copyWith(
+                  color: ThemeColors.white,
                   fontSize: 24,
                 ),
               ),
-              const SizedBox(height: 12),
-              AppSearchBar(
-                hintText: hintText,
-                onChanged: onSearchChanged,
-                onFilterPressed: onFilterPressed,
-              ),
+              if (description != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  description!,
+                  style: ThemeTextStyles.caption.copyWith(
+                    color: ThemeColors.white,
+                  ),
+                ),
+              ],
+              if (showSearchBar) ...[
+                const SizedBox(height: 12),
+                AppSearchBar(
+                  hintText: hintText,
+                  onChanged: onSearchChanged,
+                  onFilterPressed: onFilterPressed,
+                ),
+              ],
             ],
           ),
         ),

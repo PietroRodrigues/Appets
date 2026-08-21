@@ -4,8 +4,8 @@ import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// Botão padronizado para ações principais do app.
-class AppButton extends StatelessWidget {
-  const AppButton({
+class WidgetButton extends StatelessWidget {
+  const WidgetButton({
     super.key,
     required this.text,
     required this.onPressed,
@@ -14,6 +14,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.backgroundColor,
     this.foregroundColor,
+    this.borderColor,
   });
 
   final String text;
@@ -23,6 +24,9 @@ class AppButton extends StatelessWidget {
   final bool isLoading;
   final Color? backgroundColor;
   final Color? foregroundColor;
+
+  /// Cor da borda do botão. Quando nula, o botão não tem borda.
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +38,14 @@ class AppButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppColors.secondary,
+          backgroundColor: backgroundColor ?? ThemeColors.secondary,
           foregroundColor: buttonForeground,
           elevation: 3,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
+            side: borderColor != null
+                ? BorderSide(color: borderColor!, width: 1.5)
+                : BorderSide.none,
           ),
         ),
         child: isLoading
@@ -50,7 +57,7 @@ class AppButton extends StatelessWidget {
                   color: buttonForeground,
                 ),
               )
-            : Text(text, style: AppTextStyles.button.copyWith(color: buttonForeground)),
+            : Text(text, style: ThemeTextStyles.button.copyWith(color: buttonForeground)),
       ),
     );
   }

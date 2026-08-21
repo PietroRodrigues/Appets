@@ -13,4 +13,5 @@ class AppRoutes {
   static const favorites = '/favorites';
   static const profile = '/profile';
   static const settings = '/settings';
+  static const accountData = '/account-data';
 }

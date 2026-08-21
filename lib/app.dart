@@ -7,6 +7,8 @@ import 'package:appets/screens/auth/screen_register.dart';
 import 'package:appets/screens/auth/screen_forgot_password.dart';
 import 'package:appets/screens/splash/screen_splash.dart';
 import 'package:appets/screens/main/screen_home.dart';
+import 'package:appets/screens/settings/screen_settings.dart';
+import 'package:appets/screens/settings/screen_account_data.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -25,6 +27,8 @@ class App extends StatelessWidget {
         AppRoutes.register: (_) => const RegisterScreen(),
         AppRoutes.forgotPassword: (_) => const ForgotPasswordScreen(),
         AppRoutes.home: (_) => const HomeScreen(),
+        AppRoutes.settings: (_) => const SettingsScreen(),
+        AppRoutes.accountData: (_) => const AccountDataScreen(),
       },
     );
   }

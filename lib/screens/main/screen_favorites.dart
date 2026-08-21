@@ -4,10 +4,17 @@ import 'package:appets/models/mock_pets.dart';
 import 'package:appets/widgets/main/widget_pet_card.dart';
 import 'package:appets/widgets/main/widget_page_header.dart';
 import 'package:appets/screens/pet/screen_pet_details.dart';
+import 'package:appets/widgets/common/feedback/widget_empty_state.dart';
 
 /// Tela que reúne os pets favoritos do usuário.
 class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({super.key});
+  const FavoritesScreen({
+    super.key,
+    this.onExplore,
+  });
+
+  /// Ação do CTA do estado vazio (volta para a aba inicial).
+  final VoidCallback? onExplore;
 
   void _searchFavorite(String value) { // Em desenvolvimento.
     debugPrint('Buscando favorito: $value');
@@ -34,7 +41,18 @@ class FavoritesScreen extends StatelessWidget {
 
         Expanded(
 
-          child: LayoutBuilder(
+          // Temporário até termos o sistema de favoritos.
+          child: mockPets.isEmpty
+              ? AppEmptyState(
+                  icon: Icons.star_border_rounded,
+                  title: 'Nenhum favorito ainda',
+                  description:
+                      'Toque na estrela de um pet para salvá-lo aqui.',
+                  actionLabel:
+                      onExplore != null ? 'Explorar pets' : null,
+                  onAction: onExplore,
+                )
+              : LayoutBuilder(
 
             builder: (context, constraints) {
 
@@ -65,7 +83,6 @@ class FavoritesScreen extends StatelessWidget {
                 child: GridView.builder(
                   padding: const EdgeInsets.only(bottom: 120),
 
-                  // Temporário até termos o sistema de favoritos.
                   itemCount: mockPets.length, // Dados de teste.
 
                   gridDelegate:

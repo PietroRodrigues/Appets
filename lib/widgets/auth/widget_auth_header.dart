@@ -24,7 +24,7 @@ class AppAuthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = textColor ?? AppColors.textPrimary;
+    final effectiveColor = textColor ?? ThemeColors.textPrimary;
 
     return Column(
       children: [
@@ -36,7 +36,7 @@ class AppAuthHeader extends StatelessWidget {
           Text(
             headline!,
             textAlign: TextAlign.center,
-            style: AppTextStyles.title.copyWith(color: effectiveColor),
+            style: ThemeTextStyles.title.copyWith(color: effectiveColor),
           ),
 
           const SizedBox(height: 12),
@@ -46,7 +46,7 @@ class AppAuthHeader extends StatelessWidget {
           Text(
             description,
             textAlign: TextAlign.center,
-            style: AppTextStyles.heading.copyWith(color: effectiveColor),
+            style: ThemeTextStyles.heading.copyWith(color: effectiveColor),
           ),
       ],
     );

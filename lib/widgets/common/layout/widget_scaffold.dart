@@ -13,6 +13,7 @@ class AppScaffold extends StatelessWidget {
     this.resizeToAvoidBottomInset = true,
     this.extendBody = true,
     this.bottomNavigationBar,
+    this.floatingActionButton,
   });
 
   final Widget child;
@@ -22,6 +23,7 @@ class AppScaffold extends StatelessWidget {
   final bool resizeToAvoidBottomInset;
   final bool extendBody;
   final Widget? bottomNavigationBar;
+  final Widget? floatingActionButton;
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +38,12 @@ class AppScaffold extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: backgroundColor ?? AppColors.background,
+      backgroundColor: backgroundColor ?? ThemeColors.background,
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       extendBody: extendBody,
       body: body,
       bottomNavigationBar: bottomNavigationBar,
+      floatingActionButton: floatingActionButton,
     );
   }
 }

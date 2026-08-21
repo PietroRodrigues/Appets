@@ -31,9 +31,9 @@ class AppOutlinedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveBackground = backgroundColor ?? Colors.transparent;
-    final effectiveBorder = borderColor ?? AppColors.primary;
-    final effectiveText = textColor ?? AppColors.primary;
-    final effectiveIcon = iconColor ?? AppColors.primary;
+    final effectiveBorder = borderColor ?? ThemeColors.primary;
+    final effectiveText = textColor ?? ThemeColors.primary;
+    final effectiveIcon = iconColor ?? ThemeColors.primary;
 
     return SizedBox(
       width: width,
@@ -45,7 +45,7 @@ class AppOutlinedButton extends StatelessWidget {
             : const SizedBox.shrink(),
         label: Text(
           text,
-          style: AppTextStyles.button.copyWith(color: effectiveText),
+          style: ThemeTextStyles.button.copyWith(color: effectiveText),
         ),
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: effectiveBorder, width: 2),

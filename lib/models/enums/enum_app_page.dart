@@ -6,8 +6,8 @@ enum AppPage {
   /// Tela de favoritos.
   favorites,
 
-  /// Tela de publicação.
-  publish,
+  /// Tela de minhas publicações.
+  myPublications,
 
   /// Tela de perfil.
   profile,

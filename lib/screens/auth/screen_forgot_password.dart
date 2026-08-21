@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/auth/widget_auth_header.dart';
-import 'package:appets/widgets/common/widget_button.dart';
-import 'package:appets/widgets/common/widget_outlined_button.dart';
-import 'package:appets/widgets/common/widget_text_field.dart';
+import 'package:appets/widgets/common/buttons/widget_button.dart';
+import 'package:appets/widgets/common/buttons/widget_outlined_button.dart';
+import 'package:appets/widgets/common/fields/widget_text_field.dart';
 import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
 
 /// Tela para solicitar recuperação de senha pelo e-mail cadastrado.
@@ -43,7 +43,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return AuthPageLayout(
       formKey: _formKey,
-      scrollPhysics: const NeverScrollableScrollPhysics(),
 
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -51,36 +50,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         children: [
           const SizedBox(height: 20),
 
-          //----------------------------------------------------------
           // Cabeçalho da tela
-          //----------------------------------------------------------
           const AppAuthHeader(
             logoWidth: 250,
             headline: 'Recuperar Senha',
             description: '',
-            textColor: AppColors.white,
+            textColor: ThemeColors.white,
           ),
 
           const SizedBox(height: 28),
 
-          //----------------------------------------------------------
           // Texto informativo
-          //----------------------------------------------------------
           Text(
             'Informe o e-mail cadastrado para receber um link de recuperação da senha.',
             textAlign: TextAlign.center,
-            style: AppTextStyles.authBody,
+            style: ThemeTextStyles.authBody,
           ),
 
           const SizedBox(height: 32),
 
-          //----------------------------------------------------------
           // Campo de E-mail
-          //----------------------------------------------------------
           AppTextField(
             controller: _emailController,
             label: 'E-mail',
-            labelStyle: AppTextStyles.authBody,
+            labelStyle: ThemeTextStyles.authBody,
             hintText: 'Digite seu e-mail',
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
@@ -89,26 +82,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
           const SizedBox(height: 20),
 
-          //----------------------------------------------------------
           // Botão Enviar
-          //----------------------------------------------------------
-          AppButton(
+          WidgetButton(
             text: 'Enviar Link',
             onPressed: _sendRecoveryEmail, // Em desenvolvimento.
-            backgroundColor: AppColors.info,
-            foregroundColor: AppColors.white,
+            backgroundColor: ThemeColors.white,
+            foregroundColor: ThemeColors.secondary,
+            borderColor: ThemeColors.secondary,
           ),
 
           const SizedBox(height: 16),
 
-          //----------------------------------------------------------
           // Botão Voltar
-          //----------------------------------------------------------
           AppOutlinedButton(
             text: 'Voltar ao Login',
             onPressed: _goBack,
-            textColor: AppColors.white,
-            borderColor: AppColors.white,
+            textColor: ThemeColors.white,
+            borderColor: ThemeColors.white,
           ),
         ],
       ),

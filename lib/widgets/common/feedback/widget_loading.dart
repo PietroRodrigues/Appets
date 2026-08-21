@@ -5,7 +5,7 @@ import 'package:appets/core/theme/theme_colors.dart';
 class AppLoading extends StatefulWidget {
   const AppLoading({
     super.key,
-    this.color = AppColors.white,
+    this.color = ThemeColors.white,
     this.size = 10,
     this.spacing = 8,
   });

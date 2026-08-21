@@ -9,6 +9,7 @@ class AppTextField extends StatelessWidget {
   const AppTextField({
     super.key,
     this.controller,
+    this.focusNode,
     this.label,
     required this.hintText,
     this.prefixIcon,
@@ -23,11 +24,14 @@ class AppTextField extends StatelessWidget {
     this.autofocus = false,
     this.labelStyle,
     this.hintStyle,
+    this.errorStyle,
     this.maxLines = 1,
     this.inputFormatters = const [],
   });
 
   final TextEditingController? controller;
+
+  final FocusNode? focusNode;
 
   final String? label;
   final String hintText;
@@ -40,6 +44,7 @@ class AppTextField extends StatelessWidget {
   final bool autofocus;
   final TextStyle? labelStyle;
   final TextStyle? hintStyle;
+  final TextStyle? errorStyle;
 
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
@@ -58,12 +63,13 @@ class AppTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (label != null) ...[
-          Text(label!, style: labelStyle ?? AppTextStyles.body),
+          Text(label!, style: labelStyle ?? ThemeTextStyles.body),
           const SizedBox(height: 8),
         ],
 
         TextFormField(
           controller: controller,
+          focusNode: focusNode,
           enabled: enabled,
           autofocus: autofocus,
           obscureText: obscureText,
@@ -76,14 +82,15 @@ class AppTextField extends StatelessWidget {
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: hintStyle ?? AppTextStyles.body.copyWith(color: AppColors.textSecondary),
+            hintStyle: hintStyle ?? ThemeTextStyles.body.copyWith(color: ThemeColors.textSecondary),
+            errorStyle: errorStyle,
 
             prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
 
             suffixIcon: suffixIcon,
 
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: ThemeColors.white,
 
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
@@ -102,7 +109,7 @@ class AppTextField extends StatelessWidget {
 
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
+              borderSide: BorderSide(color: ThemeColors.primary, width: 2),
             ),
 
             errorBorder: OutlineInputBorder(

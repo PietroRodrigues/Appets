@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 
 /// Barra de busca reutilizável para as telas principais do app.
-class AppSearchBar extends StatelessWidget {
+///
+/// Exibe um botão de limpar (X) sempre que houver texto digitado.
+class AppSearchBar extends StatefulWidget {
   const AppSearchBar({
     super.key,
     this.controller,
@@ -24,29 +26,105 @@ class AppSearchBar extends StatelessWidget {
   final bool showFilterButton;
 
   @override
+  State<AppSearchBar> createState() => _AppSearchBarState();
+}
+
+class _AppSearchBarState extends State<AppSearchBar> {
+  // Controller interno usado quando nenhum é fornecido externamente.
+  TextEditingController? _ownController;
+
+  // Indica se há texto para exibir o botão de limpar.
+  bool _hasText = false;
+
+  TextEditingController get _controller =>
+      widget.controller ?? _ownController!;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.controller == null) {
+      _ownController = TextEditingController();
+    }
+
+    _controller.addListener(_onTextChanged);
+    _hasText = _controller.text.trim().isNotEmpty;
+  }
+
+  @override
+  void didUpdateWidget(covariant AppSearchBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller?.removeListener(_onTextChanged);
+
+      if (widget.controller == null && _ownController == null) {
+        _ownController = TextEditingController();
+      }
+
+      _controller.addListener(_onTextChanged);
+      _hasText = _controller.text.trim().isNotEmpty;
+    }
+  }
+
+  void _onTextChanged() {
+    final hasText = _controller.text.trim().isNotEmpty;
+
+    if (hasText != _hasText) {
+      setState(() {
+        _hasText = hasText;
+      });
+    }
+  }
+
+  /// Limpa a busca e notifica o callback com texto vazio.
+  void _clear() {
+    _controller.clear();
+    widget.onChanged?.call('');
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onTextChanged);
+    _ownController?.dispose();
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        //--------------------------------------------------------
         // Campo de Pesquisa
-        //--------------------------------------------------------
         Expanded(
           child: SizedBox(
             height: 48,
 
             child: TextField(
-              controller: controller,
+              controller: _controller,
 
-              onChanged: onChanged,
+              onChanged: widget.onChanged,
 
               decoration: InputDecoration(
-                hintText: hintText ?? 'Buscar meu futuro pet',
+                hintText: widget.hintText ?? 'Buscar meu futuro pet',
 
                 prefixIcon: const Icon(Icons.search),
 
+                suffixIcon: _hasText
+                    ? IconButton(
+                        onPressed: _clear,
+                        tooltip: 'Limpar busca',
+                        icon: const Icon(
+                          Icons.close,
+                          size: 20,
+                          color: ThemeColors.hint,
+                        ),
+                      )
+                    : null,
+
                 filled: true,
 
-                fillColor: AppColors.surface,
+                fillColor: ThemeColors.surface,
 
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
 
@@ -60,28 +138,30 @@ class AppSearchBar extends StatelessWidget {
           ),
         ),
 
-        if (showFilterButton) ...[
+        if (widget.showFilterButton) ...[
           const SizedBox(width: 12),
 
-          //--------------------------------------------------------
           // Botão de Filtros
-          //--------------------------------------------------------
           SizedBox(
             width: 48,
 
             height: 48,
 
-            child: Material(
-              color: AppColors.primary,
+            child: Tooltip(
+              message: 'Filtros',
 
-              borderRadius: BorderRadius.circular(14),
+              child: Material(
+                color: ThemeColors.primary,
 
-              child: InkWell(
                 borderRadius: BorderRadius.circular(14),
 
-                onTap: onFilterPressed,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
 
-                child: const Icon(Icons.tune, color: AppColors.white),
+                  onTap: widget.onFilterPressed,
+
+                  child: const Icon(Icons.tune, color: ThemeColors.white),
+                ),
               ),
             ),
           ),

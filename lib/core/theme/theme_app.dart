@@ -8,11 +8,11 @@ class AppTheme {
 
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: AppColors.background,
+    scaffoldBackgroundColor: ThemeColors.background,
 
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      primary: AppColors.primary,
+      seedColor: ThemeColors.primary,
+      primary: ThemeColors.primary,
     ),
 
     textTheme: GoogleFonts.poppinsTextTheme(),

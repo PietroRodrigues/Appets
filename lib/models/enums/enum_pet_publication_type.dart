@@ -1,0 +1,4 @@
+enum AppPetPublicationType {
+  adoption,
+  lost,
+}
