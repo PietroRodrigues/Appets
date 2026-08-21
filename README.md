@@ -1,8 +1,8 @@
 # APPets
 
-Aplicativo para publicação de pets, com foco em **adoção** e **pets perdidos**.
-Responsáveis publicam pets com fotos e informações básicas, e interessados
-podem explorar, buscar e favoritar.
+Aplicativo **Android** para publicação de pets, com foco em **adoção** e
+**pets perdidos**. Responsáveis publicam pets com fotos e informações
+básicas, e interessados podem explorar, buscar e favoritar.
 
 ## Funcionalidades
 
@@ -30,27 +30,6 @@ podem explorar, buscar e favoritar.
 | Material Icons | — | Ícones da interface |
 
 Versão atual do app: **1.0.0+1**
-
-## Como executar
-
-1. Clone o repositório e acesse a pasta do projeto:
-
-```bash
-git clone <url-do-repositorio>
-cd appets
-```
-
-2. Instale as dependências:
-
-```bash
-flutter pub get
-```
-
-3. Execute o aplicativo:
-
-```bash
-flutter run
-```
 
 ## Status do projeto
 
