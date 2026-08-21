@@ -53,3 +53,6 @@ key.properties
 # Firebase (configuracao local do projeto)
 google-services.json
 **/GoogleService-Info.plist
+
+# Configuracao local de ferramentas
+.github/agents/BestMode.agent.md
