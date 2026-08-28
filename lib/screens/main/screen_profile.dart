@@ -117,8 +117,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   alignment: Alignment.center,
                   children: [
                     AppAvatar(
-                      radius: 70,
+                      radius: 45,
                       imageUrl: _user?.photoUrl,
+                      borderColor: ThemeColors.primary,
+                      borderWidth: 3,
+                      shadowColor: ThemeColors.black.withValues(alpha: 0.25),
+                      shadowBlurRadius: 8,
                     ),
 
                     // BOTÃO FLUTUANTE PARA ALTERAR O AVATAR
@@ -132,7 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: 24),
 
                 // NOME COM BOTÃO DE EDIÇÃO
                 Row(

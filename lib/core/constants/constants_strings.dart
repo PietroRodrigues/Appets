@@ -125,7 +125,9 @@ class AppStrings {
   static const emptyPetsTitle = 'Nenhum pet por aqui';
 
   static const emptyPetsDescription =
-      'Ainda não há pets publicados. Volte mais tarde!';
+      'Ainda não há pets publicados. Que tal ser o primeiro a publicar?';
+
+  static const emptyPetsAction = 'Publicar pet';
 
   static const defaultUserName = 'Usuário';
 
@@ -289,7 +291,7 @@ class AppStrings {
 
   static const changePasswordFeature = 'Alteração de senha';
 
-  static const dangerZone = 'Zona de perigo';
+  static const dangerZone = 'Gerenciar conta';
 
   // ── Configurações ──────────────────────────────────────
 

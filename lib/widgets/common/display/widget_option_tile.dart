@@ -119,7 +119,9 @@ class AppOptionTile extends StatelessWidget {
                     Text(
                       title,
                       style: ThemeTextStyles.subtitle.copyWith(
-                        color: ThemeColors.textPrimary,
+                        color: isDestructive
+                            ? ThemeColors.error
+                            : ThemeColors.textPrimary,
                       ),
                     ),
                     if (subtitle != null) ...[

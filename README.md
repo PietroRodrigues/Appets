@@ -7,9 +7,11 @@ básicas, e interessados podem explorar, buscar e favoritar.
 ## Funcionalidades
 
 - **Autenticação** — login e cadastro com e-mail/senha, login com **Google**,
-  recuperação de senha e logout, integrados com o Firebase Auth
+  recuperação de senha e logout, integrados com o Firebase Auth. No login
+  social, o cadastro do usuário (com foto de perfil) é criado
+  automaticamente no Firestore
 - **Feed de pets** — lista de pets publicados, carregada do Firestore, com
-  busca e filtro
+  busca e filtro; estado vazio com botão para publicar o primeiro pet
 - **Detalhes do pet** — galeria de fotos, informações (idade, gênero, cidade
   e tipo de publicação), descrição e contato via WhatsApp
 - **Publicar pet** — formulário com fotos (upload para o Storage), tipo de
@@ -39,6 +41,11 @@ básicas, e interessados podem explorar, buscar e favoritar.
 | google_fonts | ^8.1.0 | Fonte Poppins |
 
 Versão atual do app: **1.0.0+1**
+
+## Orientação
+
+O aplicativo é fixo em **tela vertical (retrato)**, independente da
+orientação do aparelho.
 
 ## Arquitetura
 

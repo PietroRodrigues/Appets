@@ -50,6 +50,7 @@ class UserModel {
       id: user.uid,
       name: user.displayName ?? '',
       email: user.email ?? '',
+      photoUrl: user.photoURL ?? '',
     );
   }
 }

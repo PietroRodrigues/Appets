@@ -10,7 +10,6 @@ import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/user_model.dart';
-import 'package:appets/widgets/common/buttons/widget_button.dart';
 import 'package:appets/widgets/common/display/widget_option_tile.dart';
 import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
 import 'package:appets/widgets/common/feedback/widget_page_loading.dart';
@@ -366,7 +365,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
                   const SizedBox(height: 32),
 
-                  // SEÇÃO: ZONA DE PERIGO
+                  // SEÇÃO: GERENCIAR CONTA
                   const AppSectionTitle(
                     title: AppStrings.dangerZone,
                     titleColor: ThemeColors.error,
@@ -374,11 +373,11 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
                   const SizedBox(height: 12),
 
-                  AppButton(
-                    text: AppStrings.deleteAccount,
-                    onPressed: _isDeleting ? null : _onDeleteAccountPressed,
-                    isLoading: _isDeleting,
-                    backgroundColor: ThemeColors.error,
+                  AppOptionTile(
+                    icon: Icons.delete_outline,
+                    title: AppStrings.deleteAccount,
+                    isDestructive: true,
+                    onTap: _isDeleting ? () {} : _onDeleteAccountPressed,
                   ),                ],
               ),
             ),

@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/models/user_model.dart';
+
 /// Encapsula as operações de autenticação do Firebase Auth.
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -56,6 +59,18 @@ class AuthService {
   // Atualiza o nome exibido do usuário no perfil do Firebase Auth.
   Future<void> updateDisplayName(String name) async {
     await _auth.currentUser?.updateDisplayName(name);
+  }
+
+  /// Garante a existência do documento do usuário no Firestore.
+  ///
+  /// Se o documento ainda não existir (ex.: primeiro acesso via Google),
+  /// cria-o com [user]. Retorna o [UserModel] persistido.
+  Future<UserModel> ensureUserDocument(UserModel user) async {
+    final existing = await FirestoreService().getUser(user.id);
+    if (existing != null) return existing;
+
+    await FirestoreService().createUser(user);
+    return user;
   }
 
   /// Reautentica o usuário atual com a senha informada.

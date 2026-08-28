@@ -101,10 +101,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Expanded(
           child: _pets.isEmpty
-              ? const AppEmptyState(
+              ? AppEmptyState(
                   icon: Icons.pets_outlined,
                   title: AppStrings.emptyPetsTitle,
                   description: AppStrings.emptyPetsDescription,
+                  actionLabel: AppStrings.emptyPetsAction,
+                  onAction: _openPublishPet,
                 )
               : AppResponsivePetGrid(
                   itemCount: _pets.length,

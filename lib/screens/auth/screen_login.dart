@@ -6,6 +6,7 @@ import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
 import 'package:appets/widgets/auth/widget_auth_header.dart';
 import 'package:appets/widgets/auth/widget_password_field.dart';
@@ -93,7 +94,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// Autentica o usuário com a conta Google e navega para a Home.
+  /// Autentica o usuário com a conta Google, garante o cadastro no
+  /// Firestore e navega para a Home.
   void _loginWithGoogle() async {
     try {
       final authService = AuthService();
@@ -101,6 +103,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result == null && mounted) {
         AppSnackBar.show(context, AppStrings.googleLoginCanceled);
       } else if (result != null && mounted) {
+        final firebaseUser = result.user;
+        if (firebaseUser != null) {
+          await authService.ensureUserDocument(
+            UserModel.fromFirebaseUser(firebaseUser),
+          );
+        }
+        if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/home');
       }
     } on Exception catch (e) {
