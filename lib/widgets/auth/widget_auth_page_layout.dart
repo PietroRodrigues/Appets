@@ -4,8 +4,8 @@ import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/widgets/common/layout/widget_scaffold.dart';
 
 /// Layout base para telas de autenticação com formulário centralizado.
-class AuthPageLayout extends StatelessWidget {
-  const AuthPageLayout({
+class AppAuthPageLayout extends StatelessWidget {
+  const AppAuthPageLayout({
     super.key,
     required this.formKey,
     required this.child,
@@ -20,6 +20,7 @@ class AuthPageLayout extends StatelessWidget {
   /// Modo de validação aplicado ao formulário.
   final AutovalidateMode? autovalidateMode;
 
+  // Constrói o layout com formulário rolável centralizado.
   @override
   Widget build(BuildContext context) {
     return AppScaffold(

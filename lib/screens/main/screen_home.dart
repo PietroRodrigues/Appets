@@ -1,18 +1,26 @@
-import 'package:appets/screens/main/screen_profile.dart';
 import 'package:flutter/material.dart';
+
+import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/navigation/navigation_app.dart';
+import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/enums/enum_app_page.dart';
-import 'package:appets/widgets/main/widget_page_header.dart';
-import 'package:appets/widgets/main/widget_pet_card.dart';
-import 'package:appets/widgets/main/widget_responsive_pet_grid.dart';
-import 'package:appets/models/mock_pets.dart';
+import 'package:appets/models/model_pet.dart';
+import 'package:appets/models/user_model.dart';
 import 'package:appets/screens/main/screen_favorites.dart';
 import 'package:appets/screens/main/screen_my_publications.dart';
+import 'package:appets/screens/main/screen_profile.dart';
 import 'package:appets/screens/main/screen_publish_pet.dart';
 import 'package:appets/screens/pet/screen_pet_details.dart';
 import 'package:appets/widgets/common/feedback/widget_empty_state.dart';
+import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/common/layout/widget_scaffold.dart';
 import 'package:appets/widgets/main/widget_bottom_navigation.dart';
+import 'package:appets/widgets/main/widget_page_header.dart';
+import 'package:appets/widgets/main/widget_pet_card.dart';
+import 'package:appets/widgets/main/widget_responsive_pet_grid.dart';
 
 /// Tela inicial do app com lista de pets, busca e navegação inferior.
 class HomeScreen extends StatefulWidget {
@@ -23,25 +31,48 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Aba ativa da navegação inferior.
-  AppPage _currentPage = AppPage.home;
+  List<Pet> _pets = [];
+  bool _isLoading = true;
+  UserModel? _user;
 
-  // Atualiza a tela conforme a aba selecionada.
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  // Carrega os dados do usuário e a lista de pets do servidor.
+  Future<void> _loadData() async {
+    final authUser = AuthService().currentUser;
+    if (authUser != null) {
+      _user = await FirestoreService().getUser(authUser.uid);
+    }
+    final pets = await PetService().getAllPets();
+    if (mounted) {
+      setState(() {
+        _pets = pets;
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Fonte única de verdade da aba ativa: AppNavigation.selectedPage.
+
+  // Atualiza a aba selecionada na navegação.
   void _onNavigation(AppPage page) {
-    setState(() {
-      _currentPage = page;
-    });
+    AppNavigation.selectedPage.value = page;
   }
 
   // Ações da tela inicial.
-  void _searchPet(String value) { // Em desenvolvimento.
+
+  /// Busca pets pelo termo digitado (em desenvolvimento).
+  void _searchPet(String value) {
     debugPrint('Buscando pet: $value');
   }
 
-  void _onFilterPressed() { // Em desenvolvimento.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Filtro em desenvolvimento')),
-    );
+  /// Exibe aviso de que o filtro está em desenvolvimento.
+  void _onFilterPressed() {
+    AppSnackBar.development(context, AppStrings.filters);
   }
 
   /// Navega para a tela de publicar pet.
@@ -54,41 +85,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Monta o conteúdo da aba inicial (loading, vazio ou grade de pets).
   Widget _buildHomeContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Column(
       children: [
         AppPageHeader.user(
-          userName: 'Pietro',
-          hintText: 'Buscar meu futuro pet',
-          onSearchChanged: _searchPet, // Em desenvolvimento.
-          onFilterPressed: _onFilterPressed, // Em desenvolvimento.
+          userName: _user?.name ?? AppStrings.defaultUserName,
+          hintText: AppStrings.searchDefaultHint,
+          onSearchChanged: _searchPet,
+          onFilterPressed: _onFilterPressed,
         ),
         Expanded(
-          child: mockPets.isEmpty // Dados de teste.
+          child: _pets.isEmpty
               ? const AppEmptyState(
                   icon: Icons.pets_outlined,
-                  title: 'Nenhum pet por aqui',
-                  description:
-                      'Ainda não há pets publicados. Volte mais tarde!',
+                  title: AppStrings.emptyPetsTitle,
+                  description: AppStrings.emptyPetsDescription,
                 )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    return ResponsivePetGrid(
-                      itemCount: mockPets.length, // Dados de teste.
-                      itemBuilder: (context, index) {
-                        final pet = mockPets[index];
+              : AppResponsivePetGrid(
+                  itemCount: _pets.length,
+                  itemBuilder: (context, index) {
+                    final pet = _pets[index];
 
-                        return AppPetCard(
-                          pet: pet,
-                          heroTag: 'pet-image-${pet.id}',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PetDetailsScreen(pet: pet),
-                              ),
-                            );
-                          },
+                    return AppPetCard(
+                      pet: pet,
+                      heroTag: 'pet-image-${pet.id}',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PetDetailsScreen(pet: pet),
+                          ),
                         );
                       },
                     );
@@ -99,11 +130,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBody() {
+  // Monta a pilha de abas preservando o estado de cada uma.
+  Widget _buildBody(AppPage currentPage) {
     // IndexedStack preserva o estado e o scroll de cada aba.
     // A ordem dos filhos deve corresponder ao enum AppPage.
     return IndexedStack(
-      index: _currentPage.index,
+      index: currentPage.index,
       children: [
         _buildHomeContent(),
         FavoritesScreen(onExplore: () => _onNavigation(AppPage.home)),
@@ -113,29 +145,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Constrói a tela com navegação inferior e FAB contextual.
   @override
   Widget build(BuildContext context) {
-    // Mostra FAB apenas na aba de Minhas Publicações.
-    final showFab = _currentPage == AppPage.myPublications;
+    return ValueListenableBuilder<AppPage>(
+      valueListenable: AppNavigation.selectedPage,
+      builder: (context, currentPage, _) {
+        // Mostra FAB apenas na aba de Minhas Publicações.
+        final showFab = currentPage == AppPage.myPublications;
 
-    return AppScaffold(
-      // Sem resize: o teclado apenas sobrepõe o conteúdo (a busca fica
-      // no topo), evitando re-layout das 4 abas a cada frame da animação.
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: AppBottomNavigation(
-        currentPage: _currentPage,
-        onTap: _onNavigation,
-      ),
-      floatingActionButton: showFab
-          ? FloatingActionButton(
-              onPressed: _openPublishPet,
-              backgroundColor: ThemeColors.primary,
-              foregroundColor: ThemeColors.white,
-              elevation: 8,
-              child: const Icon(Icons.add, size: 32),
-            )
-          : null,
-      child: _buildBody(),
+        return AppScaffold(
+          // Sem resize: o teclado apenas sobrepõe o conteúdo (a busca fica
+          // no topo), evitando re-layout das 4 abas a cada frame da animação.
+          resizeToAvoidBottomInset: false,
+          bottomNavigationBar: AppBottomNavigation(
+            currentPage: currentPage,
+            onTap: _onNavigation,
+          ),
+          floatingActionButton: showFab
+              ? FloatingActionButton(
+                  onPressed: _openPublishPet,
+                  backgroundColor: ThemeColors.primary,
+                  foregroundColor: ThemeColors.white,
+                  elevation: 8,
+                  child: const Icon(Icons.add, size: 32),
+                )
+              : null,
+          child: _buildBody(currentPage),
+        );
+      },
     );
   }
 }

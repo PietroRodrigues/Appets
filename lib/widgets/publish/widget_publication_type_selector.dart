@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
-import 'package:appets/models/enums/enum_pet_publication_type.dart';
+import 'package:appets/models/enums/enums_pet.dart';
 import 'package:appets/widgets/publish/widget_option_chip.dart';
 
 /// Seletor do tipo de publicação reutilizável do formulário.

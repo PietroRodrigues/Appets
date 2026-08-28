@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/extensions/extension_pet_display.dart';
+import 'package:appets/core/extensions/extension_pet_publication_type.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
-import 'package:appets/models/enums/enum_pet_gender.dart';
-import 'package:appets/models/enums/enum_pet_publication_type.dart';
 import 'package:appets/models/model_pet.dart';
 
 /// Card reutilizável para exibir um pet em listas da interface.
@@ -79,6 +80,7 @@ class _AppPetCardState extends State<AppPetCard>
     }
   }
 
+  // Libera o controlador da animação da estrela.
   @override
   void dispose() {
     _starController.dispose();
@@ -105,8 +107,8 @@ class _AppPetCardState extends State<AppPetCard>
         SnackBar(
           content: Text(
             _isFavorited
-                ? '${widget.pet.name} adicionado aos favoritos'
-                : '${widget.pet.name} removido dos favoritos',
+                ? AppStrings.petAddedToFavorites(widget.pet.name)
+                : AppStrings.petRemovedFromFavorites(widget.pet.name),
           ),
           duration: const Duration(milliseconds: 1200),
         ),
@@ -129,36 +131,14 @@ class _AppPetCardState extends State<AppPetCard>
     return Hero(tag: tag, child: image);
   }
 
-  String get _formattedGender {
-    switch (widget.pet.gender) {
-      case AppPetGender.male:
-        return 'Macho';
+  // Rótulos formatados exibidos no card.
+  String get _formattedGender => widget.pet.genderLabel;
 
-      case AppPetGender.female:
-        return 'Fêmea';
-    }
-  }
+  String get _formattedPublicationType => widget.pet.publicationType.label;
 
-  String get _formattedPublicationType {
-    switch (widget.pet.publicationType) {
-      case AppPetPublicationType.adoption:
-        return 'Adoção';
+  Color get _publicationTypeColor => widget.pet.publicationType.color;
 
-      case AppPetPublicationType.lost:
-        return 'Perdido';
-    }
-  }
-
-  Color get _publicationTypeColor {
-    switch (widget.pet.publicationType) {
-      case AppPetPublicationType.adoption:
-        return ThemeColors.success;
-
-      case AppPetPublicationType.lost:
-        return ThemeColors.error;
-    }
-  }
-
+  // Constrói o layout do card com imagem, informações e botão de edição.
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -210,8 +190,8 @@ class _AppPetCardState extends State<AppPetCard>
                               child: IconButton(
                                 onPressed: _toggleFavorite,
                                 tooltip: _isFavorited
-                                    ? 'Remover dos favoritos'
-                                    : 'Adicionar aos favoritos',
+                                    ? AppStrings.removeFromFavorites
+                                    : AppStrings.addToFavorites,
                                 icon: Icon(
                                   _isFavorited
                                       ? Icons.star_rounded

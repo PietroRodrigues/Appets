@@ -3,9 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:appets/core/theme/theme_colors.dart';
 
+/// Define o tema visual global do app.
 class AppTheme {
   AppTheme._();
 
+  /// Tema claro do app, com fonte Poppins e cor base primária.
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     scaffoldBackgroundColor: ThemeColors.background,

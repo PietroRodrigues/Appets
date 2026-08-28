@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
@@ -29,7 +30,7 @@ class AppConfirmDialog extends StatelessWidget {
     required this.title,
     required this.message,
     required this.confirmLabel,
-    this.cancelLabel = 'Não',
+    this.cancelLabel = AppStrings.no,
   });
 
   //══════════════════════════════════════════════════════════════
@@ -54,7 +55,7 @@ class AppConfirmDialog extends StatelessWidget {
     required String title,
     required String message,
     required String confirmLabel,
-    String cancelLabel = 'Não',
+    String cancelLabel = AppStrings.no,
   }) async {
     final result = await showDialog<bool>(
       context: context,

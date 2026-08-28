@@ -1,9 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
-import 'package:appets/models/enums/enum_pet_gender.dart';
-import 'package:appets/models/enums/enum_pet_publication_type.dart';
+import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/core/services/storage_service.dart';
+import 'package:appets/models/enums/enums_pet.dart';
+import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/common/buttons/widget_button.dart';
 import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
+import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/common/fields/widget_field_label.dart';
 import 'package:appets/widgets/common/fields/widget_text_field.dart';
 import 'package:appets/widgets/publish/widget_age_fields.dart';
@@ -16,16 +23,16 @@ import 'package:appets/widgets/publish/widget_publication_type_selector.dart';
 /// Contém todos os campos (fotos, tipo, nome, idade,
 /// gênero, cidade e descrição), a validação e a
 /// confirmação de descarte ao voltar.
-class PublishPetForm extends StatefulWidget {
-  const PublishPetForm({
+class AppPublishPetForm extends StatefulWidget {
+  const AppPublishPetForm({
     super.key,
   });
 
   @override
-  State<PublishPetForm> createState() => _PublishPetFormState();
+  State<AppPublishPetForm> createState() => _AppPublishPetFormState();
 }
 
-class _PublishPetFormState extends State<PublishPetForm> {
+class _AppPublishPetFormState extends State<AppPublishPetForm> {
   // Quantidade máxima de fotos permitidas.
   static const int _maximumImageCount = 5;
 
@@ -55,6 +62,9 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
   // Indica se o usuário já adicionou alguma foto.
   bool _hasImages = false;
+
+  // Lista de caminhos das imagens selecionadas.
+  List<String> _imagePaths = [];
 
   @override
   void dispose() {
@@ -88,9 +98,9 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
     final shouldDiscard = await AppConfirmDialog.show(
       context,
-      title: 'Descartar alterações?',
-      message: 'As informações preenchidas serão perdidas.',
-      confirmLabel: 'Sim, descartar',
+      title: AppStrings.discardTitle,
+      message: AppStrings.discardMessage,
+      confirmLabel: AppStrings.discardConfirm,
     );
 
     return shouldDiscard;
@@ -108,8 +118,9 @@ class _PublishPetFormState extends State<PublishPetForm> {
   }
 
   /// Atualiza o estado das fotos ao receber alterações da grade de slots.
-  void _onImageSlotsChanged(List<bool> slots) { // Em desenvolvimento.
-    _hasImages = slots.any((filled) => filled);
+  void _onImageSlotsChanged(List<String> paths) {
+    _hasImages = paths.isNotEmpty;
+    _imagePaths = paths;
   }
 
   /// Atualiza o tipo de publicação selecionado.
@@ -135,15 +146,49 @@ class _PublishPetFormState extends State<PublishPetForm> {
   }
 
   /// Publica o pet após validar o formulário.
-  void _publishPet() { // Em desenvolvimento.
-
+  void _publishPet() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // TODO:
-    // Implementar publicação futuramente.
+    final user = AuthService().currentUser;
+    if (user == null) return;
 
+    // 1. Criar pet no Firestore
+    final newPet = Pet(
+      id: '',
+      ownerId: user.uid,
+      name: _nameController.text.trim(),
+      age: _selectedAgeValue ?? 1,
+      ageUnit: _selectedAgeUnit,
+      gender: _selectedGender ?? AppPetGender.male,
+      city: _cityController.text.trim(),
+      description: _descriptionController.text.trim(),
+      publicationType: _selectedPublicationType,
+      images: [],
+    );
+
+    final petId = await PetService().createPet(newPet);
+
+    // 2. Upload das imagens (se houver)
+    if (_imagePaths.isNotEmpty) {
+      final imageUrls = <String>[];
+      for (int i = 0; i < _imagePaths.length; i++) {
+        final url = await StorageService().uploadPetImage(
+          petId,
+          i,
+          File(_imagePaths[i]),
+        );
+        imageUrls.add(url);
+      }
+      await PetService().updatePet(petId, {'images': imageUrls});
+    }
+
+    // 3. Voltar para a Home
+    if (mounted) {
+      AppSnackBar.show(context, AppStrings.petPublished);
+      Navigator.pop(context);
+    }
   }
 
   // UI
@@ -173,18 +218,17 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
               // FOTOS
               AppImageSlotsGrid(
-                title: 'Fotos do pet',
-                description:
-                    'Toque para adicionar (mínimo 1, máximo $_maximumImageCount fotos)',
+                title: AppStrings.photosTitle,
+                description: AppStrings.photosGridDescription(_maximumImageCount),
                 maxImages: _maximumImageCount,
-                onChanged: _onImageSlotsChanged, // Em desenvolvimento.
+                onChanged: _onImageSlotsChanged,
               ),
 
               const SizedBox(height: 28),
 
 
               // TIPO DE PUBLICAÇÃO
-              AppFieldLabel(text: 'Tipo de publicação'),
+              AppFieldLabel(text: AppStrings.publicationType),
 
               AppPublicationTypeSelector(
                 selectedType: _selectedPublicationType,
@@ -195,13 +239,13 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
 
               // NOME
-              AppFieldLabel(text: 'Nome do pet'),
+              AppFieldLabel(text: AppStrings.petNameLabel),
 
               AppTextField(
 
                 controller: _nameController,
 
-                hintText: 'Digite o nome do pet',
+                hintText: AppStrings.petNameHint,
 
                 textInputAction: TextInputAction.next,
 
@@ -211,7 +255,7 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
                 validator: (value) {
                   if ((value?.trim().length ?? 0) < 2) {
-                    return 'Informe o nome do pet';
+                    return AppStrings.petNameRequired;
                   }
                   return null;
                 },
@@ -222,7 +266,7 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
 
               // IDADE
-              AppFieldLabel(text: 'Idade'),
+              AppFieldLabel(text: AppStrings.age),
 
               AppAgeFields(
                 initialValue: _selectedAgeValue,
@@ -234,7 +278,7 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
 
               // GÊNERO
-              AppFieldLabel(text: 'Gênero'),
+              AppFieldLabel(text: AppStrings.gender),
 
               AppGenderFields(
                 groupValue: _selectedGender,
@@ -243,13 +287,13 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
 
               // CIDADE
-              AppFieldLabel(text: 'Cidade'),
+              AppFieldLabel(text: AppStrings.city),
 
               AppTextField(
 
                 controller: _cityController,
 
-                hintText: 'Digite a cidade',
+                hintText: AppStrings.cityHint,
 
                 textInputAction: TextInputAction.next,
 
@@ -261,7 +305,7 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
                 validator: (value) {
                   if ((value?.trim().isEmpty ?? true)) {
-                    return 'Informe a cidade';
+                    return AppStrings.cityRequired;
                   }
                   return null;
                 },
@@ -272,15 +316,15 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
 
               // DESCRIÇÃO
-              AppFieldLabel(text: 'Sobre o pet'),
+              AppFieldLabel(text: AppStrings.aboutPet),
 
               AppTextField(
                 controller: _descriptionController,
-                hintText: 'Conte um pouco sobre o pet',
+                hintText: AppStrings.aboutPetHint,
                 maxLines: 6,
                 validator: (value) {
                   if ((value?.trim().length ?? 0) < 10) {
-                    return 'Descreva o pet (mínimo 10 caracteres)';
+                    return AppStrings.aboutPetRequired;
                   }
                   return null;
                 },
@@ -290,11 +334,11 @@ class _PublishPetFormState extends State<PublishPetForm> {
 
 
               // PUBLICAR
-              WidgetButton(
+              AppButton(
 
-                text: 'Publicar Pet',
+                text: AppStrings.publishButton,
 
-                onPressed: _publishPet, // Em desenvolvimento.
+                onPressed: _publishPet,
 
               ),
 

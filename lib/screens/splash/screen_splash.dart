@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
-import 'package:appets/core/routes/routes_app.dart';
+import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/branding/widget_logo.dart';
@@ -16,22 +16,30 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  // Inicia a preparação do app ao montar a tela.
   @override
   void initState() {
     super.initState();
-    _initializeApp(); // Em desenvolvimento.
+    _initializeApp();
   }
 
-  Future<void> _initializeApp() async { // Em desenvolvimento.
-    // Simula a inicialização do app e redireciona para a próxima tela.
+  // Aguarda um momento e encaminha para o fluxo (Home ou Login).
+  Future<void> _initializeApp() async {
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
-    // TODO:
-    Navigator.pushReplacementNamed(context, AppRoutes.login);
+    final authService = AuthService();
+    final user = authService.currentUser;
+
+    if (user != null) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
+  // Constrói a tela de abertura com logo, slogan e carregamento.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

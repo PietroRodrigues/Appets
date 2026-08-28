@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 
 /// Barra de busca reutilizável para as telas principais do app.
@@ -106,14 +107,14 @@ class _AppSearchBarState extends State<AppSearchBar> {
               onChanged: widget.onChanged,
 
               decoration: InputDecoration(
-                hintText: widget.hintText ?? 'Buscar meu futuro pet',
+                hintText: widget.hintText ?? AppStrings.searchDefaultHint,
 
                 prefixIcon: const Icon(Icons.search),
 
                 suffixIcon: _hasText
                     ? IconButton(
                         onPressed: _clear,
-                        tooltip: 'Limpar busca',
+                        tooltip: AppStrings.clearSearch,
                         icon: const Icon(
                           Icons.close,
                           size: 20,
@@ -148,7 +149,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
             height: 48,
 
             child: Tooltip(
-              message: 'Filtros',
+              message: AppStrings.filters,
 
               child: Material(
                 color: ThemeColors.primary,

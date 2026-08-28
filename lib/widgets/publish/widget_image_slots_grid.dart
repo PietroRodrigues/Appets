@@ -1,5 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
@@ -38,88 +42,71 @@ class AppImageSlotsGrid extends StatefulWidget {
   final int maxImages;
 
   /// Notifica as alterações nos slots
-  /// (`true` = preenchido, `false` = vazio).
-  final ValueChanged<List<bool>>? onChanged;
+  /// (caminhos das imagens selecionadas).
+  final ValueChanged<List<String>>? onChanged;
 
   @override
   State<AppImageSlotsGrid> createState() => _AppImageSlotsGridState();
 }
 
 class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
-  // Estado visual temporário para o fluxo de inclusão de fotos.
-  //
-  // Cada posição da lista representa um slot de imagem.
-  // A lista sempre começa com pelo menos 1 slot visível.
-  final List<bool> _imageSlots = [false];
+  // Lista de caminhos das imagens selecionadas.
+  final List<String> _imagePaths = [];
+
+  // Controlador do image_picker.
+  final ImagePicker _picker = ImagePicker();
 
   // ACTIONS
 
   /// Quantidade de slots visíveis (mínimo 1, máximo [widget.maxImages]).
   int get _visibleImageSlots {
-    // Encontra o último slot preenchido.
-    int lastFilled = -1;
-    for (int i = _imageSlots.length - 1; i >= 0; i--) {
-      if (_imageSlots[i]) {
-        lastFilled = i;
-        break;
-      }
-    }
-
-    // Se há slot preenchido, mostra até o próximo vazio (ou no máximo N).
-    if (lastFilled >= 0) {
-      final needed = lastFilled + 2;
+    if (_imagePaths.isNotEmpty) {
+      final needed = _imagePaths.length + 1;
       return needed > widget.maxImages ? widget.maxImages : needed;
     }
 
-    // Nenhum preenchido: mostra apenas 1 slot.
     return 1;
   }
 
-  /// Adiciona a imagem no [index], expandindo a lista se necessário.
-  void _addImage(int index) { // Em desenvolvimento.
-    setState(() {
-      while (_imageSlots.length <= index) {
-        _imageSlots.add(false);
-      }
+  /// Abre o seletor de imagem (galeria) e adiciona no [index].
+  Future<void> _addImage(int index) async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
 
-      _imageSlots[index] = true;
+    if (image != null && mounted) {
+      setState(() {
+        if (index < _imagePaths.length) {
+          _imagePaths[index] = image.path;
+        } else {
+          _imagePaths.add(image.path);
+        }
+      });
 
-      // Garante que há pelo menos um slot vazio depois do último preenchido.
-      if (_imageSlots.length < widget.maxImages &&
-          _imageSlots.length <= index + 1) {
-        _imageSlots.add(false);
-      }
-    });
-
-    _notifyChanged();
+      _notifyChanged();
+    }
   }
 
   /// Remove a imagem do [index] e desloca as imagens seguintes
   /// para a esquerda, mantendo ao menos 1 slot vazio visível.
-  void _removeImage(int index) { // Em desenvolvimento.
+  void _removeImage(int index) {
     setState(() {
-      if (index < 0 || index >= _imageSlots.length) return;
+      if (index < 0 || index >= _imagePaths.length) return;
 
-      _imageSlots.removeAt(index);
-
-      // Garante pelo menos 1 slot vazio no final.
-      if (_imageSlots.isEmpty || _imageSlots.last) {
-        if (_imageSlots.length < widget.maxImages) {
-          _imageSlots.add(false);
-        }
-      }
+      _imagePaths.removeAt(index);
     });
 
     _notifyChanged();
   }
 
   /// Exibe confirmação antes de remover a foto do [index].
-  Future<void> _confirmImageRemoval(int index) async { // Em desenvolvimento.
+  Future<void> _confirmImageRemoval(int index) async {
     final shouldRemove = await AppConfirmDialog.show(
       context,
-      title: 'Remover foto?',
-      message: 'Deseja remover esta foto da publicação?',
-      confirmLabel: 'Sim, remover',
+      title: AppStrings.photoRemoveTitle,
+      message: AppStrings.photoRemoveMessage,
+      confirmLabel: AppStrings.photoRemoveConfirm,
     );
 
     if (shouldRemove && mounted) {
@@ -129,13 +116,13 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
 
   /// Notifica o pai sobre o estado atual dos slots.
   void _notifyChanged() {
-    widget.onChanged?.call(List<bool>.of(_imageSlots));
+    widget.onChanged?.call(List<String>.of(_imagePaths));
   }
 
   // UI
-  Widget _buildSlot(int index) { // Em desenvolvimento.
+  Widget _buildSlot(int index) {
     final isMainImage = index == 0;
-    final hasImage = index < _imageSlots.length && _imageSlots[index];
+    final hasImage = index < _imagePaths.length;
     final accentColor = hasImage
         ? ThemeColors.success
         : isMainImage
@@ -148,7 +135,7 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
       child: InkWell(
         onTap: hasImage
             ? () => _confirmImageRemoval(index)
-            : () => _addImage(index), // Em desenvolvimento.
+            : () => _addImage(index),
         borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
@@ -158,40 +145,96 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
               width: isMainImage && !hasImage ? 2 : 1,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                // Futuramente, uma miniatura da foto substituirá este ícone.
-                hasImage ? Icons.check_circle_outline : Icons.add_a_photo_outlined,
-                color: hasImage
-                    ? ThemeColors.success
-                    : isMainImage
-                        ? ThemeColors.primary
-                        : ThemeColors.hint,
-                size: 28,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                hasImage
-                    ? 'Foto ${index + 1} adicionada'
-                    : isMainImage
-                        ? 'Foto principal *'
-                        : 'Adicionar foto ${index + 1}',
-                textAlign: TextAlign.center,
-                style: ThemeTextStyles.caption.copyWith(
-                  color: hasImage
-                      ? ThemeColors.success
-                      : isMainImage
-                          ? ThemeColors.primary
-                          : ThemeColors.textSecondary,
-                  fontWeight: isMainImage ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
+          child: hasImage
+              ? _buildImagePreview(index, isMainImage)
+              : _buildPlaceholder(isMainImage, index),
         ),
       ),
+    );
+  }
+
+  /// Miniatura da imagem selecionada.
+  Widget _buildImagePreview(int index, bool isMainImage) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(11),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.file(
+            File(_imagePaths[index]),
+            fit: BoxFit.cover,
+          ),
+          if (isMainImage)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: ThemeColors.primary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  AppStrings.mainPhotoBadge,
+                  style: TextStyle(
+                    color: ThemeColors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: GestureDetector(
+              onTap: () => _confirmImageRemoval(index),
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  color: ThemeColors.white,
+                  size: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Placeholder vazio com ícone e texto.
+  Widget _buildPlaceholder(bool isMainImage, int index) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.add_a_photo_outlined,
+          color: isMainImage ? ThemeColors.primary : ThemeColors.hint,
+          size: 28,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          isMainImage
+              ? AppStrings.mainPhotoSlot
+              : AppStrings.photoSlotLabel(index + 1),
+          textAlign: TextAlign.center,
+          style: ThemeTextStyles.caption.copyWith(
+            color: isMainImage
+                ? ThemeColors.primary
+                : ThemeColors.textSecondary,
+            fontWeight: isMainImage ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 
@@ -213,7 +256,7 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
             mainAxisSpacing: 12,
             childAspectRatio: 1.25,
           ),
-          itemBuilder: (context, index) => _buildSlot(index), // Em desenvolvimento.
+          itemBuilder: (context, index) => _buildSlot(index),
         );
       },
     );

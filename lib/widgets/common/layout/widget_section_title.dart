@@ -8,9 +8,13 @@ class AppSectionTitle extends StatelessWidget {
   const AppSectionTitle({
     super.key,
     required this.title,
+    this.titleColor,
   });
 
   final String title;
+
+  /// Cor do título. Quando nula, usa a cor primária.
+  final Color? titleColor;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +23,7 @@ class AppSectionTitle extends StatelessWidget {
       child: Text(
         title,
         style: ThemeTextStyles.subtitle.copyWith(
-          color: ThemeColors.primary,
+          color: titleColor ?? ThemeColors.primary,
           fontWeight: FontWeight.w600,
         ),
       ),

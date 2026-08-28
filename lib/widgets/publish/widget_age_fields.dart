@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/theme/theme_colors.dart';
-import 'package:appets/models/enums/enum_pet_gender.dart';
+import 'package:appets/models/enums/enums_pet.dart';
 
 /// Campos de idade reutilizáveis do formulário de publicação.
 ///
@@ -58,20 +59,6 @@ class _AppAgeFieldsState extends State<AppAgeFields> {
     }
   }
 
-  /// Rótulo da unidade exibido no dropdown.
-  String _unitLabel(AppPetAgeUnit unit) {
-    switch (unit) {
-      case AppPetAgeUnit.years:
-        return 'anos';
-
-      case AppPetAgeUnit.months:
-        return 'meses';
-
-      case AppPetAgeUnit.days:
-        return 'dias';
-    }
-  }
-
   /// Notifica o pai sobre o estado atual dos campos.
   void _notifyChanged() {
     widget.onChanged?.call(_selectedValue, _selectedUnit);
@@ -109,7 +96,7 @@ class _AppAgeFieldsState extends State<AppAgeFields> {
               _notifyChanged();
             },
             validator: (value) {
-              if (value == null) return 'Informe a idade';
+              if (value == null) return AppStrings.ageRequired;
               return null;
             },
             items: [
@@ -145,7 +132,7 @@ class _AppAgeFieldsState extends State<AppAgeFields> {
             items: AppPetAgeUnit.values.map((unit) {
               return DropdownMenuItem(
                 value: unit,
-                child: Text(_unitLabel(unit)),
+                child: Text(unit.label),
               );
             }).toList(),
           ),

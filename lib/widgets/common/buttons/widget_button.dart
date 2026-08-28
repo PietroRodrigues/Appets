@@ -4,8 +4,11 @@ import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// Botão padronizado para ações principais do app.
-class WidgetButton extends StatelessWidget {
-  const WidgetButton({
+///
+/// Oferece variações de cor de fundo, texto, borda e um estado
+/// de carregamento com indicador de progresso.
+class AppButton extends StatelessWidget {
+  const AppButton({
     super.key,
     required this.text,
     required this.onPressed,

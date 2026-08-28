@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/extensions/extension_auth_error.dart';
+import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
 import 'package:appets/widgets/auth/widget_auth_header.dart';
 import 'package:appets/widgets/common/buttons/widget_button.dart';
 import 'package:appets/widgets/common/buttons/widget_outlined_button.dart';
+import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/common/fields/widget_text_field.dart';
-import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
 
 /// Tela para solicitar recuperação de senha pelo e-mail cadastrado.
 class ForgotPasswordScreen extends StatefulWidget {
@@ -23,6 +27,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   // Armazena o e-mail informado pelo usuário.
   final _emailController = TextEditingController();
 
+  // Libera o controlador ao sair da tela.
   @override
   void dispose() {
     _emailController.dispose();
@@ -30,18 +35,41 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
+  /// Volta para a tela anterior (login).
   void _goBack() {
     Navigator.pop(context);
   }
 
-  void _sendRecoveryEmail() { // Em desenvolvimento.
-    // TODO:
-    // FirebaseAuth.instance.sendPasswordResetEmail()
+  /// Envia o link de recuperação de senha para o e-mail informado.
+  void _sendRecoveryEmail() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    try {
+      final authService = AuthService();
+      await authService.sendPasswordResetEmail(
+        _emailController.text.trim(),
+      );
+      if (!mounted) return;
+      AppSnackBar.show(context, AppStrings.recoverLinkSent);
+      Navigator.pop(context);
+    } on Exception catch (e) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        e.authMessage(AppStrings.recoverError, {
+          'user-not-found': AppStrings.emailNotRegistered,
+          'invalid-email': AppStrings.invalidEmail,
+        }),
+      );
+    }
   }
 
+  // Constrói a tela de recuperação de senha.
   @override
   Widget build(BuildContext context) {
-    return AuthPageLayout(
+    return AppAuthPageLayout(
       formKey: _formKey,
 
       child: Column(
@@ -53,7 +81,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           // Cabeçalho da tela
           const AppAuthHeader(
             logoWidth: 250,
-            headline: 'Recuperar Senha',
+            headline: AppStrings.recoverTitle,
             description: '',
             textColor: ThemeColors.white,
           ),
@@ -62,7 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
           // Texto informativo
           Text(
-            'Informe o e-mail cadastrado para receber um link de recuperação da senha.',
+            AppStrings.recoverDescription,
             textAlign: TextAlign.center,
             style: ThemeTextStyles.authBody,
           ),
@@ -72,9 +100,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           // Campo de E-mail
           AppTextField(
             controller: _emailController,
-            label: 'E-mail',
+            label: AppStrings.email,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: 'Digite seu e-mail',
+            hintText: AppStrings.emailHint,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
             prefixIcon: Icons.email_outlined,
@@ -83,9 +111,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           const SizedBox(height: 20),
 
           // Botão Enviar
-          WidgetButton(
-            text: 'Enviar Link',
-            onPressed: _sendRecoveryEmail, // Em desenvolvimento.
+          AppButton(
+            text: AppStrings.recoverButton,
+            onPressed: _sendRecoveryEmail,
             backgroundColor: ThemeColors.white,
             foregroundColor: ThemeColors.secondary,
             borderColor: ThemeColors.secondary,
@@ -95,7 +123,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
           // Botão Voltar
           AppOutlinedButton(
-            text: 'Voltar ao Login',
+            text: AppStrings.backToLogin,
             onPressed: _goBack,
             textColor: ThemeColors.white,
             borderColor: ThemeColors.white,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/theme/theme_colors.dart';
-import 'package:appets/models/enums/enum_pet_gender.dart';
+import 'package:appets/models/enums/enums_pet.dart';
 
 /// Campos de gênero reutilizáveis do formulário de publicação.
 ///
@@ -32,7 +32,7 @@ class AppGenderFields extends StatelessWidget {
           Expanded(
             child: RadioListTile<AppPetGender>(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Macho'),
+              title: Text(AppPetGender.male.label),
               value: AppPetGender.male,
               activeColor: ThemeColors.primary,
             ),
@@ -41,7 +41,7 @@ class AppGenderFields extends StatelessWidget {
           Expanded(
             child: RadioListTile<AppPetGender>(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Fêmea'),
+              title: Text(AppPetGender.female.label),
               value: AppPetGender.female,
               activeColor: ThemeColors.primary,
             ),

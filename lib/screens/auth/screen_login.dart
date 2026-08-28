@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/routes/routes_app.dart';
+import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
 import 'package:appets/widgets/auth/widget_auth_header.dart';
 import 'package:appets/widgets/auth/widget_password_field.dart';
 import 'package:appets/widgets/common/buttons/widget_button.dart';
 import 'package:appets/widgets/common/buttons/widget_outlined_button.dart';
+import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/common/fields/widget_text_field.dart';
-import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
 
 /// Tela de autenticação para acesso do usuário ao app.
 class LoginScreen extends StatefulWidget {
@@ -37,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
     fontWeight: FontWeight.w600,
   );
 
+  // Libera os controladores e focus nodes ao sair da tela.
   @override
   void dispose() {
     _emailController.dispose();
@@ -50,28 +55,70 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Navega para a tela de cadastro.
   void _goToRegister() {
     Navigator.pushNamed(context, AppRoutes.register);
   }
 
+  /// Navega para a tela de recuperação de senha.
   void _goToForgotPassword() {
     Navigator.pushNamed(context, AppRoutes.forgotPassword);
   }
 
-  void _login() { // Em desenvolvimento.
+  /// Autentica o usuário com e-mail e senha e navega para a Home.
+  void _login() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Temporariamente, o login redireciona direto para a home.
-    Navigator.pushReplacementNamed(context, AppRoutes.home);
-
-    // TODO: integrar autenticação real no futuro.
+    try {
+      final authService = AuthService();
+      await authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+    } on Exception catch (e) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        e.authMessage(AppStrings.loginError, {
+          'user-not-found': AppStrings.userNotFound,
+          'wrong-password': AppStrings.wrongPasswordMessage,
+          'invalid-email': AppStrings.invalidEmail,
+          'invalid-credential': AppStrings.invalidCredentials,
+        }),
+      );
+    }
   }
 
+  /// Autentica o usuário com a conta Google e navega para a Home.
+  void _loginWithGoogle() async {
+    try {
+      final authService = AuthService();
+      final result = await authService.loginWithGoogle();
+      if (result == null && mounted) {
+        AppSnackBar.show(context, AppStrings.googleLoginCanceled);
+      } else if (result != null && mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } on Exception catch (e) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        e.authMessage(AppStrings.googleLoginError, {
+          'network_error': AppStrings.connectionError,
+          'sign_in_canceled': AppStrings.loginCanceled,
+        }),
+      );
+    }
+  }
+
+  // Constrói a tela de login com formulário e botões de autenticação.
   @override
   Widget build(BuildContext context) {
-    return AuthPageLayout(
+    return AppAuthPageLayout(
       formKey: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
 
@@ -84,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Cabeçalho da tela
           const AppAuthHeader(
             logoWidth: 250,
-            headline: 'Bem-vindo de volta',
+            headline: AppStrings.welcomeBack,
             description: '',
             textColor: ThemeColors.white,
           ),
@@ -95,9 +142,9 @@ class _LoginScreenState extends State<LoginScreen> {
           AppTextField(
             controller: _emailController,
             focusNode: _emailFocusNode,
-            label: 'E-mail',
+            label: AppStrings.email,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: 'Digite seu e-mail',
+            hintText: AppStrings.emailHint,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             prefixIcon: Icons.email_outlined,
@@ -109,11 +156,11 @@ class _LoginScreenState extends State<LoginScreen> {
               final email = value?.trim() ?? '';
 
               if (email.isEmpty) {
-                return 'Informe seu e-mail';
+                return AppStrings.emailRequired;
               }
 
               if (!RegExp(r'^\S+@\S+\.\S+$').hasMatch(email)) {
-                return 'Digite um e-mail válido';
+                return AppStrings.emailInvalid;
               }
 
               return null;
@@ -126,9 +173,9 @@ class _LoginScreenState extends State<LoginScreen> {
           AppPasswordField(
             controller: _passwordController,
             focusNode: _passwordFocusNode,
-            label: 'Senha',
+            label: AppStrings.password,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: 'Digite sua senha',
+            hintText: AppStrings.passwordHint,
             textInputAction: TextInputAction.done,
             errorStyle: _loginErrorStyle,
             onFieldSubmitted: (_) {
@@ -138,11 +185,11 @@ class _LoginScreenState extends State<LoginScreen> {
               final password = value ?? '';
 
               if (password.isEmpty) {
-                return 'Informe sua senha';
+                return AppStrings.passwordRequired;
               }
 
               if (password.length < 6) {
-                return 'A senha deve ter no mínimo 6 caracteres';
+                return AppStrings.passwordMinLength;
               }
 
               return null;
@@ -157,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: TextButton(
               onPressed: _goToForgotPassword,
               child: Text(
-                'Esqueci minha senha',
+                AppStrings.forgotPassword,
                 style: ThemeTextStyles.body.copyWith(color: ThemeColors.white),
               ),
             ),
@@ -166,9 +213,9 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 24),
 
           // Botão Entrar
-          WidgetButton(
-            text: 'Entrar',
-            onPressed: _login, // Em desenvolvimento.
+          AppButton(
+            text: AppStrings.loginButton,
+            onPressed: _login,
             backgroundColor: ThemeColors.white,
             foregroundColor: ThemeColors.secondary,
             borderColor: ThemeColors.secondary,
@@ -178,10 +225,62 @@ class _LoginScreenState extends State<LoginScreen> {
 
           // Botão Criar Conta
           AppOutlinedButton(
-            text: 'Criar Conta',
+            text: AppStrings.createAccount,
             onPressed: _goToRegister,
             borderColor: ThemeColors.white,
             textColor: ThemeColors.white,
+          ),
+
+          const SizedBox(height: 24),
+
+          // Divisor
+          Row(
+            children: [
+              const Expanded(
+                child: Divider(color: ThemeColors.white, thickness: 0.5),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  AppStrings.or,
+                  style: ThemeTextStyles.body.copyWith(
+                    color: ThemeColors.white,
+                  ),
+                ),
+              ),
+              const Expanded(
+                child: Divider(color: ThemeColors.white, thickness: 0.5),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Botão Google
+          SizedBox(
+            height: 52,
+            child: OutlinedButton.icon(
+              onPressed: _loginWithGoogle,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: ThemeColors.white,
+                side: const BorderSide(color: ThemeColors.white),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
+              ),
+              icon: const Icon(
+                Icons.g_mobiledata,
+                size: 28,
+                color: Colors.red,
+              ),
+              label: Text(
+                AppStrings.googleLogin,
+                style: ThemeTextStyles.body.copyWith(
+                  color: ThemeColors.secondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
         ],
       ),

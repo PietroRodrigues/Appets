@@ -10,9 +10,11 @@ import 'package:appets/screens/main/screen_home.dart';
 import 'package:appets/screens/settings/screen_settings.dart';
 import 'package:appets/screens/settings/screen_account_data.dart';
 
+/// Widget raiz do app: define o tema e o mapa de rotas.
 class App extends StatelessWidget {
   const App({super.key});
 
+  // Constrói o app com tema e mapa de rotas.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

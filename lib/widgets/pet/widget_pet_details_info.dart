@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/model_pet.dart';
@@ -22,8 +25,8 @@ class AppPetDetailsInfo extends StatelessWidget {
 
   // UI
 
-  /// Botão de contato via WhatsApp (em desenvolvimento).
-  Widget _buildContactButton() {
+  /// Botão de contato via WhatsApp.
+  Widget _buildContactButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
 
@@ -34,13 +37,40 @@ class AppPetDetailsInfo extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
 
-        onPressed: () { // Em desenvolvimento.
-          // TODO:
-          // Abrir conversa via WhatsApp.
+        onPressed: () async {
+          final owner = await FirestoreService().getUser(pet.ownerId);
+          if (owner == null || owner.phone.isEmpty) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(AppStrings.ownerPhoneUnavailable),
+                ),
+              );
+            }
+            return;
+          }
+
+          final phone = owner.phone.replaceAll(RegExp(r'[^0-9]'), '');
+          final message = Uri.encodeComponent(
+            AppStrings.whatsAppMessage(pet.name),
+          );
+          final url = Uri.parse('https://wa.me/55$phone?text=$message');
+
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          } else {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(AppStrings.whatsAppError),
+                ),
+              );
+            }
+          }
         },
 
         child: const Text(
-          'Entrar em contato',
+          AppStrings.contactButton,
 
           style: TextStyle(color: ThemeColors.white),
         ),
@@ -68,21 +98,21 @@ class AppPetDetailsInfo extends StatelessWidget {
             text: pet.ageLabel,
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           AppInfoRow(
             icon: Icons.pets,
             text: pet.genderLabel,
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           AppInfoRow(
             icon: Icons.location_on_outlined,
             text: pet.city,
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // Tipo de publicação
           AppInfoRow(
@@ -98,14 +128,12 @@ class AppPetDetailsInfo extends StatelessWidget {
           const SizedBox(height: 30),
 
           // Sobre
-          Text('Sobre', style: ThemeTextStyles.subtitle),
+          Text(AppStrings.aboutSection, style: ThemeTextStyles.subtitle),
 
           const SizedBox(height: 10),
 
           Text(
-            'Este é um texto temporário apenas para montar a interface. ' // Em desenvolvimento.
-            'Futuramente essa descrição será carregada do Firebase com '
-            'as informações cadastradas pelo responsável pelo pet.',
+            pet.description ?? AppStrings.descriptionNotInformed,
 
             style: ThemeTextStyles.body,
           ),
@@ -113,7 +141,7 @@ class AppPetDetailsInfo extends StatelessWidget {
           const SizedBox(height: 40),
 
           // CONTATO
-          _buildContactButton(),
+          _buildContactButton(context),
         ],
       ),
     );

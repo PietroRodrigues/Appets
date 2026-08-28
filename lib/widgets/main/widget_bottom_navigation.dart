@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/enums/enum_app_page.dart';
@@ -35,28 +36,28 @@ class AppBottomNavigation extends StatelessWidget {
                 _NavIconButton(
                   icon: Icons.home_outlined,
                   activeIcon: Icons.home,
-                  label: 'Início',
+                  label: AppStrings.navHome,
                   isActive: currentPage == AppPage.home,
                   onTap: () => onTap(AppPage.home),
                 ),
                 _NavIconButton(
                   icon: Icons.star_border,
                   activeIcon: Icons.star,
-                  label: 'Favoritos',
+                  label: AppStrings.navFavorites,
                   isActive: currentPage == AppPage.favorites,
                   onTap: () => onTap(AppPage.favorites),
                 ),
                 _NavIconButton(
                   icon: Icons.campaign_outlined,
                   activeIcon: Icons.campaign,
-                  label: 'Publicações',
+                  label: AppStrings.navPublications,
                   isActive: currentPage == AppPage.myPublications,
                   onTap: () => onTap(AppPage.myPublications),
                 ),
                 _NavIconButton(
                   icon: Icons.person_outline,
                   activeIcon: Icons.person,
-                  label: 'Perfil',
+                  label: AppStrings.navProfile,
                   isActive: currentPage == AppPage.profile,
                   onTap: () => onTap(AppPage.profile),
                 ),

@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/extensions/extension_auth_error.dart';
+import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/models/user_model.dart';
+import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
 import 'package:appets/widgets/auth/widget_auth_header.dart';
 import 'package:appets/widgets/auth/widget_password_field.dart';
 import 'package:appets/widgets/common/buttons/widget_button.dart';
 import 'package:appets/widgets/common/buttons/widget_outlined_button.dart';
+import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/common/fields/widget_text_field.dart';
-import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
 
 /// Tela de cadastro para criar uma nova conta no app.
 class RegisterScreen extends StatefulWidget {
@@ -27,6 +33,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  // Libera os controladores ao sair da tela.
   @override
   void dispose() {
     _nameController.dispose();
@@ -40,18 +47,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  /// Volta para a tela anterior (login).
   void _goBack() {
     Navigator.pop(context);
   }
 
-  void _register() { // Em desenvolvimento.
-    // TODO:
-    // Criar conta utilizando Firebase Authentication.
+  /// Cadastra o usuário, persiste o documento no Firestore e navega para a Home.
+  void _register() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      if (!mounted) return;
+      AppSnackBar.show(context, AppStrings.passwordMismatch);
+      return;
+    }
+
+    try {
+      final authService = AuthService();
+      final credential = await authService.register(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      await authService.updateDisplayName(_nameController.text.trim());
+
+      final user = credential.user;
+      if (user != null) {
+        final userModel = UserModel.fromFirebaseUser(user);
+        await FirestoreService().createUser(userModel);
+      }
+
+      if (!mounted) return;
+      AppSnackBar.show(context, AppStrings.accountCreated);
+      Navigator.pushReplacementNamed(context, '/home');
+    } on Exception catch (e) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        e.authMessage(AppStrings.registerError, {
+          'email-already-in-use': AppStrings.emailAlreadyInUse,
+          'weak-password': AppStrings.weakPassword,
+          'invalid-email': AppStrings.invalidEmail,
+        }),
+      );
+    }
   }
 
+  // Constrói a tela de cadastro com o formulário completo.
   @override
   Widget build(BuildContext context) {
-    return AuthPageLayout(
+    return AppAuthPageLayout(
       formKey: _formKey,
 
       child: Column(
@@ -62,7 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Cabeçalho
           const AppAuthHeader(
             logoWidth: 250,
-            headline: 'Crie sua conta',
+            headline: AppStrings.createYourAccount,
             description: '',
             textColor: ThemeColors.white,
           ),
@@ -72,9 +119,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Nome
           AppTextField(
             controller: _nameController,
-            label: 'Nome',
+            label: AppStrings.registerNameLabel,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: 'Digite seu nome completo',
+            hintText: AppStrings.registerNameHint,
             textInputAction: TextInputAction.next,
             prefixIcon: Icons.person_outline,
           ),
@@ -84,9 +131,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // E-mail
           AppTextField(
             controller: _emailController,
-            label: 'E-mail',
+            label: AppStrings.email,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: 'Digite seu e-mail',
+            hintText: AppStrings.emailHint,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             prefixIcon: Icons.email_outlined,
@@ -97,9 +144,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Senha
           AppPasswordField(
             controller: _passwordController,
-            label: 'Senha',
+            label: AppStrings.password,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: 'Digite sua senha',
+            hintText: AppStrings.passwordHint,
             textInputAction: TextInputAction.next,
           ),
 
@@ -108,18 +155,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Confirmar Senha
           AppPasswordField(
             controller: _confirmPasswordController,
-            label: 'Confirmar Senha',
+            label: AppStrings.confirmPassword,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: 'Digite novamente sua senha',
+            hintText: AppStrings.confirmPasswordHint,
             textInputAction: TextInputAction.done,
           ),
 
           const SizedBox(height: 24),
 
           // Botão Criar Conta
-          WidgetButton(
-            text: 'Criar Conta',
-            onPressed: _register, // Em desenvolvimento.
+          AppButton(
+            text: AppStrings.createAccount,
+            onPressed: _register,
             backgroundColor: ThemeColors.white,
             foregroundColor: ThemeColors.secondary,
             borderColor: ThemeColors.secondary,
@@ -129,7 +176,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           // Voltar para Login
           AppOutlinedButton(
-            text: 'Já possuo uma conta',
+            text: AppStrings.alreadyHaveAccount,
             onPressed: _goBack,
             textColor: ThemeColors.white,
             borderColor: ThemeColors.white,

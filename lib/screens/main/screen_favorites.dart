@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/models/mock_pets.dart';
-import 'package:appets/widgets/main/widget_pet_card.dart';
-import 'package:appets/widgets/main/widget_page_header.dart';
+import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/models/model_pet.dart';
 import 'package:appets/screens/pet/screen_pet_details.dart';
 import 'package:appets/widgets/common/feedback/widget_empty_state.dart';
+import 'package:appets/widgets/common/feedback/widget_page_loading.dart';
+import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
+import 'package:appets/widgets/main/widget_page_header.dart';
+import 'package:appets/widgets/main/widget_pet_card.dart';
+import 'package:appets/widgets/main/widget_responsive_pet_grid.dart';
 
 /// Tela que reúne os pets favoritos do usuário.
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({
     super.key,
     this.onExplore,
@@ -16,132 +21,88 @@ class FavoritesScreen extends StatelessWidget {
   /// Ação do CTA do estado vazio (volta para a aba inicial).
   final VoidCallback? onExplore;
 
-  void _searchFavorite(String value) { // Em desenvolvimento.
+  @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  List<Pet> _favoritePets = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    // Por enquanto, mostra todos os pets como favoritos.
+    // TODO: Implementar sistema real de favoritos no Firestore.
+    final pets = await PetService().getAllPets();
+    if (mounted) {
+      setState(() {
+        _favoritePets = pets;
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Busca um pet nos favoritos pelo termo digitado (em desenvolvimento).
+  void _searchFavorite(String value) {
     debugPrint('Buscando favorito: $value');
   }
 
-  void _onFilterPressed(BuildContext context) { // Em desenvolvimento.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Filtro em desenvolvimento')),
-    );
+  /// Exibe aviso de que o filtro está em desenvolvimento.
+  void _onFilterPressed() {
+    AppSnackBar.development(context, AppStrings.filters);
   }
 
+  // Constrói a tela de favoritos (loading, vazio ou grade).
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const AppPageLoading(title: AppStrings.favoritesTitle);
+    }
 
     return Column(
-
       children: [
         AppPageHeader.title(
-          title: 'Meus favoritos',
-          hintText: 'Buscar nos favoritos',
-          onSearchChanged: _searchFavorite, // Em desenvolvimento.
-          onFilterPressed: () => _onFilterPressed(context), // Em desenvolvimento.
+          title: AppStrings.favoritesTitle,
+          hintText: AppStrings.favoritesSearchHint,
+          onSearchChanged: _searchFavorite,
+          onFilterPressed: _onFilterPressed,
         ),
 
         Expanded(
-
-          // Temporário até termos o sistema de favoritos.
-          child: mockPets.isEmpty
+          child: _favoritePets.isEmpty
               ? AppEmptyState(
                   icon: Icons.star_border_rounded,
-                  title: 'Nenhum favorito ainda',
-                  description:
-                      'Toque na estrela de um pet para salvá-lo aqui.',
+                  title: AppStrings.emptyFavoritesTitle,
+                  description: AppStrings.emptyFavoritesDescription,
                   actionLabel:
-                      onExplore != null ? 'Explorar pets' : null,
-                  onAction: onExplore,
+                      widget.onExplore != null ? AppStrings.explorePets : null,
+                  onAction: widget.onExplore,
                 )
-              : LayoutBuilder(
-
-            builder: (context, constraints) {
-
-              final width = constraints.maxWidth;
-
-              final crossAxisCount =
-                  width < 320 ? 1 :
-                  width < 700 ? 2 :
-                  3;
-
-              final childAspectRatio =
-                  width < 320
-                  ? 0.84
-                  : width < 700
-                  ? 0.68
-                  : 0.74;
-
-              return Padding(
-
-                padding: EdgeInsets.symmetric(
-
-                  horizontal: width < 320 ? 10 : 14,
-
-                  vertical: width < 320 ? 10 : 16,
-
-                ),
-
-                child: GridView.builder(
-                  padding: const EdgeInsets.only(bottom: 120),
-
-                  itemCount: mockPets.length, // Dados de teste.
-
-                  gridDelegate:
-                      SliverGridDelegateWithFixedCrossAxisCount(
-
-                    crossAxisCount: crossAxisCount,
-
-                    crossAxisSpacing:
-                        width < 320 ? 8 : 12,
-
-                    mainAxisSpacing:
-                        width < 320 ? 8 : 12,
-
-                    childAspectRatio: childAspectRatio,
-
-                  ),
-
+              : AppResponsivePetGrid(
+                  itemCount: _favoritePets.length,
                   itemBuilder: (context, index) {
-
-                    final pet = mockPets[index];
+                    final pet = _favoritePets[index];
 
                     return AppPetCard(
                       pet: pet,
-
                       onTap: () {
-
                         Navigator.push(
-
                           context,
-
                           MaterialPageRoute(
-
-                            builder: (_) =>
-                                PetDetailsScreen(pet: pet),
-
+                            builder: (_) => PetDetailsScreen(pet: pet),
                           ),
-
                         );
-
                       },
-
                     );
-
                   },
-
                 ),
-
-              );
-
-            },
-
-          ),
-
         ),
-
       ],
-
     );
-
   }
-
 }

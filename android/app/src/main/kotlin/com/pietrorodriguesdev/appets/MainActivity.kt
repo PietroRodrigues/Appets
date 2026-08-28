@@ -1,4 +1,4 @@
-package com.example.appets
+package com.pietrorodriguesdev.appets
 
 import io.flutter.embedding.android.FlutterActivity
 

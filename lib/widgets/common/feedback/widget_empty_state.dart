@@ -70,7 +70,7 @@ class AppEmptyState extends StatelessWidget {
             // AÇÃO OPCIONAL
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 24),
-              WidgetButton(
+              AppButton(
                 text: actionLabel!,
                 onPressed: onAction,
                 width: 220,

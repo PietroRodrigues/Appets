@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 /// Grid responsivo para listas de pets.
-class ResponsivePetGrid extends StatelessWidget {
-  const ResponsivePetGrid({
+///
+/// Ajusta o número de colunas conforme a largura disponível.
+class AppResponsivePetGrid extends StatelessWidget {
+  const AppResponsivePetGrid({
     super.key,
     required this.itemCount,
     required this.itemBuilder,
