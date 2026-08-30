@@ -6,7 +6,7 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
-import 'package:appets/models/enums/enum_app_page.dart';
+import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/models/user_model.dart';
 import 'package:appets/screens/main/screen_favorites.dart';
@@ -15,8 +15,9 @@ import 'package:appets/screens/main/screen_profile.dart';
 import 'package:appets/screens/main/screen_publish_pet.dart';
 import 'package:appets/screens/pet/screen_pet_details.dart';
 import 'package:appets/widgets/common/feedback/widget_empty_state.dart';
+import 'package:appets/widgets/common/feedback/widget_page_loading.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
-import 'package:appets/widgets/common/layout/widget_scaffold.dart';
+import 'package:appets/widgets/common/layout/widget_layout.dart';
 import 'package:appets/widgets/main/widget_bottom_navigation.dart';
 import 'package:appets/widgets/main/widget_page_header.dart';
 import 'package:appets/widgets/main/widget_pet_card.dart';
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    AppNavigation.selectedPage.value = AppPage.home;
     _loadData();
   }
 
@@ -88,7 +90,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Monta o conteúdo da aba inicial (loading, vazio ou grade de pets).
   Widget _buildHomeContent() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return AppPageLoading(
+        userName: _user?.name ?? AppStrings.defaultUserName,
+      );
     }
 
     return Column(
@@ -116,6 +120,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     return AppPetCard(
                       pet: pet,
                       heroTag: 'pet-image-${pet.id}',
+                      initialIsFavorited:
+                          _user?.favoritePetIds.contains(pet.id) ?? false,
                       onTap: () {
                         Navigator.push(
                           context,

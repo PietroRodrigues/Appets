@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/widgets/common/layout/widget_scaffold.dart';
+import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/widgets/common/feedback/widget_loading.dart';
+import 'package:appets/widgets/common/layout/widget_layout.dart';
 import 'package:appets/widgets/main/widget_page_header.dart';
 
 /// Tela de carregamento com cabeçalho da página e indicador central.
@@ -41,7 +43,7 @@ class AppPageLoading extends StatelessWidget {
       children: [
         header,
         const Expanded(
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: AppLoading(color: ThemeColors.primary)),
         ),
       ],
     );

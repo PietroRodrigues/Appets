@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:appets/models/enums/enums_pet.dart';
+import 'package:appets/models/enums/enums_app.dart';
 
 /// Modelo de dados de um pet.
 ///

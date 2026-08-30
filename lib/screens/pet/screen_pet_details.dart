@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
-import 'package:appets/widgets/pet/widget_pet_details_info.dart';
-import 'package:appets/widgets/pet/widget_pet_gallery.dart';
+import 'package:appets/widgets/pet/widget_pet_details.dart';
 
 /// Tela de detalhes com imagens e informações do pet selecionado.
 ///
@@ -23,11 +24,25 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   // Estado de favorito do pet.
   bool _isFavorited = false;
 
-  // Alterna o estado de favorito do pet.
-  void _toggleFavorite() {
+  // Alterna o estado de favorito do pet, persistindo no Firestore.
+  Future<void> _toggleFavorite() async {
     setState(() {
       _isFavorited = !_isFavorited;
     });
+
+    final authUser = AuthService().currentUser;
+    if (authUser == null || widget.pet.id.isEmpty) return;
+
+    final service = FirestoreService();
+    try {
+      if (_isFavorited) {
+        await service.addFavorite(authUser.uid, widget.pet.id);
+      } else {
+        await service.removeFavorite(authUser.uid, widget.pet.id);
+      }
+    } catch (_) {
+      // Mantém o estado visual; a persistência será reconciliada na próxima carga.
+    }
   }
 
   // Exibe aviso de que o compartilhamento está em desenvolvimento.

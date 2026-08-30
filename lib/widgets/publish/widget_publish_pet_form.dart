@@ -6,15 +6,14 @@ import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
-import 'package:appets/models/enums/enums_pet.dart';
+import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
-import 'package:appets/widgets/common/buttons/widget_button.dart';
+import 'package:appets/widgets/common/buttons/widget_buttons.dart';
+import 'package:appets/widgets/common/feedback/widget_process_loading.dart';
 import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
-import 'package:appets/widgets/common/fields/widget_field_label.dart';
-import 'package:appets/widgets/common/fields/widget_text_field.dart';
-import 'package:appets/widgets/publish/widget_age_fields.dart';
-import 'package:appets/widgets/publish/widget_gender_fields.dart';
+import 'package:appets/widgets/common/fields/widget_fields.dart';
+import 'package:appets/widgets/publish/widget_attribute_fields.dart';
 import 'package:appets/widgets/publish/widget_image_slots_grid.dart';
 import 'package:appets/widgets/publish/widget_publication_type_selector.dart';
 
@@ -62,6 +61,9 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
 
   // Indica se o usuário já adicionou alguma foto.
   bool _hasImages = false;
+
+  // Evita publicações duplicadas enquanto o envio está em andamento.
+  bool _isPublishing = false;
 
   // Lista de caminhos das imagens selecionadas.
   List<String> _imagePaths = [];
@@ -147,6 +149,8 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
 
   /// Publica o pet após validar o formulário.
   void _publishPet() async {
+    if (_isPublishing) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -154,41 +158,68 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
     final user = AuthService().currentUser;
     if (user == null) return;
 
-    // 1. Criar pet no Firestore
-    final newPet = Pet(
-      id: '',
-      ownerId: user.uid,
-      name: _nameController.text.trim(),
-      age: _selectedAgeValue ?? 1,
-      ageUnit: _selectedAgeUnit,
-      gender: _selectedGender ?? AppPetGender.male,
-      city: _cityController.text.trim(),
-      description: _descriptionController.text.trim(),
-      publicationType: _selectedPublicationType,
-      images: [],
+    _isPublishing = true;
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    final result = await Navigator.push<AppProcessResult>(
+      context,
+      MaterialPageRoute<AppProcessResult>(
+        builder: (_) => AppProcessLoadingScreen(
+          message: AppStrings.publishLoading,
+          task: () async {
+            try {
+              // 1. Criar pet no Firestore
+              final newPet = Pet(
+                id: '',
+                ownerId: user.uid,
+                name: _nameController.text.trim(),
+                age: _selectedAgeValue ?? 1,
+                ageUnit: _selectedAgeUnit,
+                gender: _selectedGender ?? AppPetGender.male,
+                city: _cityController.text.trim(),
+                description: _descriptionController.text.trim(),
+                publicationType: _selectedPublicationType,
+                images: [],
+              );
+
+              final petId = await PetService().createPet(newPet);
+
+              // 2. Upload das imagens (se houver)
+              if (_imagePaths.isNotEmpty) {
+                final imageUrls = <String>[];
+                for (int i = 0; i < _imagePaths.length; i++) {
+                  final url = await StorageService().uploadPetImage(
+                    petId,
+                    i,
+                    File(_imagePaths[i]),
+                  );
+                  imageUrls.add(url);
+                }
+                await PetService().updatePet(petId, {'images': imageUrls});
+              }
+
+              return const AppProcessResult.success();
+            } on Exception {
+              return const AppProcessResult.failure(AppStrings.publishError);
+            }
+          },
+        ),
+      ),
     );
+    if (!mounted) return;
 
-    final petId = await PetService().createPet(newPet);
-
-    // 2. Upload das imagens (se houver)
-    if (_imagePaths.isNotEmpty) {
-      final imageUrls = <String>[];
-      for (int i = 0; i < _imagePaths.length; i++) {
-        final url = await StorageService().uploadPetImage(
-          petId,
-          i,
-          File(_imagePaths[i]),
-        );
-        imageUrls.add(url);
-      }
-      await PetService().updatePet(petId, {'images': imageUrls});
+    switch (result?.status) {
+      case AppProcessStatus.success:
+        AppSnackBar.show(context, AppStrings.petPublished);
+        Navigator.pop(context);
+      case AppProcessStatus.failure:
+        AppSnackBar.show(context, result!.message!);
+      case AppProcessStatus.canceled:
+      case null:
+        break;
     }
 
-    // 3. Voltar para a Home
-    if (mounted) {
-      AppSnackBar.show(context, AppStrings.petPublished);
-      Navigator.pop(context);
-    }
+    _isPublishing = false;
   }
 
   // UI

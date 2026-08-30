@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
-import 'package:appets/widgets/common/display/widget_option_tile.dart';
+import 'package:appets/widgets/common/display/widget_display.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
-import 'package:appets/widgets/common/layout/widget_scaffold.dart';
+import 'package:appets/widgets/common/layout/widget_layout.dart';
 import 'package:appets/widgets/main/widget_page_header.dart';
 
 /// Tela de configurações do aplicativo.

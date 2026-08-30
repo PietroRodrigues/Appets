@@ -4,9 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
+import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/model_pet.dart';
+import 'package:appets/widgets/common/display/widget_display.dart';
 
 /// Card reutilizável para exibir um pet em listas da interface.
 ///
@@ -87,8 +90,9 @@ class _AppPetCardState extends State<AppPetCard>
     super.dispose();
   }
 
-  /// Alterna o estado de favorito com animação, vibração e feedback visual.
-  void _toggleFavorite() {
+  /// Alterna o estado de favorito com animação, vibração e feedback visual,
+  /// persistindo a alteração no Firestore.
+  void _toggleFavorite() async {
     setState(() {
       _isFavorited = !_isFavorited;
 
@@ -113,22 +117,27 @@ class _AppPetCardState extends State<AppPetCard>
           duration: const Duration(milliseconds: 1200),
         ),
       );
+
+    final authUser = AuthService().currentUser;
+    if (authUser == null || widget.pet.id.isEmpty) return;
+
+    final service = FirestoreService();
+    try {
+      if (_isFavorited) {
+        await service.addFavorite(authUser.uid, widget.pet.id);
+      } else {
+        await service.removeFavorite(authUser.uid, widget.pet.id);
+      }
+    } catch (_) {
+      // Mantém o estado visual; a persistência será reconciliada na próxima carga.
+    }
   }
 
   /// Imagem do pet, com animação Hero quando há [heroTag].
   Widget _buildPetImage() {
-    final image = Image.asset(
-      widget.pet.images.first,
-      fit: BoxFit.contain,
-    );
+    final url = widget.pet.images.isNotEmpty ? widget.pet.images.first : '';
 
-    final tag = widget.heroTag;
-
-    if (tag == null) {
-      return image;
-    }
-
-    return Hero(tag: tag, child: image);
+    return AppPetImage(url: url, heroTag: widget.heroTag);
   }
 
   // Rótulos formatados exibidos no card.

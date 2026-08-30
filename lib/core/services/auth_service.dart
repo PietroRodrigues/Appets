@@ -73,10 +73,25 @@ class AuthService {
     return user;
   }
 
+  /// Indica se a conta atual usa o provedor de e-mail/senha.
+  bool get usesPasswordProvider {
+    final user = _auth.currentUser;
+    return user?.providerData.any(
+          (info) => info.providerId == 'password',
+        ) ??
+        false;
+  }
+
+  /// Indica se a conta atual foi criada com o Google.
+  bool get usesGoogleProvider {
+    final user = _auth.currentUser;
+    return user?.providerData.any(
+          (info) => info.providerId == 'google.com',
+        ) ??
+        false;
+  }
+
   /// Reautentica o usuário atual com a senha informada.
-  ///
-  /// Necessário antes de excluir a conta quando o login
-  /// não foi recente (Firebase exige `requires-recent-login`).
   Future<void> reauthenticateWithPassword(String password) async {
     final user = _auth.currentUser;
     if (user == null || user.email == null) return;
@@ -86,6 +101,26 @@ class AuthService {
       password: password,
     );
     await user.reauthenticateWithCredential(credential);
+  }
+
+  /// Reautentica o usuário atual reabrindo o seletor de conta Google.
+  ///
+  /// Retorna `false` se o usuário cancelar. Lança erro se a conta
+  /// escolhida for diferente da que está logada (`user-mismatch`).
+  Future<bool> reauthenticateWithGoogle() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    final googleUser = await _google.signIn();
+    if (googleUser == null) return false;
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    await user.reauthenticateWithCredential(credential);
+    return true;
   }
 
   /// Exclui a conta do usuário logado no Firebase Auth.

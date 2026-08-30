@@ -1,4 +1,4 @@
-import 'package:appets/models/enums/enums_pet.dart';
+import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 
 /// Extensões de exibição dos dados do pet.

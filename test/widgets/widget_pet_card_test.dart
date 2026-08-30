@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:appets/models/enums/enums_pet.dart';
+import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/main/widget_pet_card.dart';
 

@@ -6,8 +6,9 @@ import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// Popup de confirmação reutilizável.
 ///
-/// Exibe uma mensagem de confirmação com botões de
-/// cancelar e confirmar (destrutivo, vermelho).
+/// Exibe uma mensagem de confirmação com dois botões igualmente
+/// visíveis, lado a lado: cancelar (contorno) e confirmar
+/// (vermelho, destrutivo).
 ///
 /// **Uso recomendado:** Utilizar o método estático [show]
 /// para exibir o popup e obter o resultado booleano.
@@ -31,6 +32,7 @@ class AppConfirmDialog extends StatelessWidget {
     required this.message,
     required this.confirmLabel,
     this.cancelLabel = AppStrings.no,
+    this.messageHighlight,
   });
 
   //══════════════════════════════════════════════════════════════
@@ -41,6 +43,10 @@ class AppConfirmDialog extends StatelessWidget {
   final String message;
   final String confirmLabel;
   final String cancelLabel;
+
+  /// Trecho de [message] que deve ser destacado em negrito e na
+  /// cor de erro (busca sem diferenciar maiúsculas/minúsculas).
+  final String? messageHighlight;
 
   //══════════════════════════════════════════════════════════════
   // STATIC HELPER
@@ -56,6 +62,7 @@ class AppConfirmDialog extends StatelessWidget {
     required String message,
     required String confirmLabel,
     String cancelLabel = AppStrings.no,
+    String? messageHighlight,
   }) async {
     final result = await showDialog<bool>(
       context: context,
@@ -64,6 +71,7 @@ class AppConfirmDialog extends StatelessWidget {
         message: message,
         confirmLabel: confirmLabel,
         cancelLabel: cancelLabel,
+        messageHighlight: messageHighlight,
       ),
     );
 
@@ -84,28 +92,94 @@ class AppConfirmDialog extends StatelessWidget {
         title,
         style: ThemeTextStyles.heading,
       ),
-      content: Text(
-        message,
-        style: ThemeTextStyles.body,
-      ),
+      content: _buildMessage(),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: Text(
-            cancelLabel,
-            style: ThemeTextStyles.body.copyWith(
-              color: ThemeColors.textSecondary,
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(
+                    color: ThemeColors.textSecondary,
+                    width: 1.5,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  cancelLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: ThemeTextStyles.button.copyWith(
+                    color: ThemeColors.textSecondary,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(context, true),
-          style: FilledButton.styleFrom(
-            backgroundColor: ThemeColors.error,
-          ),
-          child: Text(confirmLabel),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: ThemeColors.error,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  confirmLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: ThemeTextStyles.button.copyWith(
+                    color: ThemeColors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  /// Constrói o texto da mensagem, destacando [messageHighlight]
+  /// quando informado.
+  Widget _buildMessage() {
+    final highlight = messageHighlight;
+    final highlightIndex = highlight == null || highlight.isEmpty
+        ? -1
+        : message.toLowerCase().indexOf(highlight.toLowerCase());
+
+    if (highlightIndex < 0 || highlight!.isEmpty) {
+      return Text(message, style: ThemeTextStyles.body);
+    }
+
+    return Text.rich(
+      TextSpan(
+        style: ThemeTextStyles.body,
+        children: [
+          TextSpan(text: message.substring(0, highlightIndex)),
+          TextSpan(
+            text: message.substring(
+              highlightIndex,
+              highlightIndex + highlight.length,
+            ),
+            style: ThemeTextStyles.body.copyWith(
+              color: ThemeColors.error,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          TextSpan(
+            text: message.substring(highlightIndex + highlight.length),
+          ),
+        ],
+      ),
     );
   }
 }

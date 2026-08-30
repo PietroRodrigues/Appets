@@ -27,10 +27,13 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initializeApp() async {
     await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return;
-
     final authService = AuthService();
-    final user = authService.currentUser;
+    // Aguarda o primeiro evento do stream para capturar a sessão
+    // restaurada no cold start, evitando mandar usuário logado
+    // para o login (forçando reautenticação).
+    final user = await authService.authStateChanges.first;
+
+    if (!mounted) return;
 
     if (user != null) {
       Navigator.pushReplacementNamed(context, '/home');

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'package:appets/models/enums/enum_app_page.dart';
+import 'package:appets/models/enums/enums_app.dart';
 
 /// Controla a navegação por abas e a ação de voltar para a Home.
 class AppNavigation {

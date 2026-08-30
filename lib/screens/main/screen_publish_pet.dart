@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
-import 'package:appets/widgets/common/layout/widget_scaffold.dart';
+import 'package:appets/widgets/common/layout/widget_layout.dart';
 import 'package:appets/widgets/main/widget_page_header.dart';
 import 'package:appets/widgets/publish/widget_publish_pet_form.dart';
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
-import 'package:appets/widgets/common/buttons/widget_button.dart';
+import 'package:appets/widgets/common/buttons/widget_buttons.dart';
 
 /// Estado vazio reutilizável com ícone, título, descrição e ação opcional.
 class AppEmptyState extends StatelessWidget {

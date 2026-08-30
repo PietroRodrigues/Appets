@@ -13,8 +13,6 @@ class AppStrings {
 
   // ── Autenticação ───────────────────────────────────────
 
-  static const welcomeBack = 'Bem-vindo de volta';
-
   static const email = 'E-mail';
 
   static const emailHint = 'Digite seu e-mail';
@@ -61,6 +59,10 @@ class AppStrings {
 
   static const loginCanceled = 'Login cancelado.';
 
+  static const loginLoading = 'Entrando na sua conta...';
+
+  static const googleLoginLoading = 'Entrando com Google...';
+
   // ── Cadastro ───────────────────────────────────────────
 
   static const createYourAccount = 'Crie sua conta';
@@ -78,6 +80,8 @@ class AppStrings {
   static const accountCreated = 'Conta criada com sucesso!';
 
   static const registerError = 'Erro ao criar conta.';
+
+  static const registerLoading = 'Criando sua conta...';
 
   static const emailAlreadyInUse = 'E-mail já cadastrado.';
 
@@ -99,6 +103,8 @@ class AppStrings {
   static const recoverError = 'Erro ao enviar link.';
 
   static const emailNotRegistered = 'E-mail não cadastrado.';
+
+  static const recoverLoading = 'Enviando link de recuperação...';
 
   // ── Navegação ──────────────────────────────────────────
 
@@ -172,6 +178,10 @@ class AppStrings {
   static const discardConfirm = 'Sim, descartar';
 
   static const petPublished = 'Pet publicado com sucesso!';
+
+  static const publishLoading = 'Publicando anúncio...';
+
+  static const publishError = 'Erro ao publicar o pet. Tente novamente.';
 
   static const photosTitle = 'Fotos do pet';
 
@@ -319,12 +329,14 @@ class AppStrings {
 
   static const deleteAccount = 'Deletar conta';
 
+  static const deleteAccountLoading = 'Deletando sua conta...';
+
   static const deleteAccountTitle = 'Deletar conta?';
 
   static const deleteAccountConfirmMessage =
       'Certeza que quer deletar a sua conta de usuário?';
 
-  static const deleteAccountContinue = 'Sim, continuar';
+  static const deleteAccountContinue = 'Continuar';
 
   static const deleteAccountFinalTitle = 'Aviso importante';
 
@@ -332,7 +344,9 @@ class AppStrings {
       'Todos os dados referentes à conta serão deletados permanentemente: '
       'anúncios, imagens e dados pessoais. Esta ação não pode ser desfeita.';
 
-  static const deletePermanently = 'Deletar permanentemente';
+  static const deleteAccountConfirm = 'Sim, Deletar';
+
+  static const deletePermanentlyHighlight = 'deletados permanentemente';
 
   static const deleteAccountPasswordTitle = 'Confirmar para continuar';
 
@@ -347,8 +361,8 @@ class AppStrings {
   static const wrongPassword = 'Senha incorreta. Tente novamente.';
 
   static const deleteAccountReauthWarning =
-      'Para excluir a conta é necessário sair e entrar novamente. '
-      'Depois tente excluir outra vez.';
+      'Não foi possível confirmar sua identidade para excluir a conta. '
+      'Tente novamente.';
 
   static const accountDeleted = 'Conta deletada com sucesso.';
 

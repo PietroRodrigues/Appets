@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/screens/pet/screen_pet_details.dart';
@@ -36,9 +38,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _loadFavorites() async {
-    // Por enquanto, mostra todos os pets como favoritos.
-    // TODO: Implementar sistema real de favoritos no Firestore.
-    final pets = await PetService().getAllPets();
+    // Carrega os pets favoritados de verdade a partir do Firestore.
+    final authUser = AuthService().currentUser;
+    if (authUser == null) {
+      if (mounted) {
+        setState(() {
+          _favoritePets = [];
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    final user = await FirestoreService().getUser(authUser.uid);
+    final petIds = user?.favoritePetIds ?? [];
+    final pets = await PetService().getFavoritePets(petIds);
+
     if (mounted) {
       setState(() {
         _favoritePets = pets;
@@ -90,6 +105,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
                     return AppPetCard(
                       pet: pet,
+                      initialIsFavorited: true,
                       onTap: () {
                         Navigator.push(
                           context,

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/user_model.dart';
-import 'package:appets/widgets/common/display/widget_avatar.dart';
-import 'package:appets/widgets/common/display/widget_option_tile.dart';
+import 'package:appets/widgets/common/display/widget_display.dart';
 import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/main/widget_page_header.dart';
@@ -74,6 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (shouldLogout && mounted) {
       await AuthService().logout();
+      AppNavigation.selectedPage.value = AppPage.home;
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');
       }

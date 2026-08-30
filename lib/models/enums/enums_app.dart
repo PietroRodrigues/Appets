@@ -1,4 +1,4 @@
-/// Enums relacionados ao domínio de Pet.
+/// Enums do domínio e da navegação do aplicativo.
 library;
 
 // ── Gênero ──────────────────────────────────────────────
@@ -46,4 +46,20 @@ enum AppPetAgeUnit {
 enum AppPetPublicationType {
   adoption,
   lost,
+}
+
+// ── Páginas da navegação ────────────────────────────────
+
+enum AppPage {
+  /// Tela inicial.
+  home,
+
+  /// Tela de favoritos.
+  favorites,
+
+  /// Tela de minhas publicações.
+  myPublications,
+
+  /// Tela de perfil.
+  profile,
 }

@@ -10,6 +10,7 @@ class UserModel {
     this.phone = '',
     this.city = '',
     this.photoUrl = '',
+    this.favoritePetIds = const [],
   });
 
   final String id;
@@ -19,6 +20,9 @@ class UserModel {
   final String city;
   final String photoUrl;
 
+  /// IDs dos pets favoritados pelo usuário.
+  final List<String> favoritePetIds;
+
   // Converte o usuário em um mapa para persistência no Firestore.
   Map<String, dynamic> toMap() {
     return {
@@ -27,6 +31,7 @@ class UserModel {
       'phone': phone,
       'city': city,
       'photoUrl': photoUrl,
+      'favoritePetIds': favoritePetIds,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
@@ -41,6 +46,7 @@ class UserModel {
       phone: data['phone'] ?? '',
       city: data['city'] ?? '',
       photoUrl: data['photoUrl'] ?? '',
+      favoritePetIds: List<String>.from(data['favoritePetIds'] ?? []),
     );
   }
 

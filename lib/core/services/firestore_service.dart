@@ -22,6 +22,20 @@ class FirestoreService {
     await _db.collection('users').doc(uid).update(data);
   }
 
+  // Adiciona um pet aos favoritos do usuário.
+  Future<void> addFavorite(String uid, String petId) async {
+    await updateUser(uid, {
+      'favoritePetIds': FieldValue.arrayUnion([petId]),
+    });
+  }
+
+  // Remove um pet dos favoritos do usuário.
+  Future<void> removeFavorite(String uid, String petId) async {
+    await updateUser(uid, {
+      'favoritePetIds': FieldValue.arrayRemove([petId]),
+    });
+  }
+
   // Remove o documento do usuário.
   Future<void> deleteUser(String uid) async {
     await _db.collection('users').doc(uid).delete();

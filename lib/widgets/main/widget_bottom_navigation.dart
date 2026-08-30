@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
-import 'package:appets/models/enums/enum_app_page.dart';
+import 'package:appets/models/enums/enums_app.dart';
 
 /// Barra de navegação inferior com ícones e rótulos centralizados.
 class AppBottomNavigation extends StatelessWidget {

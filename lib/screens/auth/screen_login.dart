@@ -7,13 +7,11 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/user_model.dart';
-import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
-import 'package:appets/widgets/auth/widget_auth_header.dart';
-import 'package:appets/widgets/auth/widget_password_field.dart';
-import 'package:appets/widgets/common/buttons/widget_button.dart';
-import 'package:appets/widgets/common/buttons/widget_outlined_button.dart';
+import 'package:appets/widgets/auth/widget_auth.dart';
+import 'package:appets/widgets/common/fields/widget_fields.dart';
+import 'package:appets/widgets/common/buttons/widget_buttons.dart';
+import 'package:appets/widgets/common/feedback/widget_process_loading.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
-import 'package:appets/widgets/common/fields/widget_text_field.dart';
 
 /// Tela de autenticação para acesso do usuário ao app.
 class LoginScreen extends StatefulWidget {
@@ -26,6 +24,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   // Controla a validação do formulário de login.
   final _formKey = GlobalKey<FormState>();
+
+  // Evita envio duplicado enquanto uma autenticação está em andamento.
+  bool _isSubmitting = false;
 
   // Armazena os dados digitados pelo usuário.
   final _emailController = TextEditingController();
@@ -68,60 +69,111 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /// Autentica o usuário com e-mail e senha e navega para a Home.
   void _login() async {
+    if (_isSubmitting) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    try {
-      final authService = AuthService();
-      await authService.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
-    } on Exception catch (e) {
-      if (!mounted) return;
-      AppSnackBar.show(
-        context,
-        e.authMessage(AppStrings.loginError, {
-          'user-not-found': AppStrings.userNotFound,
-          'wrong-password': AppStrings.wrongPasswordMessage,
-          'invalid-email': AppStrings.invalidEmail,
-          'invalid-credential': AppStrings.invalidCredentials,
-        }),
-      );
+    _isSubmitting = true;
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    final result = await Navigator.push<AppProcessResult>(
+      context,
+      MaterialPageRoute<AppProcessResult>(
+        builder: (_) => AppProcessLoadingScreen(
+          message: AppStrings.loginLoading,
+          task: () async {
+            try {
+              final authService = AuthService();
+              await authService.login(
+                email: _emailController.text.trim(),
+                password: _passwordController.text,
+              );
+              return const AppProcessResult.success();
+            } on Exception catch (e) {
+              return AppProcessResult.failure(
+                e.authMessage(AppStrings.loginError, {
+                  'user-not-found': AppStrings.userNotFound,
+                  'wrong-password': AppStrings.wrongPasswordMessage,
+                  'invalid-email': AppStrings.invalidEmail,
+                  'invalid-credential': AppStrings.invalidCredentials,
+                }),
+              );
+            }
+          },
+        ),
+      ),
+    );
+    if (!mounted) return;
+
+    switch (result?.status) {
+      case AppProcessStatus.success:
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      case AppProcessStatus.failure:
+        AppSnackBar.show(context, result!.message!);
+      case AppProcessStatus.canceled:
+      case null:
+        break;
     }
+
+    _isSubmitting = false;
   }
 
   /// Autentica o usuário com a conta Google, garante o cadastro no
   /// Firestore e navega para a Home.
   void _loginWithGoogle() async {
-    try {
-      final authService = AuthService();
-      final result = await authService.loginWithGoogle();
-      if (result == null && mounted) {
+    if (_isSubmitting) return;
+
+    _isSubmitting = true;
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    final result = await Navigator.push<AppProcessResult>(
+      context,
+      MaterialPageRoute<AppProcessResult>(
+        builder: (_) => AppProcessLoadingScreen(
+          message: AppStrings.googleLoginLoading,
+          task: () async {
+            try {
+              final authService = AuthService();
+              final googleResult = await authService.loginWithGoogle();
+              if (googleResult == null) {
+                return const AppProcessResult.canceled();
+              }
+
+              final firebaseUser = googleResult.user;
+              if (firebaseUser != null) {
+                await authService.ensureUserDocument(
+                  UserModel.fromFirebaseUser(firebaseUser),
+                );
+              }
+              return const AppProcessResult.success();
+            } on Exception catch (e) {
+              return AppProcessResult.failure(
+                e.authMessage(AppStrings.googleLoginError, {
+                  'network_error': AppStrings.connectionError,
+                  'sign_in_canceled': AppStrings.loginCanceled,
+                }),
+              );
+            }
+          },
+        ),
+      ),
+    );
+    if (!mounted) return;
+
+    switch (result?.status) {
+      case AppProcessStatus.success:
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      case AppProcessStatus.canceled:
         AppSnackBar.show(context, AppStrings.googleLoginCanceled);
-      } else if (result != null && mounted) {
-        final firebaseUser = result.user;
-        if (firebaseUser != null) {
-          await authService.ensureUserDocument(
-            UserModel.fromFirebaseUser(firebaseUser),
-          );
-        }
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } on Exception catch (e) {
-      if (!mounted) return;
-      AppSnackBar.show(
-        context,
-        e.authMessage(AppStrings.googleLoginError, {
-          'network_error': AppStrings.connectionError,
-          'sign_in_canceled': AppStrings.loginCanceled,
-        }),
-      );
+      case AppProcessStatus.failure:
+        AppSnackBar.show(context, result!.message!);
+      case null:
+        break;
     }
+
+    _isSubmitting = false;
   }
 
   // Constrói a tela de login com formulário e botões de autenticação.
@@ -135,17 +187,16 @@ class _LoginScreenState extends State<LoginScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
 
           // Cabeçalho da tela
           const AppAuthHeader(
-            logoWidth: 250,
-            headline: AppStrings.welcomeBack,
+            logoWidth: 240,
             description: '',
             textColor: ThemeColors.white,
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 8),
 
           // Campo de E-mail
           AppTextField(
@@ -176,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
             },
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
 
           // Campo de Senha
           AppPasswordField(
@@ -205,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
             },
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
 
           // Recuperação de senha
           Align(
@@ -219,28 +270,30 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
           // Botão Entrar
           AppButton(
             text: AppStrings.loginButton,
             onPressed: _login,
+            height: 48,
             backgroundColor: ThemeColors.white,
             foregroundColor: ThemeColors.secondary,
             borderColor: ThemeColors.secondary,
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Botão Criar Conta
           AppOutlinedButton(
             text: AppStrings.createAccount,
             onPressed: _goToRegister,
+            height: 48,
             borderColor: ThemeColors.white,
             textColor: ThemeColors.white,
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Divisor
           Row(
@@ -263,33 +316,12 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Botão Google
-          SizedBox(
-            height: 52,
-            child: OutlinedButton.icon(
-              onPressed: _loginWithGoogle,
-              style: OutlinedButton.styleFrom(
-                backgroundColor: ThemeColors.white,
-                side: const BorderSide(color: ThemeColors.white),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                ),
-              ),
-              icon: const Icon(
-                Icons.g_mobiledata,
-                size: 28,
-                color: Colors.red,
-              ),
-              label: Text(
-                AppStrings.googleLogin,
-                style: ThemeTextStyles.body.copyWith(
-                  color: ThemeColors.secondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          AppGoogleButton(
+            onPressed: _loginWithGoogle,
+            height: 48,
           ),
         ],
       ),

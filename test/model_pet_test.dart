@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/extensions/extension_pet_display.dart';
-import 'package:appets/models/enums/enums_pet.dart';
+import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 
 void main() {
