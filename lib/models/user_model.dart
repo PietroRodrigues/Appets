@@ -8,7 +8,7 @@ class UserModel {
     required this.name,
     required this.email,
     this.phone = '',
-    this.city = '',
+    this.address = '',
     this.photoUrl = '',
     this.favoritePetIds = const [],
   });
@@ -17,7 +17,7 @@ class UserModel {
   final String name;
   final String email;
   final String phone;
-  final String city;
+  final String address;
   final String photoUrl;
 
   /// IDs dos pets favoritados pelo usuário.
@@ -29,7 +29,7 @@ class UserModel {
       'name': name,
       'email': email,
       'phone': phone,
-      'city': city,
+      'address': address,
       'photoUrl': photoUrl,
       'favoritePetIds': favoritePetIds,
       'createdAt': FieldValue.serverTimestamp(),
@@ -44,7 +44,7 @@ class UserModel {
       name: data['name'] ?? '',
       email: data['email'] ?? '',
       phone: data['phone'] ?? '',
-      city: data['city'] ?? '',
+      address: data['address'] ?? data['city'] ?? '',
       photoUrl: data['photoUrl'] ?? '',
       favoritePetIds: List<String>.from(data['favoritePetIds'] ?? []),
     );

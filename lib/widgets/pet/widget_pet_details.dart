@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
-import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/model_pet.dart';
@@ -158,8 +157,7 @@ class AppPetDetailsInfo extends StatelessWidget {
         ),
 
         onPressed: () async {
-          final owner = await FirestoreService().getUser(pet.ownerId);
-          if (owner == null || owner.phone.isEmpty) {
+          if (pet.ownerPhone.isEmpty) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -170,7 +168,7 @@ class AppPetDetailsInfo extends StatelessWidget {
             return;
           }
 
-          final phone = owner.phone.replaceAll(RegExp(r'[^0-9]'), '');
+          final phone = pet.ownerPhone.replaceAll(RegExp(r'[^0-9]'), '');
           final message = Uri.encodeComponent(
             AppStrings.whatsAppMessage(pet.name),
           );
@@ -229,7 +227,7 @@ class AppPetDetailsInfo extends StatelessWidget {
 
           AppInfoRow(
             icon: Icons.location_on_outlined,
-            text: pet.city,
+            text: pet.address,
           ),
 
           const SizedBox(height: 14),

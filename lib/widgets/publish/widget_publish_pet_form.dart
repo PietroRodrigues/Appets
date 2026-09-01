@@ -3,14 +3,20 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
+import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
+import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/common/buttons/widget_buttons.dart';
 import 'package:appets/widgets/common/feedback/widget_process_loading.dart';
 import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
+import 'package:appets/widgets/common/feedback/widget_action_dialog.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/common/fields/widget_fields.dart';
 import 'package:appets/widgets/publish/widget_attribute_fields.dart';
@@ -42,15 +48,22 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   final TextEditingController _nameController =
       TextEditingController();
 
-  final TextEditingController _cityController =
+  final TextEditingController _phoneController =
+      TextEditingController();
+
+  final TextEditingController _addressController =
       TextEditingController();
 
   final TextEditingController _descriptionController =
       TextEditingController();
 
   // Controla a navegação de foco entre os campos pelo teclado.
-  final FocusNode _cityFocusNode = FocusNode();
+  final FocusNode _phoneFocusNode = FocusNode();
+  final FocusNode _addressFocusNode = FocusNode();
   final FocusNode _descriptionFocusNode = FocusNode();
+
+  // Dados da conta do dono (para pré-preencher o contato por herança).
+  UserModel? _owner;
 
   // Estado do formulário de publicação.
   AppPetGender? _selectedGender = AppPetGender.male;
@@ -69,13 +82,42 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   List<String> _imagePaths = [];
 
   @override
+  void initState() {
+    super.initState();
+    _loadOwnerContact();
+  }
+
+  // Carrega o contato da conta do dono para pré-preencher os campos.
+  Future<void> _loadOwnerContact() async {
+    try {
+      final user = AuthService().currentUser;
+      if (user == null) return;
+
+      final owner = await FirestoreService().getUser(user.uid);
+      if (!mounted) return;
+      setState(() {
+        _owner = owner;
+      });
+      if (owner != null) {
+        _phoneController.text = owner.phone;
+        _addressController.text = owner.address;
+      }
+    } catch (_) {
+      // Se a busca falhar (ex.: ambiente sem Firebase), os campos
+      // permanecem vazios/editáveis e a publicação segue o fluxo normal.
+    }
+  }
+
+  @override
   void dispose() {
 
     _nameController.dispose();
-    _cityController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
     _descriptionController.dispose();
 
-    _cityFocusNode.dispose();
+    _phoneFocusNode.dispose();
+    _addressFocusNode.dispose();
     _descriptionFocusNode.dispose();
 
     super.dispose();
@@ -87,7 +129,8 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   /// Indica se o usuário já preencheu algo no formulário.
   bool get _hasUnsavedChanges {
     return _nameController.text.trim().isNotEmpty ||
-        _cityController.text.trim().isNotEmpty ||
+        _phoneController.text.trim().isNotEmpty ||
+        _addressController.text.trim().isNotEmpty ||
         _descriptionController.text.trim().isNotEmpty ||
         _hasImages;
   }
@@ -147,19 +190,33 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
     });
   }
 
+  /// Valida o celular de contato (obrigatório, 11 dígitos, WhatsApp).
+  String? _validatePhone(String? value) =>
+      AppValidators.validateCellPhone(value);
+
   /// Publica o pet após validar o formulário.
   void _publishPet() async {
     if (_isPublishing) return;
+
+    final user = AuthService().currentUser;
+    if (user == null) return;
+
+    // Perfil incompleto (sem celular/endereço) -> orientar a completar o
+    // cadastro antes de validar os demais campos (evita erros confusos).
+    if (!_hasContactFilled) {
+      _redirectToCompleteProfile();
+      return;
+    }
 
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final user = AuthService().currentUser;
-    if (user == null) return;
-
     _isPublishing = true;
     FocusManager.instance.primaryFocus?.unfocus();
+
+    final phone = _phoneController.text.trim();
+    final address = _addressController.text.trim();
 
     final result = await Navigator.push<AppProcessResult>(
       context,
@@ -176,7 +233,9 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
                 age: _selectedAgeValue ?? 1,
                 ageUnit: _selectedAgeUnit,
                 gender: _selectedGender ?? AppPetGender.male,
-                city: _cityController.text.trim(),
+                address: address,
+                ownerPhone: phone,
+                ownerAddress: address,
                 description: _descriptionController.text.trim(),
                 publicationType: _selectedPublicationType,
                 images: [],
@@ -211,7 +270,14 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
     switch (result?.status) {
       case AppProcessStatus.success:
         AppSnackBar.show(context, AppStrings.petPublished);
-        Navigator.pop(context);
+        // D1: contato alterado em relação à conta -> perguntar se atualiza tudo.
+        if (_contactChanged(phone, address)) {
+          final shouldUpdate = await _confirmUpdateAllPublications();
+          if (shouldUpdate && mounted) {
+            await _updateAllPublications(user.uid, phone, address);
+          }
+        }
+        if (mounted) Navigator.pop(context, true);
       case AppProcessStatus.failure:
         AppSnackBar.show(context, result!.message!);
       case AppProcessStatus.canceled:
@@ -220,6 +286,87 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
     }
 
     _isPublishing = false;
+  }
+
+  // Indica se os campos de contato obrigatórios estão corretos
+  // (celular válido e endereço preenchido).
+  bool get _hasContactFilled =>
+      _phoneController.text.trim().isNotEmpty &&
+      _addressController.text.trim().isNotEmpty;
+
+  // Indica se o formulário está completo para publicar. Usado apenas
+  // para a cor do botão; os erros de campo só aparecem ao publicar.
+  bool get _isFormComplete {
+    if ((_nameController.text.trim().length) < 2) return false;
+    if (AppValidators.validateCellPhone(_phoneController.text) != null) {
+      return false;
+    }
+    if (_addressController.text.trim().isEmpty) return false;
+    return true;
+  }
+
+  // Recalcula o estado para atualizar a cor do botão ao digitar.
+  void _onFieldChanged(String _) {
+    setState(() {});
+  }
+
+  // Compara o contato informado com o da conta.
+  bool _contactChanged(String phone, String address) {
+    final ownerPhone = _owner?.phone ?? '';
+    final ownerAddress = _owner?.address ?? '';
+    return phone != ownerPhone || address != ownerAddress;
+  }
+
+  /// Mostra o diálogo orientando a completar o cadastro e, ao clicar em
+  /// "Completar cadastro", navega para a tela de dados da conta.
+  Future<void> _redirectToCompleteProfile() async {
+    final shouldComplete = await AppActionDialog.show(
+      context,
+      title: AppStrings.incompleteProfileTitle,
+      message: AppStrings.incompleteProfileMessage,
+      actionLabel: AppStrings.completeProfileButton,
+      actionIcon: Icons.edit_outlined,
+    );
+
+    if (shouldComplete && mounted) {
+      Navigator.pushNamed(context, AppRoutes.accountData);
+    }
+  }
+
+  /// Abre o diálogo Sim/Não para atualizar todas as publicações.
+  Future<bool> _confirmUpdateAllPublications() {
+    return AppConfirmDialog.show(
+      context,
+      title: AppStrings.updateAllPublicationsTitle,
+      message: AppStrings.updateAllPublicationsMessage,
+      confirmLabel: AppStrings.updateAllPublicationsConfirm,
+      cancelLabel: AppStrings.updateAllPublicationsCancel,
+    );
+  }
+
+  // Atualiza a conta e todas as publicações do dono com o novo contato.
+  Future<void> _updateAllPublications(
+    String uid,
+    String phone,
+    String address,
+  ) async {
+    try {
+      if (_owner != null) {
+        await FirestoreService().updateUser(uid, {
+          'phone': phone,
+          'address': address,
+        });
+      }
+      final myPets = await PetService().getPetsByOwner(uid);
+      for (final pet in myPets) {
+        await PetService().updatePet(pet.id, {
+          'ownerPhone': phone,
+          'ownerAddress': address,
+        });
+      }
+    } catch (_) {
+      // Falha silenciosa: a publicação atual já foi gravada corretamente.
+    }
   }
 
   // UI
@@ -233,8 +380,6 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
       child: Form(
 
         key: _formKey,
-
-        autovalidateMode: AutovalidateMode.onUserInteraction,
 
         child: SingleChildScrollView(
 
@@ -280,8 +425,10 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
 
                 textInputAction: TextInputAction.next,
 
+                onChanged: _onFieldChanged,
+
                 onFieldSubmitted: (_) {
-                  _cityFocusNode.requestFocus();
+                  _phoneFocusNode.requestFocus();
                 },
 
                 validator: (value) {
@@ -317,48 +464,53 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
               ),
 
 
-              // CIDADE
-              AppFieldLabel(text: AppStrings.city),
+              // TELEFONE DE CONTATO (herdado da conta, editável)
+              AppFieldLabel(text: AppStrings.contactOwnerLabel),
+
+              AppPhoneField(
+                controller: _phoneController,
+                focusNode: _phoneFocusNode,
+                hintText: AppStrings.contactOwnerHint,
+                textInputAction: TextInputAction.next,
+                onChanged: _onFieldChanged,
+                onFieldSubmitted: (_) {
+                  _addressFocusNode.requestFocus();
+                },
+                validator: _validatePhone,
+              ),
+
+              const SizedBox(height: 20),
+
+              // ENDEREÇO (herdado da conta, editável)
+              AppFieldLabel(text: AppStrings.addressLabel),
 
               AppTextField(
-
-                controller: _cityController,
-
-                hintText: AppStrings.cityHint,
-
+                controller: _addressController,
+                hintText: AppStrings.addressHint,
                 textInputAction: TextInputAction.next,
-
-                focusNode: _cityFocusNode,
-
+                focusNode: _addressFocusNode,
+                onChanged: _onFieldChanged,
                 onFieldSubmitted: (_) {
                   _descriptionFocusNode.requestFocus();
                 },
-
                 validator: (value) {
                   if ((value?.trim().isEmpty ?? true)) {
-                    return AppStrings.cityRequired;
+                    return AppStrings.addressRequired;
                   }
                   return null;
                 },
-
               ),
 
               const SizedBox(height: 20),
 
 
-              // DESCRIÇÃO
+              // DESCRIÇÃO (opcional)
               AppFieldLabel(text: AppStrings.aboutPet),
 
               AppTextField(
                 controller: _descriptionController,
                 hintText: AppStrings.aboutPetHint,
                 maxLines: 6,
-                validator: (value) {
-                  if ((value?.trim().length ?? 0) < 10) {
-                    return AppStrings.aboutPetRequired;
-                  }
-                  return null;
-                },
               ),
 
               const SizedBox(height: 32),
@@ -370,6 +522,10 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
                 text: AppStrings.publishButton,
 
                 onPressed: _publishPet,
+
+                backgroundColor: _isFormComplete
+                    ? ThemeColors.success
+                    : ThemeColors.disabled,
 
               ),
 

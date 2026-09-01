@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/services/auth_service.dart';
-import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
@@ -21,27 +21,41 @@ class PetDetailsScreen extends StatefulWidget {
 }
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
-  // Estado de favorito do pet.
-  bool _isFavorited = false;
+  // Estado de favorito derivado da fonte global de favoritos.
+  bool get _isFavorited =>
+      FavoritesService.instance.isFavorite(widget.pet.id);
 
-  // Alterna o estado de favorito do pet, persistindo no Firestore.
+  @override
+  void initState() {
+    super.initState();
+    FavoritesService.instance.favoriteIds.addListener(_onFavoritesChanged);
+  }
+
+  @override
+  void dispose() {
+    FavoritesService.instance.favoriteIds.removeListener(_onFavoritesChanged);
+    super.dispose();
+  }
+
+  void _onFavoritesChanged() {
+    if (mounted) setState(() {});
+  }
+
+  // Alterna o estado de favorito do pet, persistindo no Firestore
+  // por meio do serviço global.
   Future<void> _toggleFavorite() async {
-    setState(() {
-      _isFavorited = !_isFavorited;
-    });
-
     final authUser = AuthService().currentUser;
     if (authUser == null || widget.pet.id.isEmpty) return;
 
-    final service = FirestoreService();
-    try {
-      if (_isFavorited) {
-        await service.addFavorite(authUser.uid, widget.pet.id);
-      } else {
-        await service.removeFavorite(authUser.uid, widget.pet.id);
-      }
-    } catch (_) {
-      // Mantém o estado visual; a persistência será reconciliada na próxima carga.
+    final service = FavoritesService.instance;
+    final wasFavorited = _isFavorited;
+
+    final ok = wasFavorited
+        ? await service.remove(authUser.uid, widget.pet.id)
+        : await service.add(authUser.uid, widget.pet.id);
+
+    if (!ok && mounted) {
+      AppSnackBar.show(context, AppStrings.contactSaveError);
     }
   }
 

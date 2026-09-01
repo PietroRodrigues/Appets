@@ -4,6 +4,7 @@ import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
@@ -75,6 +76,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (shouldLogout && mounted) {
       await AuthService().logout();
+      // Limpa a fonte global de favoritos para não vazar dados
+      // da conta anterior para a próxima sessão.
+      FavoritesService.instance.reset();
       AppNavigation.selectedPage.value = AppPage.home;
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');

@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+
+import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 
@@ -23,4 +26,24 @@ extension AppPetDisplayX on Pet {
 
   /// Gênero formatado ("Macho" ou "Fêmea").
   String get genderLabel => gender.label;
+
+  /// Ícone do gênero (♂ para macho, ♀ para fêmea).
+  IconData get genderIcon {
+    switch (gender) {
+      case AppPetGender.male:
+        return Icons.male;
+      case AppPetGender.female:
+        return Icons.female;
+    }
+  }
+
+  /// Cor associada ao gênero (azul para macho, rosa para fêmea).
+  Color get genderColor {
+    switch (gender) {
+      case AppPetGender.male:
+        return ThemeColors.genderMale;
+      case AppPetGender.female:
+        return ThemeColors.genderFemale;
+    }
+  }
 }

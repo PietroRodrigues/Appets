@@ -150,6 +150,9 @@ class AppStrings {
 
   static const explorePets = 'Explorar pets';
 
+  static const favoritesLoadError =
+      'Não foi possível carregar seus favoritos. Tente novamente.';
+
   // ── Minhas publicações ─────────────────────────────────
 
   static const myPublicationsTitle = 'Minhas Publicações';
@@ -202,11 +205,11 @@ class AppStrings {
 
   static const gender = 'Gênero';
 
-  static const city = 'Cidade';
+  static const address = 'Endereço';
 
-  static const cityHint = 'Digite a cidade';
+  static const addressHint = 'Digite o endereço';
 
-  static const cityRequired = 'Informe a cidade';
+  static const addressRequired = 'Informe o endereço';
 
   static const aboutPet = 'Sobre o pet';
 
@@ -215,6 +218,31 @@ class AppStrings {
   static const aboutPetRequired = 'Descreva o pet (mínimo 10 caracteres)';
 
   static const publishButton = 'Publicar Pet';
+
+  static const contactOwnerLabel = 'Telefone';
+
+  static const contactOwnerHint = 'Ex.: (11) 98765-4321';
+
+  static const contactOwnerRequired = 'Informe o telefone de contato';
+
+  static const ownerPhoneInvalid =
+      'Informe um celular válido com DDD (11 dígitos)';
+
+  static const incompleteProfileTitle = 'Complete seu cadastro';
+
+  static const incompleteProfileMessage =
+      'Para publicar um pet é preciso ter celular e endereço cadastrados na sua conta.';
+
+  static const completeProfileButton = 'Completar cadastro';
+
+  static const updateAllPublicationsTitle = 'Atualizar contato?';
+
+  static const updateAllPublicationsMessage =
+      'Atualizar todas as publicações com o telefone novo?';
+
+  static const updateAllPublicationsConfirm = 'Sim';
+
+  static const updateAllPublicationsCancel = 'Não';
 
   static const photoRemoveTitle = 'Remover foto?';
 
@@ -294,6 +322,21 @@ class AppStrings {
   static const addressLabel = 'Endereço';
 
   static const editAddressFeature = 'Edição de endereço';
+
+  static const saveContact = 'Salvar';
+
+  static const contactSaved = 'Dados salvos com sucesso!';
+
+  static const contactSaveError = 'Não foi possível salvar. Tente novamente.';
+
+  static const editHint = 'Toque para editar';
+
+  static const discardChangesTitle = 'Alterações não salvas';
+
+  static const discardChangesMessage =
+      'Você tem alterações que ainda não foram salvas. Descartá-las?';
+
+  static const discardDraftConfirm = 'Descartar';
 
   static const securitySection = 'Segurança';
 

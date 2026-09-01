@@ -11,6 +11,17 @@ class AppNavigation {
     AppPage.home,
   );
 
+  /// Sinal de que a lista de pets mudou (ex.: pet publicado com sucesso).
+  ///
+  /// As telas que exibem pets escutam este notificador e recarregam os
+  /// dados quando ele é disparado, sem depender de reiniciar o app.
+  static final ValueNotifier<int> petsDataVersion = ValueNotifier<int>(0);
+
+  /// Dispara o sinal de mudança na lista de pets.
+  static void notifyPetsChanged() {
+    petsDataVersion.value++;
+  }
+
   // Esvazia a pilha de navegação e volta para a aba inicial.
   static void goHome(BuildContext context) {
     Navigator.of(context, rootNavigator: true).popUntil(

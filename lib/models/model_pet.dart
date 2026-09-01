@@ -16,8 +16,10 @@ class Pet {
     required this.name,
     required this.age,
     required this.gender,
-    required this.city,
+    required this.address,
     required this.images,
+    this.ownerPhone = '',
+    this.ownerAddress = '',
     this.description,
     this.ageUnit = AppPetAgeUnit.years,
     this.publicationType = AppPetPublicationType.adoption,
@@ -39,7 +41,16 @@ class Pet {
 
   final AppPetGender gender;
 
-  final String city;
+  final String address;
+
+  /// Telefone de contato do dono, "carimbo" copiado da conta
+  /// no momento da publicação. Mantido aqui para exibição
+  /// sem necessidade de buscar o usuário a cada listagem.
+  final String ownerPhone;
+
+  /// Endereço do dono, "carimbo" copiado da conta no momento
+  /// da publicação.
+  final String ownerAddress;
 
   final List<String> images;
 
@@ -60,7 +71,9 @@ class Pet {
       'age': age,
       'ageUnit': ageUnit.name,
       'gender': gender.name,
-      'city': city,
+      'address': address,
+      'ownerPhone': ownerPhone,
+      'ownerAddress': ownerAddress,
       'description': description ?? '',
       'publicationType': publicationType.name,
       'images': images,
@@ -71,8 +84,13 @@ class Pet {
   // Cria um pet a partir de um documento do Firestore.
   factory Pet.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    return Pet.fromMap(doc.id, data);
+  }
+
+  // Cria um pet a partir de um mapa de dados (ex.: documento Firestore).
+  factory Pet.fromMap(String id, Map<String, dynamic> data) {
     return Pet(
-      id: doc.id,
+      id: id,
       ownerId: data['ownerId'] ?? '',
       name: data['name'] ?? '',
       age: data['age'] ?? 0,
@@ -84,13 +102,22 @@ class Pet {
         (e) => e.name == data['gender'],
         orElse: () => AppPetGender.male,
       ),
-      city: data['city'] ?? '',
+      address: data['address'] ?? data['city'] ?? '',
+      ownerPhone: data['ownerPhone'] ?? '',
+      ownerAddress: data['ownerAddress'] ?? '',
       description: data['description'],
       publicationType: AppPetPublicationType.values.firstWhere(
         (e) => e.name == data['publicationType'],
         orElse: () => AppPetPublicationType.adoption,
       ),
-      images: List<String>.from(data['images'] ?? []),
+      images: _stringList(data['images']),
     );
+  }
+
+  // Converte defensivamente uma lista do Firestore em uma lista de strings.
+  // Ignora elementos não-string e evita TypeError com dados corrompidos.
+  static List<String> _stringList(Object? value) {
+    if (value is! List) return [];
+    return value.whereType<String>().toList();
   }
 }

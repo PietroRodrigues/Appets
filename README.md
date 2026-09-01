@@ -11,18 +11,24 @@ básicas, e interessados podem explorar, buscar e favoritar.
   social, o cadastro do usuário (com foto de perfil) é criado
   automaticamente no Firestore
 - **Feed de pets** — lista de pets publicados, carregada do Firestore, com
-  busca e filtro; estado vazio com botão para publicar o primeiro pet
-- **Detalhes do pet** — galeria de fotos, informações (idade, gênero, cidade
-  e tipo de publicação), descrição e contato via WhatsApp
+  busca e filtro; pull-to-refresh; estado vazio com botão para publicar o
+  primeiro pet
+- **Detalhes do pet** — galeria de fotos, informações (idade, gênero,
+  endereço e tipo de publicação), descrição e contato via WhatsApp (usando
+  telefone carimbado no pet)
 - **Publicar pet** — formulário com fotos (upload para o Storage), tipo de
-  publicação (adoção/perdido), nome, idade, gênero, cidade e descrição,
-  com confirmação antes de descartar alterações
-- **Favoritos** — pets salvos pelo usuário
+  publicação (adoção/perdido), nome, idade, gênero, telefone do responsável
+  (com máscara e validação), endereço e descrição (opcional); gate de
+  cadastro incompleto redireciona para completar dados; confirmação antes
+  de descartar alterações
+- **Favoritos** — pets salvos pelo usuário com sincronização reativa entre
+  todas as telas e limpeza automática de favoritos órfãos
 - **Minhas publicações** — gerenciamento dos pets publicados pelo usuário
-  (filtro por dono no Firestore)
+  (filtro por dono no Firestore); pull-to-refresh
 - **Perfil** — dados da conta, configurações e desconexão
-- **Dados da conta** — dados carregados do Firestore e **exclusão da conta**,
-  com confirmação em duas etapas e reautenticação por senha
+- **Dados da conta** — edição inline de nome, telefone e endereço (com
+  validação de telefone), dados carregados do Firestore e **exclusão da
+  conta**, com confirmação em duas etapas e reautenticação por senha
 
 > Os dados vêm do Firestore (Autenticação, Pets, Usuários) e as fotos dos
 > pets são armazenadas no Storage.
@@ -52,9 +58,10 @@ orientação do aparelho.
 O código está organizado em camadas:
 
 - `lib/core/services/` — serviços de backend (`AuthService`,
-  `FirestoreService`, `PetService`, `StorageService`)
+  `FirestoreService`, `PetService`, `StorageService`, `FavoritesService`)
 - `lib/core/navigation/` — controle de navegação por abas
 - `lib/core/constants/` — strings e assets centralizados
+- `lib/core/validators/` — validadores (telefone com máscara BR)
 - `lib/models/` — modelos de dados (`Pet`, `UserModel`, enums)
 - `lib/screens/` — telas organizadas por área (auth, main, pet, settings, splash)
 - `lib/widgets/` — componentes reutilizáveis por área
@@ -62,6 +69,7 @@ O código está organizado em camadas:
 ## Status do projeto
 
 Em desenvolvimento. Busca e filtro ainda são placeholders e algumas ações
-(ex.: troca de avatar e edição de nome) exibem o aviso *"em desenvolvimento"*
-enquanto as integrações não são implementadas. O backend Firebase já está
-integrado e operacional.
+(ex.: troca de avatar, compartilhar pet, edição de e-mail/senha) exibem o
+aviso *"em desenvolvimento"*. A edição de dados da conta (nome, telefone,
+endereço) já é funcional com edição inline e validação. O backend Firebase
+está integrado e operacional.

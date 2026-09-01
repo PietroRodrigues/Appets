@@ -13,7 +13,7 @@ void main() {
         name: 'Rex',
         age: 3,
         gender: AppPetGender.male,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: ['assets/images/dog.png'],
       );
 
@@ -21,7 +21,7 @@ void main() {
       expect(pet.name, 'Rex');
       expect(pet.age, 3);
       expect(pet.gender, AppPetGender.male);
-      expect(pet.city, 'São Paulo');
+      expect(pet.address, 'São Paulo');
       expect(pet.description, isNull);
       expect(pet.ageUnit, AppPetAgeUnit.years);
     });
@@ -34,7 +34,7 @@ void main() {
         age: 6,
         ageUnit: AppPetAgeUnit.months,
         gender: AppPetGender.female,
-        city: 'Campinas',
+        address: 'Campinas',
         description: 'Luna é muito carinhosa.',
         images: ['assets/images/dog.png'],
       );
@@ -53,7 +53,7 @@ void main() {
         age: 1,
         ageUnit: AppPetAgeUnit.years,
         gender: AppPetGender.male,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: [],
       );
 
@@ -68,7 +68,7 @@ void main() {
         age: 3,
         ageUnit: AppPetAgeUnit.years,
         gender: AppPetGender.male,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: [],
       );
 
@@ -83,7 +83,7 @@ void main() {
         age: 1,
         ageUnit: AppPetAgeUnit.months,
         gender: AppPetGender.male,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: [],
       );
 
@@ -98,7 +98,7 @@ void main() {
         age: 6,
         ageUnit: AppPetAgeUnit.months,
         gender: AppPetGender.male,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: [],
       );
 
@@ -113,7 +113,7 @@ void main() {
         age: 1,
         ageUnit: AppPetAgeUnit.days,
         gender: AppPetGender.male,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: [],
       );
 
@@ -128,7 +128,7 @@ void main() {
         age: 15,
         ageUnit: AppPetAgeUnit.days,
         gender: AppPetGender.male,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: [],
       );
 
@@ -144,7 +144,7 @@ void main() {
         name: 'Rex',
         age: 3,
         gender: AppPetGender.male,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: [],
       );
 
@@ -158,11 +158,61 @@ void main() {
         name: 'Luna',
         age: 3,
         gender: AppPetGender.female,
-        city: 'São Paulo',
+        address: 'São Paulo',
         images: [],
       );
 
       expect(pet.genderLabel, 'Fêmea');
+    });
+
+    test('fromMap lê imagens quando a lista é válida', () {
+      final pet = Pet.fromMap('pet_001', {
+        'ownerId': 'user_001',
+        'name': 'Rex',
+        'age': 2,
+        'ageUnit': 'years',
+        'gender': 'male',
+        'address': 'São Paulo',
+        'images': ['a.png', 'b.png'],
+      });
+
+      expect(pet.id, 'pet_001');
+      expect(pet.images, ['a.png', 'b.png']);
+    });
+
+    test('fromMap ignora elementos não-string em images (dados corrompidos)',
+        () {
+      final pet = Pet.fromMap('pet_001', {
+        'ownerId': 'user_001',
+        'name': 'Rex',
+        'age': 2,
+        'gender': 'male',
+        'address': 'São Paulo',
+        'images': ['a.png', 123, null, 'b.png', true],
+      });
+
+      expect(pet.images, ['a.png', 'b.png']);
+    });
+
+    test('fromMap não lança quando images falta ou não é uma lista', () {
+      final withoutImages = Pet.fromMap('pet_001', {
+        'ownerId': 'user_001',
+        'name': 'Rex',
+        'age': 2,
+        'gender': 'male',
+        'address': 'São Paulo',
+      });
+      expect(withoutImages.images, isEmpty);
+
+      final stringImages = Pet.fromMap('pet_001', {
+        'ownerId': 'user_001',
+        'name': 'Rex',
+        'age': 2,
+        'gender': 'male',
+        'address': 'São Paulo',
+        'images': 'not-a-list',
+      });
+      expect(stringImages.images, isEmpty);
     });
   });
 }

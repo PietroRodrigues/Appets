@@ -10,12 +10,18 @@ class AppResponsivePetGrid extends StatelessWidget {
     required this.itemBuilder,
     this.padding,
     this.bottomPadding = 120,
+    this.physics,
   });
 
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;
   final EdgeInsetsGeometry? padding;
   final double bottomPadding;
+
+  /// Física de rolagem do grid. Use `AlwaysScrollableScrollPhysics`
+  /// quando envolvido por um [RefreshIndicator] para permitir o
+  /// pull-to-refresh mesmo com poucos itens.
+  final ScrollPhysics? physics;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +41,7 @@ class AppResponsivePetGrid extends StatelessWidget {
             vertical: width < 320 ? 10 : 16,
           ),
           child: GridView.builder(
+            physics: physics,
             padding: EdgeInsets.only(bottom: bottomPadding),
             itemCount: itemCount,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

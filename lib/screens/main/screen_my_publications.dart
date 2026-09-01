@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/models/model_pet.dart';
@@ -36,6 +37,18 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
   @override
   void initState() {
     super.initState();
+    _loadMyPets();
+    AppNavigation.petsDataVersion.addListener(_onPetsChanged);
+  }
+
+  @override
+  void dispose() {
+    AppNavigation.petsDataVersion.removeListener(_onPetsChanged);
+    super.dispose();
+  }
+
+  // Reage ao sinal de mudança na lista de pets (ex.: pet publicado).
+  void _onPetsChanged() {
     _loadMyPets();
   }
 
@@ -95,37 +108,59 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
 
         // CONTEÚDO - GRID DE PUBLICAÇÕES
         Expanded(
-          child: _myPets.isEmpty
-              ? AppEmptyState(
-                  icon: Icons.pets_outlined,
-                  title: AppStrings.emptyPublicationsTitle,
-                  description: AppStrings.emptyPublicationsDescription,
-                  actionLabel:
-                      widget.onPublish != null ? AppStrings.publishPet : null,
-                  onAction: widget.onPublish,
-                )
-              : AppResponsivePetGrid(
-                  itemCount: _myPets.length,
-                  itemBuilder: (context, index) {
-                    final pet = _myPets[index];
+          child: RefreshIndicator(
+            onRefresh: _loadMyPets,
+            child: _myPets.isEmpty
+                ? _refreshableEmptyState()
+                : AppResponsivePetGrid(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: _myPets.length,
+                    itemBuilder: (context, index) {
+                      final pet = _myPets[index];
 
-                    return AppPetCard(
-                      pet: pet,
-                      isMyPublication: true,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PetDetailsScreen(pet: pet),
-                          ),
-                        );
-                      },
-                      onEdit: () => _editPet(pet),
-                    );
-                  },
-                ),
+                      return AppPetCard(
+                        pet: pet,
+                        isMyPublication: true,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PetDetailsScreen(pet: pet),
+                            ),
+                          );
+                        },
+                        onEdit: () => _editPet(pet),
+                      );
+                    },
+                  ),
+          ),
         ),
       ],
+    );
+  }
+
+  // Estado vazio dentro de um scrollable para permitir o pull-to-refresh
+  // mesmo sem itens na lista.
+  Widget _refreshableEmptyState() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: AppEmptyState(
+                icon: Icons.pets_outlined,
+                title: AppStrings.emptyPublicationsTitle,
+                description: AppStrings.emptyPublicationsDescription,
+                actionLabel:
+                    widget.onPublish != null ? AppStrings.publishPet : null,
+                onAction: widget.onPublish,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

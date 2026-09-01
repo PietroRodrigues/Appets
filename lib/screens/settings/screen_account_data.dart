@@ -4,17 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/common/display/widget_display.dart';
 import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
 import 'package:appets/widgets/common/feedback/widget_page_loading.dart';
 import 'package:appets/widgets/common/feedback/widget_process_loading.dart';
 import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
+import 'package:appets/widgets/common/buttons/widget_buttons.dart';
+import 'package:appets/widgets/common/fields/widget_editable_tile.dart';
 import 'package:appets/widgets/common/fields/widget_fields.dart';
 import 'package:appets/widgets/common/layout/widget_layout.dart';
 import 'package:appets/widgets/main/widget_page_header.dart';
@@ -37,6 +41,16 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
   UserModel? _user;
   bool _isLoading = true;
   bool _isDeleting = false;
+  bool _isSaving = false;
+
+  // Rascunhos editáveis (valores ainda não salvos no Firestore).
+  String _draftName = '';
+  String _draftEmail = '';
+  String _draftPhone = '';
+  String _draftAddress = '';
+
+  // Campo atualmente em edição (apenas um por vez).
+  String? _editingField;
 
   @override
   void initState() {
@@ -49,10 +63,29 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
     final authUser = AuthService().currentUser;
     if (authUser != null) {
       _user = await FirestoreService().getUser(authUser.uid);
+      if (_user != null) {
+        _syncDraftsFromUser();
+      }
     }
     if (mounted) {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _syncDraftsFromUser() {
+    _draftName = _user?.name ?? '';
+    _draftEmail = _user?.email ?? '';
+    _draftPhone = _user?.phone ?? '';
+    _draftAddress = _user?.address ?? '';
+  }
+
+  // Indica se há alterações não salvas em relação ao Firestore.
+  bool get _hasUnsavedChanges {
+    if (_user == null) return false;
+    return _draftName != _user!.name ||
+        _draftEmail != _user!.email ||
+        _draftPhone != _user!.phone ||
+        _draftAddress != _user!.address;
   }
 
   // ACTIONS
@@ -60,6 +93,118 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
   /// Exibe aviso de recurso em desenvolvimento.
   void _showDevelopmentMessage(String feature) {
     AppSnackBar.development(context, feature);
+  }
+
+  // Superfície para edição inline do tile indicado.
+  void _startEditing(String field) {
+    setState(() {
+      _editingField = field;
+    });
+  }
+
+  // Grava o valor localmente ao confirmar a edição do campo.
+  void _commitField(String field, String value) {
+    setState(() {
+      _editingField = null;
+      switch (field) {
+        case 'name':
+          _draftName = value;
+          break;
+        case 'email':
+          _draftEmail = value;
+          break;
+        case 'phone':
+          _draftPhone = value;
+          break;
+        case 'address':
+          _draftAddress = value;
+          break;
+      }
+    });
+  }
+
+  /// Salva os rascunhos no Firestore e atualiza o estado.
+  Future<void> _saveChanges() async {
+    if (_isSaving) return;
+
+    setState(() => _isSaving = true);
+    FocusManager.instance.primaryFocus?.unfocus();
+    _editingField = null;
+
+    final authUser = AuthService().currentUser;
+    final uid = authUser?.uid ?? _user?.id;
+    if (uid == null) {
+      setState(() => _isSaving = false);
+      AppSnackBar.show(context, AppStrings.contactSaveError);
+      return;
+    }
+
+    // Valida o celular antes de salvar (regra "só celular/WhatsApp").
+    final phoneError = AppValidators.validateCellPhone(_draftPhone);
+    if (phoneError != null) {
+      setState(() {
+        _isSaving = false;
+        _editingField = 'phone';
+      });
+      AppSnackBar.show(context, phoneError);
+      return;
+    }
+
+    try {
+      await FirestoreService().updateUser(uid, {
+        'name': _draftName.trim(),
+        'email': _draftEmail.trim(),
+        'phone': _draftPhone.trim(),
+        'address': _draftAddress.trim(),
+      });
+
+      // Atualiza o modelo local (evita nova busca) e redefine rascunhos.
+      setState(() {
+        _user = UserModel(
+          id: _user!.id,
+          name: _draftName.trim(),
+          email: _draftEmail.trim(),
+          phone: _draftPhone.trim(),
+          address: _draftAddress.trim(),
+          photoUrl: _user!.photoUrl,
+          favoritePetIds: _user!.favoritePetIds,
+        );
+        _isSaving = false;
+      });
+
+      if (mounted) {
+        AppSnackBar.show(context, AppStrings.contactSaved);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        AppSnackBar.show(context, AppStrings.contactSaveError);
+      }
+    }
+  }
+
+  // Intercepta o botão voltar: com alterações não salvas, pergunta antes.
+  Future<void> _onPopInvokedWithResult(bool didPop, Object? result) async {
+    if (didPop) return;
+
+    if (!_hasUnsavedChanges) {
+      Navigator.pop(context);
+      return;
+    }
+
+    final shouldDiscard = await AppConfirmDialog.show(
+      context,
+      title: AppStrings.discardChangesTitle,
+      message: AppStrings.discardChangesMessage,
+      confirmLabel: AppStrings.discardDraftConfirm,
+      cancelLabel: AppStrings.cancel,
+    );
+
+    if (shouldDiscard && mounted) {
+      // Restaura os valores originais e volta.
+      _syncDraftsFromUser();
+      Navigator.pop(context);
+    }
   }
 
   /// Fluxo de confirmação em duas etapas e exclusão com tela de carregamento.
@@ -164,6 +309,9 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
       } catch (_) {
         // Ignora falha no logout; a conta já foi excluída.
       }
+
+      // Limpa a fonte global de favoritos da conta excluída.
+      FavoritesService.instance.reset();
 
       return const AppProcessResult.success();
     } catch (_) {
@@ -438,7 +586,10 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
       );
     }
 
-    return AppScaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: _onPopInvokedWithResult,
+      child: AppScaffold(
       child: Column(
         children: [
 
@@ -460,29 +611,50 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
                   const SizedBox(height: 12),
 
-                  AppOptionTile(
+                  AppEditableTile(
                     icon: Icons.person_outline,
                     title: AppStrings.nameLabel,
-                    subtitle: _user?.name ?? '',
-                    onTap: () => _showDevelopmentMessage(AppStrings.editNameFeature),
+                    initialValue: _user?.name ?? '',
+                    committedValue: _draftName,
+                    isEditing: _editingField == 'name',
+                    onStartEditing: () => _startEditing('name'),
+                    onCommit: (v) => _commitField('name', v),
                   ),
 
                   const SizedBox(height: 12),
 
-                  AppOptionTile(
+                  AppEditableTile(
                     icon: Icons.email_outlined,
                     title: AppStrings.email,
-                    subtitle: _user?.email ?? '',
-                    onTap: () => _showDevelopmentMessage(AppStrings.editEmailFeature),
+                    initialValue: _user?.email ?? '',
+                    committedValue: _draftEmail,
+                    isEditing: _editingField == 'email',
+                    onStartEditing: () => _startEditing('email'),
+                    onCommit: (v) => _commitField('email', v),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if ((value?.trim().isEmpty ?? true) ||
+                          !RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value!.trim())) {
+                        return 'E-mail inválido';
+                      }
+                      return null;
+                    },
                   ),
 
                   const SizedBox(height: 12),
 
-                  AppOptionTile(
+                  AppEditableTile(
                     icon: Icons.phone_outlined,
                     title: AppStrings.phoneLabel,
-                    subtitle: _user?.phone ?? '',
-                    onTap: () => _showDevelopmentMessage(AppStrings.editPhoneFeature),
+                    initialValue: _user?.phone ?? '',
+                    committedValue: _draftPhone,
+                    isEditing: _editingField == 'phone',
+                    onStartEditing: () => _startEditing('phone'),
+                    onCommit: (v) => _commitField('phone', v),
+                    phone: true,
+                    validator: AppValidators.validateCellPhone,
                   ),
 
                   const SizedBox(height: 20),
@@ -492,11 +664,14 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
                   const SizedBox(height: 12),
 
-                  AppOptionTile(
+                  AppEditableTile(
                     icon: Icons.location_on_outlined,
                     title: AppStrings.addressLabel,
-                    subtitle: _user?.city ?? '',
-                    onTap: () => _showDevelopmentMessage(AppStrings.editAddressFeature),
+                    initialValue: _user?.address ?? '',
+                    committedValue: _draftAddress,
+                    isEditing: _editingField == 'address',
+                    onStartEditing: () => _startEditing('address'),
+                    onCommit: (v) => _commitField('address', v),
                   ),
 
                   const SizedBox(height: 20),
@@ -514,6 +689,17 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
                   const SizedBox(height: 32),
 
+                  // BOTÃO DE SALVAR (verde) — envia as alterações ao Firebase
+                  AppButton(
+                    text: AppStrings.saveContact,
+                    onPressed: _isSaving ? () {} : _saveChanges,
+                    height: 50,
+                    backgroundColor: ThemeColors.success,
+                    foregroundColor: ThemeColors.white,
+                  ),
+
+                  const SizedBox(height: 24),
+
                   // SEÇÃO: GERENCIAR CONTA
                   const AppSectionTitle(
                     title: AppStrings.dangerZone,
@@ -527,11 +713,13 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                     title: AppStrings.deleteAccount,
                     isDestructive: true,
                     onTap: _isDeleting ? () {} : _onDeleteAccountPressed,
-                  ),                ],
+                  ),
+                ],
               ),
             ),
           ),
         ],
+      ),
       ),
     );
   }

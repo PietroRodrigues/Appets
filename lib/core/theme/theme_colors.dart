@@ -34,6 +34,12 @@ class ThemeColors {
   static const Color error = Color(0xFFE53935);
   static const Color info = Color(0xFF42A5F5);
 
+  /// Azul usado para indicar pet macho.
+  static const Color genderMale = Color(0xFF42A5F5);
+
+  /// Rosa usado para indicar pet fêmea.
+  static const Color genderFemale = Color(0xFFEC6BAD);
+
   // =========================
   // Borders
   // =========================

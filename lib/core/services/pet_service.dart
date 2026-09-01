@@ -48,12 +48,25 @@ class PetService {
   }
 
   // Retorna os pets correspondentes a uma lista de IDs (usado para favoritos).
+  //
+  // O Firestore limita `whereIn` a no máximo 10 valores por consulta, então
+  // os IDs são divididos em lotes de 10 e as consultas rodam em paralelo.
   Future<List<Pet>> getFavoritePets(List<String> petIds) async {
     if (petIds.isEmpty) return [];
-    final snapshot = await _db
-        .collection('pets')
-        .where(FieldPath.documentId, whereIn: petIds)
-        .get();
-    return snapshot.docs.map((doc) => Pet.fromFirestore(doc)).toList();
+
+    const batchSize = 10;
+    final results = <Pet>[];
+    for (var i = 0; i < petIds.length; i += batchSize) {
+      final end = (i + batchSize > petIds.length)
+          ? petIds.length
+          : i + batchSize;
+      final batch = petIds.sublist(i, end);
+      final snapshot = await _db
+          .collection('pets')
+          .where(FieldPath.documentId, whereIn: batch)
+          .get();
+      results.addAll(snapshot.docs.map((doc) => Pet.fromFirestore(doc)));
+    }
+    return results;
   }
 }

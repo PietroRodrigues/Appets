@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:appets/core/constants/constants_strings.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
@@ -41,6 +42,18 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     AppNavigation.selectedPage.value = AppPage.home;
     _loadData();
+    AppNavigation.petsDataVersion.addListener(_onPetsChanged);
+  }
+
+  @override
+  void dispose() {
+    AppNavigation.petsDataVersion.removeListener(_onPetsChanged);
+    super.dispose();
+  }
+
+  // Reage ao sinal de mudança na lista de pets (ex.: pet publicado).
+  void _onPetsChanged() {
+    _loadData();
   }
 
   // Carrega os dados do usuário e a lista de pets do servidor.
@@ -48,6 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final authUser = AuthService().currentUser;
     if (authUser != null) {
       _user = await FirestoreService().getUser(authUser.uid);
+      // Popula a fonte global de favoritos (estado real dos cards).
+      await FavoritesService.instance.loadForUser(authUser.uid);
     }
     final pets = await PetService().getAllPets();
     if (mounted) {
@@ -77,14 +92,20 @@ class _HomeScreenState extends State<HomeScreen> {
     AppSnackBar.development(context, AppStrings.filters);
   }
 
-  /// Navega para a tela de publicar pet.
-  void _openPublishPet() {
-    Navigator.push(
+  /// Navega para a tela de publicar pet e, ao voltar, recarrega a
+  /// lista caso a publicação tenha sido executada com sucesso.
+  Future<void> _openPublishPet() async {
+    final published = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
+      MaterialPageRoute<bool>(
         builder: (_) => const PublishPetScreen(),
       ),
     );
+
+    if (published == true && mounted) {
+      // Dispara o sinal: Home e Minhas Publicações recarregam.
+      AppNavigation.notifyPetsChanged();
+    }
   }
 
   // Monta o conteúdo da aba inicial (loading, vazio ou grade de pets).
@@ -104,37 +125,69 @@ class _HomeScreenState extends State<HomeScreen> {
           onFilterPressed: _onFilterPressed,
         ),
         Expanded(
-          child: _pets.isEmpty
-              ? AppEmptyState(
-                  icon: Icons.pets_outlined,
-                  title: AppStrings.emptyPetsTitle,
-                  description: AppStrings.emptyPetsDescription,
-                  actionLabel: AppStrings.emptyPetsAction,
-                  onAction: _openPublishPet,
-                )
-              : AppResponsivePetGrid(
-                  itemCount: _pets.length,
-                  itemBuilder: (context, index) {
-                    final pet = _pets[index];
+          child: RefreshIndicator(
+            onRefresh: _loadData,
+            child: _pets.isEmpty
+                ? _refreshableEmptyState(
+                    icon: Icons.pets_outlined,
+                    title: AppStrings.emptyPetsTitle,
+                    description: AppStrings.emptyPetsDescription,
+                    actionLabel: AppStrings.emptyPetsAction,
+                    onAction: _openPublishPet,
+                  )
+                : AppResponsivePetGrid(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: _pets.length,
+                    itemBuilder: (context, index) {
+                      final pet = _pets[index];
 
-                    return AppPetCard(
-                      pet: pet,
-                      heroTag: 'pet-image-${pet.id}',
-                      initialIsFavorited:
-                          _user?.favoritePetIds.contains(pet.id) ?? false,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PetDetailsScreen(pet: pet),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                      return AppPetCard(
+                        pet: pet,
+                        heroTag: 'pet-image-${pet.id}',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PetDetailsScreen(pet: pet),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
         ),
       ],
+    );
+  }
+
+  // Estado vazio dentro de um scrollable para permitir o pull-to-refresh
+  // mesmo sem itens na lista.
+  Widget _refreshableEmptyState({
+    required IconData icon,
+    required String title,
+    required String description,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: AppEmptyState(
+                icon: icon,
+                title: title,
+                description: description,
+                actionLabel: actionLabel,
+                onAction: onAction,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
