@@ -5,13 +5,9 @@ import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/widgets/publish/widget_publish_pet_form.dart';
 
 void main() {
-  group('AppPublishPetForm', () {
+  group('WGPublishPetForm', () {
     Widget createTestWidget() {
-      return const MaterialApp(
-        home: Scaffold(
-          body: AppPublishPetForm(),
-        ),
-      );
+      return const MaterialApp(home: Scaffold(body: WGPublishPetForm()));
     }
 
     // Lê a cor de fundo do botão "Publicar Pet".
@@ -48,7 +44,10 @@ void main() {
     testWidgets('campo nome aceita texto', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
-      final nameField = find.widgetWithText(TextFormField, 'Digite o nome do pet');
+      final nameField = find.widgetWithText(
+        TextFormField,
+        'Digite o nome do pet',
+      );
       expect(nameField, findsOneWidget);
 
       await tester.enterText(nameField, 'Rex');
@@ -58,8 +57,10 @@ void main() {
     testWidgets('campo endereço aceita texto', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
-      final addressField =
-          find.widgetWithText(TextFormField, 'Digite o endereço');
+      final addressField = find.widgetWithText(
+        TextFormField,
+        'Digite o endereço',
+      );
       expect(addressField, findsOneWidget);
 
       await tester.enterText(addressField, 'São Paulo');
@@ -69,15 +70,19 @@ void main() {
     testWidgets('campo descrição aceita texto', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
-      final descField = find.widgetWithText(TextFormField, 'Conte um pouco sobre o pet');
+      final descField = find.widgetWithText(
+        TextFormField,
+        'Conte um pouco sobre o pet',
+      );
       expect(descField, findsOneWidget);
 
       await tester.enterText(descField, '描述 um pet muito bom');
       expect(find.text('描述 um pet muito bom'), findsOneWidget);
     });
 
-    testWidgets('botão de publicar começa cinza (formulário incompleto)',
-        (tester) async {
+    testWidgets('botão de publicar começa cinza (formulário incompleto)', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
 
       expect(publishButtonColor(tester), ThemeColors.disabled);
@@ -107,8 +112,9 @@ void main() {
       expect(publishButtonColor(tester), ThemeColors.success);
     });
 
-    testWidgets('botão continua cinza com celular inválido (fixo/10 dígitos)',
-        (tester) async {
+    testWidgets('botão continua cinza com celular inválido (fixo/10 dígitos)', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
 
       await tester.enterText(

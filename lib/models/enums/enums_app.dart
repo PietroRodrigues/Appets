@@ -43,9 +43,65 @@ enum AppPetAgeUnit {
 
 // ── Tipo de publicação ──────────────────────────────────
 
-enum AppPetPublicationType {
-  adoption,
-  lost,
+enum AppPetPublicationType { adoption, lost }
+
+// ── Espécie ─────────────────────────────────────────────
+
+enum AppPetSpecies {
+  dog,
+  cat,
+  rabbit,
+  hamster,
+  fish,
+  bird,
+  turtle,
+  reptile,
+  other;
+
+  /// Rótulo exibido na interface.
+  String get label {
+    switch (this) {
+      case AppPetSpecies.dog:
+        return 'Cachorro';
+
+      case AppPetSpecies.cat:
+        return 'Gato';
+
+      case AppPetSpecies.rabbit:
+        return 'Coelho';
+
+      case AppPetSpecies.hamster:
+        return 'Hamster';
+
+      case AppPetSpecies.fish:
+        return 'Peixe';
+
+      case AppPetSpecies.bird:
+        return 'Pássaro';
+
+      case AppPetSpecies.turtle:
+        return 'Tartaruga';
+
+      case AppPetSpecies.reptile:
+        return 'Réptil';
+
+      case AppPetSpecies.other:
+        return 'Outro';
+    }
+  }
+}
+
+// ── Filtro do feed de pets ──────────────────────────────
+
+enum AppPetFilter {
+  /// Feed paginado de todos os pets publicados.
+  all,
+
+  /// Lista reativa dos pets favoritados do usuário logado.
+  favorites,
+
+  /// Feed paginado apenas das publicações do usuário logado.
+  myPublications,
 }
 
 // ── Páginas da navegação ────────────────────────────────

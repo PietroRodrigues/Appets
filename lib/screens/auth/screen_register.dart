@@ -1,18 +1,19 @@
-import 'package:flutter/material.dart';
-
-import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/user_model.dart';
-import 'package:appets/widgets/auth/widget_auth.dart';
-import 'package:appets/widgets/common/fields/widget_fields.dart';
-import 'package:appets/widgets/common/buttons/widget_buttons.dart';
-import 'package:appets/widgets/common/feedback/widget_process_loading.dart';
-import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
+import 'package:appets/widgets/auth/widget_auth_button.dart';
+import 'package:appets/widgets/auth/widget_auth_header.dart';
+import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
+import 'package:appets/widgets/feedback/widget_process.dart';
+import 'package:appets/widgets/feedback/widget_snack_bar.dart';
+import 'package:appets/widgets/fields/widget_email_field.dart';
+import 'package:appets/widgets/fields/widget_password_field.dart';
+import 'package:appets/widgets/fields/widget_text_field.dart';
+import 'package:flutter/material.dart';
 
 /// Tela de cadastro para criar uma nova conta no app.
 class RegisterScreen extends StatefulWidget {
@@ -22,12 +23,9 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
   // Controla a validação do formulário de cadastro.
   final _formKey = GlobalKey<FormState>();
-
-  // Evita envio duplicado enquanto o cadastro está em andamento.
-  bool _isSubmitting = false;
 
   // Armazena os dados digitados pelo usuário.
   final _nameController = TextEditingController();
@@ -56,75 +54,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   /// Cadastra o usuário, persiste o documento no Firestore e navega para a Home.
   void _register() async {
-    if (_isSubmitting) return;
-
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
       if (!mounted) return;
-      AppSnackBar.show(context, AppStrings.passwordMismatch);
+      WGSnackBar.show(context, AuthStrings.PASSWORD_MISMATCH);
       return;
     }
 
-    _isSubmitting = true;
-    FocusManager.instance.primaryFocus?.unfocus();
+    final result = await pushProcess(
+      message: AuthStrings.REGISTER_LOADING,
+      task: () async {
+        try {
+          final authService = AuthService.instance;
+          final credential = await authService.register(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
 
-    final result = await Navigator.push<AppProcessResult>(
-      context,
-      MaterialPageRoute<AppProcessResult>(
-        builder: (_) => AppProcessLoadingScreen(
-          message: AppStrings.registerLoading,
-          task: () async {
-            try {
-              final authService = AuthService();
-              final credential = await authService.register(
-                email: _emailController.text.trim(),
-                password: _passwordController.text,
-              );
+          await authService.updateDisplayName(_nameController.text.trim());
 
-              await authService.updateDisplayName(_nameController.text.trim());
-
-              final user = credential.user;
-              if (user != null) {
-                final userModel = UserModel.fromFirebaseUser(user);
-                await FirestoreService().createUser(userModel);
-              }
-              return const AppProcessResult.success();
-            } on Exception catch (e) {
-              return AppProcessResult.failure(
-                e.authMessage(AppStrings.registerError, {
-                  'email-already-in-use': AppStrings.emailAlreadyInUse,
-                  'weak-password': AppStrings.weakPassword,
-                  'invalid-email': AppStrings.invalidEmail,
-                }),
-              );
-            }
-          },
-        ),
-      ),
+          final user = credential.user;
+          if (user != null) {
+            final userModel = UserModel.fromFirebaseUser(user);
+            await FirestoreService.instance.createUser(userModel);
+          }
+          return const WGProcessResult.success();
+        } on Exception catch (e) {
+          return WGProcessResult.failure(
+            e.authMessage(AuthStrings.REGISTER_ERROR, {
+              'email-already-in-use': AuthStrings.EMAIL_ALREADY_IN_USE,
+              'weak-password': AuthStrings.WEAK_PASSWORD,
+              'invalid-email': AuthStrings.INVALID_EMAIL,
+            }),
+          );
+        }
+      },
     );
     if (!mounted) return;
 
     switch (result?.status) {
-      case AppProcessStatus.success:
-        AppSnackBar.show(context, AppStrings.accountCreated);
+      case WGProcessStatus.success:
+        WGSnackBar.show(context, AuthStrings.ACCOUNT_CREATED);
         Navigator.pushReplacementNamed(context, AppRoutes.home);
-      case AppProcessStatus.failure:
-        AppSnackBar.show(context, result!.message!);
-      case AppProcessStatus.canceled:
+      case WGProcessStatus.failure:
+        WGSnackBar.show(context, result!.message!);
+      case WGProcessStatus.canceled:
       case null:
         break;
     }
-
-    _isSubmitting = false;
   }
 
   // Constrói a tela de cadastro com o formulário completo.
   @override
   Widget build(BuildContext context) {
-    return AppAuthPageLayout(
+    return WGAuthPageLayout(
       formKey: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
 
@@ -135,21 +121,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 8),
 
           // Cabeçalho
-          const AppAuthHeader(
-            logoWidth: 240,
-            headline: AppStrings.createYourAccount,
-            description: '',
-            textColor: ThemeColors.white,
-          ),
+          const WGAuthHeader.auth(headline: AuthStrings.CREATE_YOUR_ACCOUNT),
 
           const SizedBox(height: 8),
 
           // Nome
-          AppTextField(
+          WGTextField(
             controller: _nameController,
-            label: AppStrings.registerNameLabel,
+            label: AuthStrings.REGISTER_NAME_LABEL,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: AppStrings.registerNameHint,
+            hintText: AuthStrings.REGISTER_NAME_HINT,
             textInputAction: TextInputAction.next,
             prefixIcon: Icons.person_outline,
           ),
@@ -157,61 +138,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 8),
 
           // E-mail
-          AppTextField(
+          WGEmailField(
             controller: _emailController,
-            label: AppStrings.email,
-            labelStyle: ThemeTextStyles.authBody,
-            hintText: AppStrings.emailHint,
-            keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            prefixIcon: Icons.email_outlined,
           ),
 
           const SizedBox(height: 8),
 
           // Senha
-          AppPasswordField(
+          WGPasswordField(
             controller: _passwordController,
-            label: AppStrings.password,
+            label: AuthStrings.PASSWORD,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: AppStrings.passwordHint,
+            hintText: AuthStrings.PASSWORD_HINT,
             textInputAction: TextInputAction.next,
           ),
 
           const SizedBox(height: 8),
 
           // Confirmar Senha
-          AppPasswordField(
+          WGPasswordField(
             controller: _confirmPasswordController,
-            label: AppStrings.confirmPassword,
+            label: AuthStrings.CONFIRM_PASSWORD,
             labelStyle: ThemeTextStyles.authBody,
-            hintText: AppStrings.confirmPasswordHint,
+            hintText: AuthStrings.CONFIRM_PASSWORD_HINT,
             textInputAction: TextInputAction.done,
           ),
 
           const SizedBox(height: 12),
 
           // Botão Criar Conta
-          AppButton(
-            text: AppStrings.createAccount,
-            onPressed: _register,
-            height: 48,
-            backgroundColor: ThemeColors.white,
-            foregroundColor: ThemeColors.secondary,
-            borderColor: ThemeColors.secondary,
-          ),
+          WGAuthButton(text: AuthStrings.CREATE_ACCOUNT, onPressed: _register),
 
           const SizedBox(height: 12),
 
           // Voltar para Login
-          AppOutlinedButton(
-            text: AppStrings.alreadyHaveAccount,
+          WGAuthSecondaryButton(
+            text: AuthStrings.ALREADY_HAVE_ACCOUNT,
             onPressed: _goBack,
-            height: 48,
-            textColor: ThemeColors.white,
-            borderColor: ThemeColors.white,
           ),
-
         ],
       ),
     );

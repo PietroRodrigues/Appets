@@ -3,15 +3,16 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 /// Opera sobre as imagens dos pets no Firebase Storage.
 class StorageService {
+  StorageService._();
+
+  static final StorageService instance = StorageService._();
+
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Faz upload de uma imagem do pet e retorna a URL de acesso.
   Future<String> uploadPetImage(String petId, int index, File imageFile) async {
     final ref = _storage.ref().child('pets/$petId/photo_$index.jpg');
-    await ref.putFile(
-      imageFile,
-      SettableMetadata(contentType: 'image/jpeg'),
-    );
+    await ref.putFile(imageFile, SettableMetadata(contentType: 'image/jpeg'));
     return await ref.getDownloadURL();
   }
 

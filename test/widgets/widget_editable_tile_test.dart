@@ -1,29 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:appets/widgets/common/fields/widget_editable_tile.dart';
-import 'package:appets/widgets/common/fields/widget_fields.dart';
+import 'package:appets/widgets/fields/widget_editable_tile.dart';
+import 'package:appets/widgets/fields/widget_phone_field.dart';
 
 void main() {
-  group('AppPhoneField', () {
+  group('WGPhoneField', () {
     testWidgets('aplica máscara (XX) XXXXX-XXXX ao digitar', (tester) async {
       final controller = TextEditingController();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: AppPhoneField(
-              controller: controller,
-              hintText: 'Telefone',
-            ),
+            body: WGPhoneField(controller: controller, hintText: 'Telefone'),
           ),
         ),
       );
 
-      await tester.enterText(
-        find.byType(AppPhoneField),
-        '11987654321',
-      );
+      await tester.enterText(find.byType(WGPhoneField), '11987654321');
 
       expect(controller.text, '(11) 98765-4321');
 
@@ -31,7 +25,7 @@ void main() {
     });
   });
 
-  group('AppEditableTile', () {
+  group('WGEditableTile', () {
     Widget buildTile({
       required bool isEditing,
       required String committedValue,
@@ -44,7 +38,7 @@ void main() {
           body: SingleChildScrollView(
             child: StatefulBuilder(
               builder: (context, setState) {
-                return AppEditableTile(
+                return WGEditableTile(
                   icon: Icons.person_outline,
                   title: 'Nome',
                   initialValue: 'Valor original',
@@ -60,8 +54,7 @@ void main() {
       );
     }
 
-    testWidgets('exibe o valor commitado fora do modo edição',
-        (tester) async {
+    testWidgets('exibe o valor commitado fora do modo edição', (tester) async {
       await tester.pumpWidget(
         buildTile(
           isEditing: false,
@@ -75,8 +68,9 @@ void main() {
       expect(find.text('Rex'), findsOneWidget);
     });
 
-    testWidgets('entra em edição e devolve o valor via onCommit',
-        (tester) async {
+    testWidgets('entra em edição e devolve o valor via onCommit', (
+      tester,
+    ) async {
       String? committed;
 
       var editing = false;
@@ -87,7 +81,7 @@ void main() {
             body: SingleChildScrollView(
               child: StatefulBuilder(
                 builder: (context, setState) {
-                  return AppEditableTile(
+                  return WGEditableTile(
                     icon: Icons.person_outline,
                     title: 'Nome',
                     initialValue: 'Rex',

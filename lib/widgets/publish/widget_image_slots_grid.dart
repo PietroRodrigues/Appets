@@ -1,12 +1,11 @@
 import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-
-import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/constants/constants_strings_publish.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
-import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
+import 'package:appets/widgets/feedback/widget_dialogs.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 /// Grade de slots para seleção de fotos do pet.
 ///
@@ -21,8 +20,8 @@ import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
 ///   nenhum vazio extra aparece.
 ///
 /// Notifica o pai a cada alteração através de [onChanged].
-class AppImageSlotsGrid extends StatefulWidget {
-  const AppImageSlotsGrid({
+class WGImageSlotsGrid extends StatefulWidget {
+  const WGImageSlotsGrid({
     super.key,
     this.title,
     this.description,
@@ -46,10 +45,15 @@ class AppImageSlotsGrid extends StatefulWidget {
   final ValueChanged<List<String>>? onChanged;
 
   @override
-  State<AppImageSlotsGrid> createState() => _AppImageSlotsGridState();
+  State<WGImageSlotsGrid> createState() => _WGImageSlotsGridState();
 }
 
-class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
+class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
+  // Controle temporário: enquanto o Storage não está ativo, a seleção de
+  // fotos fica bloqueada por uma barreira visual. Ao ativar o Storage,
+  // mude para `true` para reativar a seleção sem tocar no restante do código.
+  static const bool _photosEnabled = false;
+
   // Lista de caminhos das imagens selecionadas.
   final List<String> _imagePaths = [];
 
@@ -102,11 +106,11 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
 
   /// Exibe confirmação antes de remover a foto do [index].
   Future<void> _confirmImageRemoval(int index) async {
-    final shouldRemove = await AppConfirmDialog.show(
+    final shouldRemove = await WGConfirmDialog.show(
       context,
-      title: AppStrings.photoRemoveTitle,
-      message: AppStrings.photoRemoveMessage,
-      confirmLabel: AppStrings.photoRemoveConfirm,
+      title: PublishStrings.PHOTO_REMOVE_TITLE,
+      message: PublishStrings.PHOTO_REMOVE_MESSAGE,
+      confirmLabel: PublishStrings.PHOTO_REMOVE_CONFIRM,
     );
 
     if (shouldRemove && mounted) {
@@ -126,8 +130,8 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
     final accentColor = hasImage
         ? ThemeColors.success
         : isMainImage
-            ? ThemeColors.primary
-            : ThemeColors.border;
+        ? ThemeColors.primary
+        : ThemeColors.border;
 
     return Material(
       color: ThemeColors.surface,
@@ -160,25 +164,19 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.file(
-            File(_imagePaths[index]),
-            fit: BoxFit.cover,
-          ),
+          Image.file(File(_imagePaths[index]), fit: BoxFit.cover),
           if (isMainImage)
             Positioned(
               top: 4,
               left: 4,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: ThemeColors.primary,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  AppStrings.mainPhotoBadge,
+                  PublishStrings.MAIN_PHOTO_BADGE,
                   style: TextStyle(
                     color: ThemeColors.white,
                     fontSize: 10,
@@ -224,8 +222,8 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
         const SizedBox(height: 8),
         Text(
           isMainImage
-              ? AppStrings.mainPhotoSlot
-              : AppStrings.photoSlotLabel(index + 1),
+              ? PublishStrings.MAIN_PHOTO_SLOT
+              : PublishStrings.photoSlotLabel(index + 1),
           textAlign: TextAlign.center,
           style: ThemeTextStyles.caption.copyWith(
             color: isMainImage
@@ -238,9 +236,70 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
     );
   }
 
-  // UI
+  /// Grade de slots envolvida por uma barreira de bloqueio enquanto as
+  /// fotos não estão habilitadas (Storage inativo).
+  ///
+  /// A barreira mantém a grade visível, mas absorve todos os toques
+  /// (impedindo adicionar/remover foto) e exibe a mensagem "em
+  /// desenvolvimento". A lógica de seleção permanece intacta; basta
+  /// ligar [_photosEnabled] para reativar a interação.
+  Widget _buildGridWithBarrier() {
+    if (_photosEnabled) return _buildGrid();
 
-  /// Grade de slots.
+    return Stack(
+      children: [
+        _buildGrid(),
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {},
+            child: Container(
+              decoration: BoxDecoration(
+                color: ThemeColors.surface.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: ThemeColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.lock_outline,
+                      color: ThemeColors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        SharedStrings.featureInDevelopment(
+                          PublishStrings.PHOTOS_TITLE,
+                        ),
+                        style: const TextStyle(
+                          color: ThemeColors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // UI
   Widget _buildGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -265,7 +324,7 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
   @override
   Widget build(BuildContext context) {
     if (widget.title == null && widget.description == null) {
-      return _buildGrid();
+      return _buildGridWithBarrier();
     }
 
     return Column(
@@ -273,23 +332,17 @@ class _AppImageSlotsGridState extends State<AppImageSlotsGrid> {
       children: [
         // TÍTULO
         if (widget.title != null)
-          Text(
-            widget.title!,
-            style: ThemeTextStyles.subtitle,
-          ),
+          Text(widget.title!, style: ThemeTextStyles.subtitle),
 
         // DESCRIÇÃO
         if (widget.description != null) ...[
           SizedBox(height: widget.title != null ? 4 : 0),
-          Text(
-            widget.description!,
-            style: ThemeTextStyles.caption,
-          ),
+          Text(widget.description!, style: ThemeTextStyles.caption),
         ],
 
         const SizedBox(height: 12),
 
-        _buildGrid(),
+        _buildGridWithBarrier(),
       ],
     );
   }

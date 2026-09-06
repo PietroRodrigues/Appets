@@ -3,6 +3,10 @@ import 'package:appets/models/user_model.dart';
 
 /// Opera sobre o documento `users` no Firestore.
 class FirestoreService {
+  FirestoreService._();
+
+  static final FirestoreService instance = FirestoreService._();
+
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Cria o documento do usuário na coleção `users`.
@@ -33,6 +37,20 @@ class FirestoreService {
   Future<void> removeFavorite(String uid, String petId) async {
     await updateUser(uid, {
       'favoritePetIds': FieldValue.arrayRemove([petId]),
+    });
+  }
+
+  // Adiciona um pet à lista de publicações do usuário.
+  Future<void> addMyPet(String uid, String petId) async {
+    await updateUser(uid, {
+      'myPublishedPetIds': FieldValue.arrayUnion([petId]),
+    });
+  }
+
+  // Remove um pet da lista de publicações do usuário.
+  Future<void> removeMyPet(String uid, String petId) async {
+    await updateUser(uid, {
+      'myPublishedPetIds': FieldValue.arrayRemove([petId]),
     });
   }
 

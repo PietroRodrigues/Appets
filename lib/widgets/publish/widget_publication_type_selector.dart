@@ -10,8 +10,8 @@ import 'package:appets/models/enums/enums_app.dart';
 /// Sem [accentColor], o chip selecionado fica sólido na cor primária
 /// com texto branco. Com [accentColor], fica com fundo suave da cor
 /// e texto/borda coloridos (estilo das tags dos cards).
-class AppOptionChip extends StatelessWidget {
-  const AppOptionChip({
+class WGOptionChip extends StatelessWidget {
+  const WGOptionChip({
     super.key,
     required this.label,
     required this.isSelected,
@@ -60,8 +60,8 @@ class AppOptionChip extends StatelessWidget {
 ///
 /// Exibe um chip para cada [AppPetPublicationType],
 /// com a cor de destaque de cada tipo.
-class AppPublicationTypeSelector extends StatelessWidget {
-  const AppPublicationTypeSelector({
+class WGPublicationTypeSelector extends StatelessWidget {
+  const WGPublicationTypeSelector({
     super.key,
     required this.selectedType,
     required this.onChanged,
@@ -82,7 +82,7 @@ class AppPublicationTypeSelector extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: AppPetPublicationType.values.map((type) {
-        return AppOptionChip(
+        return WGOptionChip(
           label: type.label,
           isSelected: selectedType == type,
           accentColor: type.color,

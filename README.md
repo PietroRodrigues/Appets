@@ -1,75 +1,140 @@
-# APPets
+# 🐾 APPets
 
-Aplicativo **Android** para publicação de pets, com foco em **adoção** e
-**pets perdidos**. Responsáveis publicam pets com fotos e informações
-básicas, e interessados podem explorar, buscar e favoritar.
+> Aplicativo **Flutter** para publicação de pets — **adoção** e **pets perdidos** — com backend **Firebase** integrado.
+
+O **APPets** é um projeto de estudo de engenharia de software mobile: um
+aplicativo onde responsáveis publicam pets disponíveis para adoção ou que
+perderam, e interessados exploram, buscam e salvam como favoritos os pets.
+Tudo em tempo real, com autenticação, controle de conta e um feed
+responsivo e paginado.
+
+---
+
+## Sobre o projeto
+
+O app resolve um problema real: hoje, anúncios de adoção e *pets perdidos*
+se espalham por grupos de WhatsApp e posts que se perdem rápido. O APPets
+centraliza isso em um lugar só, com:
+
+- **Publicação simples** — nome, idade, gênero, espécie, raça, endereço,
+  telefone do responsável e fotos (com validação de telefone BR);
+- **Busca inteligente** — digite qualquer termo do nome ou da descrição;
+  o app encontra o pet mesmo com acentos ou letras diferentes
+  ("poo" → "poodle");
+- **Favoritos reativos** — salve pets e veja a lista atualizar em todas as
+  telas na hora;
+- **Resposta rápida** — contato direto via WhatsApp usando o telefone
+  carimbado no anúncio.
+
+Tecnicamente, é um exercício de arquitetura em camadas, estado reativo,
+integração com o ecossistema Firebase e UI responsiva em Flutter.
+
+---
 
 ## Funcionalidades
 
-- **Autenticação** — login e cadastro com e-mail/senha, login com **Google**,
-  recuperação de senha e logout, integrados com o Firebase Auth. No login
-  social, o cadastro do usuário (com foto de perfil) é criado
-  automaticamente no Firestore
-- **Feed de pets** — lista de pets publicados, carregada do Firestore, com
-  busca e filtro; pull-to-refresh; estado vazio com botão para publicar o
-  primeiro pet
-- **Detalhes do pet** — galeria de fotos, informações (idade, gênero,
-  endereço e tipo de publicação), descrição e contato via WhatsApp (usando
-  telefone carimbado no pet)
-- **Publicar pet** — formulário com fotos (upload para o Storage), tipo de
-  publicação (adoção/perdido), nome, idade, gênero, telefone do responsável
-  (com máscara e validação), endereço e descrição (opcional); gate de
-  cadastro incompleto redireciona para completar dados; confirmação antes
-  de descartar alterações
-- **Favoritos** — pets salvos pelo usuário com sincronização reativa entre
-  todas as telas e limpeza automática de favoritos órfãos
-- **Minhas publicações** — gerenciamento dos pets publicados pelo usuário
-  (filtro por dono no Firestore); pull-to-refresh
-- **Perfil** — dados da conta, configurações e desconexão
-- **Dados da conta** — edição inline de nome, telefone e endereço (com
-  validação de telefone), dados carregados do Firestore e **exclusão da
-  conta**, com confirmação em duas etapas e reautenticação por senha
+| Módulo | O que faz |
+|---|---|
+| 🔐 **Autenticação** | E-mail/senha, **Google**, recuperação de senha, reautenticação e exclusão de conta. Perfil é criado automaticamente no Firestore |
+| 🏠 **Feed** | Lista paginada de todos os pets (stream + *load more* ao rolar), pull-to-refresh e estados de vazio/busca |
+| 🔎 **Busca por tokens** | Home busca no servidor (`arrayContainsAny` sobre `searchTokens`, sem dependência de texto exato); Favoritos e Minhas Publicações filtram client-side |
+| 🐕 **Detalhes** | Galeria de fotos, espécie · raça, idade, gênero, endereço, descrição e contato via WhatsApp |
+| ➕ **Publicar** | Formulário com validação, tipo de publicação (adoção/perdido), espécie (9 opções) e gestão de fotos |
+| ⭐ **Favoritos** | Estado global reativo com atualização otimista, rollback e limpeza de órfãos |
+| 📄 **Minhas publicações** | Aba dedicada com FAB de publicar, busca local e sincronização reativa (backfill automático) |
+| 👤 **Perfil / Conta** | Edição inline de nome, telefone e endereço; exclusão de conta com confirmação em duas etapas e sem deixar pets órfãos |
 
-> Os dados vêm do Firestore (Autenticação, Pets, Usuários) e as fotos dos
-> pets são armazenadas no Storage.
+---
 
-## Tecnologias
+## Stack
 
 | Tecnologia | Versão | Uso |
 |---|---|---|
 | Flutter / Dart | SDK ^3.12.0 | Framework principal |
 | firebase_core / firebase_auth | ^3.12.1 / ^5.5.4 | Inicialização e autenticação |
-| cloud_firestore | ^5.6.9 | Persistência de usuários e pets |
+| cloud_firestore | ^5.6.9 | Persistência de usuários, pets, favoritos e publicações |
 | firebase_storage | ^12.4.1 | Upload de imagens dos pets |
 | google_sign_in | ^6.2.2 | Login com conta Google |
 | image_picker | ^1.1.2 | Seleção de fotos no formulário |
 | url_launcher | ^6.3.1 | Contato via WhatsApp |
 | google_fonts | ^8.1.0 | Fonte Poppins |
+| flutter_lints | ^6.0.0 | Qualidade de código |
+| flutter_test | SDK | 104 testes automatizados |
 
-Versão atual do app: **1.0.0+1**
+Versão atual do app: **1.0.0+1** · Orientação fixa **retrato**.
 
-## Orientação
-
-O aplicativo é fixo em **tela vertical (retrato)**, independente da
-orientação do aparelho.
+---
 
 ## Arquitetura
 
-O código está organizado em camadas:
+Padrão de camadas com **serviços singleton** e estado reativo via
+`ValueNotifier`:
 
-- `lib/core/services/` — serviços de backend (`AuthService`,
-  `FirestoreService`, `PetService`, `StorageService`, `FavoritesService`)
-- `lib/core/navigation/` — controle de navegação por abas
-- `lib/core/constants/` — strings e assets centralizados
-- `lib/core/validators/` — validadores (telefone com máscara BR)
-- `lib/models/` — modelos de dados (`Pet`, `UserModel`, enums)
-- `lib/screens/` — telas organizadas por área (auth, main, pet, settings, splash)
-- `lib/widgets/` — componentes reutilizáveis por área
+```
+lib/
+├── core/
+│   ├── constants/      # strings e assets por domínio (auth, home, publish…)
+│   ├── extensions/     # exibição formatada do Pet (idade, gênero, espécie·raça)
+│   ├── navigation/     # navegação por abas
+│   ├── services/       # Auth, Firestore, Pet, Storage, Favorites, MyPublications
+│   ├── theme/          # cores e tema
+│   ├── utils/          # busca: tokens normalizados + controlador de query
+│   └── validators/     # validação de telefone BR com máscara
+├── models/             # Pet, UserModel e enums (espécie, tipo, filtro, gênero)
+├── screens/            # telas (login, home, favoritos, publicações, perfil…)
+└── widgets/            # componentes por tema (auth, feed, fields, feedback…)
+```
+
+### Decisões técnicas que merecem destaque
+
+- **Feed paginado com cursor** — a Home e a aba Minhas Publicações leem
+  o Firestore em páginas de 20 itens (`startAfterDocument`), detectando
+  `hasMore` com um pedido de +1 item. Nada de carregar a coleção inteira.
+- **Busca sem depender do texto exato** — tokens normalizados
+  (minúsculas + sem acento) gravados no documento; a Home consulta com
+  `arrayContainsAny` e as outras abas filtram localmente.
+- **Favoritos e publicações reativos** — estado global em memória com
+  atualização otimista, rollback em falha, limpeza de órfãos e reset ao
+  deslogar. Todas as telas reagem instantaneamente.
+- **Exclusão de conta segura** — apaga pets (Firestore + Storage) **antes**
+  do Auth; se a limpeza falhar, a exclusão é abortada para nunca deixar
+  dados órfãos.
+- **UI responsiva** — grid que alterna 1/2/3 colunas conforme a largura,
+  tipografia Poppins e widgets reutilizáveis por tema.
+
+---
+
+## Como executar
+
+```bash
+flutter pub get
+flutter run
+```
+
+> Requisitos: Flutter SDK ^3.12.0 e um **Projeto Firebase** configurado
+> (GoogleService-Info / google-services.json, planos gratuitos de Auth,
+> Firestore e Storage). O app roda em **Android**; as pastas web/windows/
+> linux/macos existem apenas pela geração padrão do template.
+
+### Testes
+
+```bash
+flutter test        # 104 testes
+flutter analyze     # sem issues
+```
+
+---
 
 ## Status do projeto
 
-Em desenvolvimento. Busca e filtro ainda são placeholders e algumas ações
-(ex.: troca de avatar, compartilhar pet, edição de e-mail/senha) exibem o
-aviso *"em desenvolvimento"*. A edição de dados da conta (nome, telefone,
-endereço) já é funcional com edição inline e validação. O backend Firebase
-está integrado e operacional.
+Em desenvolvimento ativo. O backbone (auth, backend, feed paginado e busca)
+está funcional; a busca da Home precisa de **um índice composto** no
+console do Firestore. Faltam: filtro por tipo, edição de pet, edição de
+e-mail/senha, troca de avatar, GPS, permissões/fotos com Storage ativo e
+polish (compartilhar). O plano detalhado está em [`BACKLOG.txt`](./BACKLOG.txt).
+
+---
+
+## Licença
+
+Projeto de estudo/portfólio, sem vínculo comercial.

@@ -1,11 +1,10 @@
 import 'dart:io';
-
-import 'package:flutter/material.dart';
-
-import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/constants/constants_strings_profile.dart';
+import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
@@ -13,31 +12,31 @@ import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/models/user_model.dart';
-import 'package:appets/widgets/common/buttons/widget_buttons.dart';
-import 'package:appets/widgets/common/feedback/widget_process_loading.dart';
-import 'package:appets/widgets/common/feedback/widget_confirm_dialog.dart';
-import 'package:appets/widgets/common/feedback/widget_action_dialog.dart';
-import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
-import 'package:appets/widgets/common/fields/widget_fields.dart';
+import 'package:appets/widgets/buttons/widget_buttons.dart';
+import 'package:appets/widgets/feedback/widget_dialogs.dart';
+import 'package:appets/widgets/feedback/widget_process.dart';
+import 'package:appets/widgets/feedback/widget_snack_bar.dart';
+import 'package:appets/widgets/fields/widget_field_label.dart';
+import 'package:appets/widgets/fields/widget_phone_field.dart';
+import 'package:appets/widgets/fields/widget_text_field.dart';
 import 'package:appets/widgets/publish/widget_attribute_fields.dart';
 import 'package:appets/widgets/publish/widget_image_slots_grid.dart';
 import 'package:appets/widgets/publish/widget_publication_type_selector.dart';
+import 'package:flutter/material.dart';
 
 /// Formulário reutilizável de publicação de pet.
 ///
 /// Contém todos os campos (fotos, tipo, nome, idade,
 /// gênero, cidade e descrição), a validação e a
 /// confirmação de descarte ao voltar.
-class AppPublishPetForm extends StatefulWidget {
-  const AppPublishPetForm({
-    super.key,
-  });
+class WGPublishPetForm extends StatefulWidget {
+  const WGPublishPetForm({super.key});
 
   @override
-  State<AppPublishPetForm> createState() => _AppPublishPetFormState();
+  State<WGPublishPetForm> createState() => _WGPublishPetFormState();
 }
 
-class _AppPublishPetFormState extends State<AppPublishPetForm> {
+class _WGPublishPetFormState extends State<WGPublishPetForm> {
   // Quantidade máxima de fotos permitidas.
   static const int _maximumImageCount = 5;
 
@@ -45,19 +44,18 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // Campos do formulário.
-  final TextEditingController _nameController =
-      TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
-  final TextEditingController _phoneController =
-      TextEditingController();
+  final TextEditingController _raceController = TextEditingController();
 
-  final TextEditingController _addressController =
-      TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
-  final TextEditingController _descriptionController =
-      TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+
+  final TextEditingController _descriptionController = TextEditingController();
 
   // Controla a navegação de foco entre os campos pelo teclado.
+  final FocusNode _raceFocusNode = FocusNode();
   final FocusNode _phoneFocusNode = FocusNode();
   final FocusNode _addressFocusNode = FocusNode();
   final FocusNode _descriptionFocusNode = FocusNode();
@@ -67,6 +65,7 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
 
   // Estado do formulário de publicação.
   AppPetGender? _selectedGender = AppPetGender.male;
+  AppPetSpecies _selectedSpecies = AppPetSpecies.dog;
   int? _selectedAgeValue = 1;
   AppPetAgeUnit _selectedAgeUnit = AppPetAgeUnit.years;
   AppPetPublicationType _selectedPublicationType =
@@ -90,10 +89,10 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   // Carrega o contato da conta do dono para pré-preencher os campos.
   Future<void> _loadOwnerContact() async {
     try {
-      final user = AuthService().currentUser;
+      final user = AuthService.instance.currentUser;
       if (user == null) return;
 
-      final owner = await FirestoreService().getUser(user.uid);
+      final owner = await FirestoreService.instance.getUser(user.uid);
       if (!mounted) return;
       setState(() {
         _owner = owner;
@@ -110,18 +109,18 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
 
   @override
   void dispose() {
-
     _nameController.dispose();
+    _raceController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
     _descriptionController.dispose();
 
+    _raceFocusNode.dispose();
     _phoneFocusNode.dispose();
     _addressFocusNode.dispose();
     _descriptionFocusNode.dispose();
 
     super.dispose();
-
   }
 
   // ACTIONS
@@ -129,6 +128,7 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   /// Indica se o usuário já preencheu algo no formulário.
   bool get _hasUnsavedChanges {
     return _nameController.text.trim().isNotEmpty ||
+        _raceController.text.trim().isNotEmpty ||
         _phoneController.text.trim().isNotEmpty ||
         _addressController.text.trim().isNotEmpty ||
         _descriptionController.text.trim().isNotEmpty ||
@@ -141,11 +141,11 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
       return true;
     }
 
-    final shouldDiscard = await AppConfirmDialog.show(
+    final shouldDiscard = await WGConfirmDialog.show(
       context,
-      title: AppStrings.discardTitle,
-      message: AppStrings.discardMessage,
-      confirmLabel: AppStrings.discardConfirm,
+      title: PublishStrings.DISCARD_TITLE,
+      message: PublishStrings.DISCARD_MESSAGE,
+      confirmLabel: PublishStrings.DISCARD_CONFIRM,
     );
 
     return shouldDiscard;
@@ -198,7 +198,7 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   void _publishPet() async {
     if (_isPublishing) return;
 
-    final user = AuthService().currentUser;
+    final user = AuthService.instance.currentUser;
     if (user == null) return;
 
     // Perfil incompleto (sem celular/endereço) -> orientar a completar o
@@ -218,11 +218,11 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
     final phone = _phoneController.text.trim();
     final address = _addressController.text.trim();
 
-    final result = await Navigator.push<AppProcessResult>(
+    final result = await Navigator.push<WGProcessResult>(
       context,
-      MaterialPageRoute<AppProcessResult>(
-        builder: (_) => AppProcessLoadingScreen(
-          message: AppStrings.publishLoading,
+      MaterialPageRoute<WGProcessResult>(
+        builder: (_) => WGProcessLoadingScreen(
+          message: PublishStrings.PUBLISH_LOADING,
           task: () async {
             try {
               // 1. Criar pet no Firestore
@@ -230,6 +230,8 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
                 id: '',
                 ownerId: user.uid,
                 name: _nameController.text.trim(),
+                race: _raceController.text.trim(),
+                species: _selectedSpecies,
                 age: _selectedAgeValue ?? 1,
                 ageUnit: _selectedAgeUnit,
                 gender: _selectedGender ?? AppPetGender.male,
@@ -241,25 +243,46 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
                 images: [],
               );
 
-              final petId = await PetService().createPet(newPet);
+              final petId = await PetService.instance.createPet(newPet);
+              await MyPublicationsService.instance.add(user.uid, petId);
 
-              // 2. Upload das imagens (se houver)
+              // 2. Upload das imagens (se houver). Se o Storage falhar
+              //    (ex.: ainda não configurado no Firebase), desfaz a
+              //    publicação criada para não deixar um pet órfão sem fotos.
               if (_imagePaths.isNotEmpty) {
-                final imageUrls = <String>[];
-                for (int i = 0; i < _imagePaths.length; i++) {
-                  final url = await StorageService().uploadPetImage(
-                    petId,
-                    i,
-                    File(_imagePaths[i]),
-                  );
-                  imageUrls.add(url);
+                try {
+                  final imageUrls = <String>[];
+                  for (int i = 0; i < _imagePaths.length; i++) {
+                    final url = await StorageService.instance.uploadPetImage(
+                      petId,
+                      i,
+                      File(_imagePaths[i]),
+                    );
+                    imageUrls.add(url);
+                  }
+                  await PetService.instance.updatePet(petId, {
+                    'images': imageUrls,
+                  });
+                } catch (_) {
+                  try {
+                    await PetService.instance.deletePet(petId);
+                    await MyPublicationsService.instance.remove(
+                      user.uid,
+                      petId,
+                    );
+                  } catch (_) {
+                    // Melhor esforço: se o rollback falhar, o usuário é
+                    // informado do erro e o pet pode ser removido depois.
+                  }
+                  rethrow;
                 }
-                await PetService().updatePet(petId, {'images': imageUrls});
               }
 
-              return const AppProcessResult.success();
+              return const WGProcessResult.success();
             } on Exception {
-              return const AppProcessResult.failure(AppStrings.publishError);
+              return const WGProcessResult.failure(
+                PublishStrings.PUBLISH_ERROR,
+              );
             }
           },
         ),
@@ -268,8 +291,8 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
     if (!mounted) return;
 
     switch (result?.status) {
-      case AppProcessStatus.success:
-        AppSnackBar.show(context, AppStrings.petPublished);
+      case WGProcessStatus.success:
+        WGSnackBar.show(context, PublishStrings.PET_PUBLISHED);
         // D1: contato alterado em relação à conta -> perguntar se atualiza tudo.
         if (_contactChanged(phone, address)) {
           final shouldUpdate = await _confirmUpdateAllPublications();
@@ -278,9 +301,9 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
           }
         }
         if (mounted) Navigator.pop(context, true);
-      case AppProcessStatus.failure:
-        AppSnackBar.show(context, result!.message!);
-      case AppProcessStatus.canceled:
+      case WGProcessStatus.failure:
+        WGSnackBar.show(context, result!.message!);
+      case WGProcessStatus.canceled:
       case null:
         break;
     }
@@ -320,11 +343,11 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   /// Mostra o diálogo orientando a completar o cadastro e, ao clicar em
   /// "Completar cadastro", navega para a tela de dados da conta.
   Future<void> _redirectToCompleteProfile() async {
-    final shouldComplete = await AppActionDialog.show(
+    final shouldComplete = await WGActionDialog.show(
       context,
-      title: AppStrings.incompleteProfileTitle,
-      message: AppStrings.incompleteProfileMessage,
-      actionLabel: AppStrings.completeProfileButton,
+      title: PublishStrings.INCOMPLETE_PROFILE_TITLE,
+      message: PublishStrings.INCOMPLETE_PROFILE_MESSAGE,
+      actionLabel: PublishStrings.COMPLETE_PROFILE_BUTTON,
       actionIcon: Icons.edit_outlined,
     );
 
@@ -335,12 +358,12 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
 
   /// Abre o diálogo Sim/Não para atualizar todas as publicações.
   Future<bool> _confirmUpdateAllPublications() {
-    return AppConfirmDialog.show(
+    return WGConfirmDialog.show(
       context,
-      title: AppStrings.updateAllPublicationsTitle,
-      message: AppStrings.updateAllPublicationsMessage,
-      confirmLabel: AppStrings.updateAllPublicationsConfirm,
-      cancelLabel: AppStrings.updateAllPublicationsCancel,
+      title: PublishStrings.UPDATE_ALL_PUBLICATIONS_TITLE,
+      message: PublishStrings.UPDATE_ALL_PUBLICATIONS_MESSAGE,
+      confirmLabel: PublishStrings.UPDATE_ALL_PUBLICATIONS_CONFIRM,
+      cancelLabel: PublishStrings.UPDATE_ALL_PUBLICATIONS_CANCEL,
     );
   }
 
@@ -352,14 +375,14 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   ) async {
     try {
       if (_owner != null) {
-        await FirestoreService().updateUser(uid, {
+        await FirestoreService.instance.updateUser(uid, {
           'phone': phone,
           'address': address,
         });
       }
-      final myPets = await PetService().getPetsByOwner(uid);
+      final myPets = await PetService.instance.getPetsByOwner(uid);
       for (final pet in myPets) {
-        await PetService().updatePet(pet.id, {
+        await PetService.instance.updatePet(pet.id, {
           'ownerPhone': phone,
           'ownerAddress': address,
         });
@@ -372,81 +395,118 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
   // UI
   @override
   Widget build(BuildContext context) {
-
     return PopScope<Object?>(
       canPop: false,
       onPopInvokedWithResult: _onPopInvokedWithResult,
 
       child: Form(
-
         key: _formKey,
 
         child: SingleChildScrollView(
-
           padding: const EdgeInsets.all(20),
 
           child: Column(
-
             crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
-
-
               // FOTOS
-              AppImageSlotsGrid(
-                title: AppStrings.photosTitle,
-                description: AppStrings.photosGridDescription(_maximumImageCount),
+              WGImageSlotsGrid(
+                title: PublishStrings.PHOTOS_TITLE,
+                description: PublishStrings.photosGridDescription(
+                  _maximumImageCount,
+                ),
                 maxImages: _maximumImageCount,
                 onChanged: _onImageSlotsChanged,
               ),
 
               const SizedBox(height: 28),
 
-
               // TIPO DE PUBLICAÇÃO
-              AppFieldLabel(text: AppStrings.publicationType),
+              WGFieldLabel(text: PublishStrings.PUBLICATION_TYPE),
 
-              AppPublicationTypeSelector(
+              WGPublicationTypeSelector(
                 selectedType: _selectedPublicationType,
                 onChanged: _onPublicationTypeChanged,
               ),
 
               const SizedBox(height: 20),
 
-
               // NOME
-              AppFieldLabel(text: AppStrings.petNameLabel),
+              WGFieldLabel(text: PublishStrings.PET_NAME_LABEL),
 
-              AppTextField(
-
+              WGTextField(
                 controller: _nameController,
 
-                hintText: AppStrings.petNameHint,
+                hintText: PublishStrings.PET_NAME_HINT,
 
                 textInputAction: TextInputAction.next,
 
                 onChanged: _onFieldChanged,
 
                 onFieldSubmitted: (_) {
-                  _phoneFocusNode.requestFocus();
+                  _raceFocusNode.requestFocus();
                 },
 
                 validator: (value) {
                   if ((value?.trim().length ?? 0) < 2) {
-                    return AppStrings.petNameRequired;
+                    return PublishStrings.PET_NAME_REQUIRED;
                   }
                   return null;
                 },
-
               ),
 
               const SizedBox(height: 20),
 
+              // ESPÉCIE
+              WGFieldLabel(text: PublishStrings.SPECIES_LABEL),
+
+              DropdownButtonFormField<AppPetSpecies>(
+                initialValue: _selectedSpecies,
+                decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: ThemeColors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSpecies = value ?? AppPetSpecies.dog;
+                  });
+                },
+                items: AppPetSpecies.values
+                    .map(
+                      (species) => DropdownMenuItem(
+                        value: species,
+                        child: Text(species.label),
+                      ),
+                    )
+                    .toList(),
+              ),
+
+              const SizedBox(height: 20),
+
+              // RAÇA (opcional)
+              WGFieldLabel(text: PublishStrings.PET_RACE_LABEL),
+
+              WGTextField(
+                controller: _raceController,
+                hintText: PublishStrings.PET_RACE_HINT,
+                textInputAction: TextInputAction.next,
+                focusNode: _raceFocusNode,
+                onChanged: _onFieldChanged,
+                onFieldSubmitted: (_) {
+                  _phoneFocusNode.requestFocus();
+                },
+              ),
+
+              const SizedBox(height: 20),
 
               // IDADE
-              AppFieldLabel(text: AppStrings.age),
+              WGFieldLabel(text: PublishStrings.AGE),
 
-              AppAgeFields(
+              WGAgeFields(
                 initialValue: _selectedAgeValue,
                 initialUnit: _selectedAgeUnit,
                 onChanged: _onAgeChanged,
@@ -454,23 +514,21 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
 
               const SizedBox(height: 20),
 
-
               // GÊNERO
-              AppFieldLabel(text: AppStrings.gender),
+              WGFieldLabel(text: PublishStrings.GENDER),
 
-              AppGenderFields(
+              WGGenderFields(
                 groupValue: _selectedGender,
                 onChanged: _onGenderChanged,
               ),
 
-
               // TELEFONE DE CONTATO (herdado da conta, editável)
-              AppFieldLabel(text: AppStrings.contactOwnerLabel),
+              WGFieldLabel(text: PublishStrings.CONTACT_OWNER_LABEL),
 
-              AppPhoneField(
+              WGPhoneField(
                 controller: _phoneController,
                 focusNode: _phoneFocusNode,
-                hintText: AppStrings.contactOwnerHint,
+                hintText: PublishStrings.CONTACT_OWNER_HINT,
                 textInputAction: TextInputAction.next,
                 onChanged: _onFieldChanged,
                 onFieldSubmitted: (_) {
@@ -482,11 +540,11 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
               const SizedBox(height: 20),
 
               // ENDEREÇO (herdado da conta, editável)
-              AppFieldLabel(text: AppStrings.addressLabel),
+              WGFieldLabel(text: ProfileStrings.ADDRESS_LABEL),
 
-              AppTextField(
+              WGTextField(
                 controller: _addressController,
-                hintText: AppStrings.addressHint,
+                hintText: PublishStrings.ADDRESS_HINT,
                 textInputAction: TextInputAction.next,
                 focusNode: _addressFocusNode,
                 onChanged: _onFieldChanged,
@@ -495,7 +553,7 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
                 },
                 validator: (value) {
                   if ((value?.trim().isEmpty ?? true)) {
-                    return AppStrings.addressRequired;
+                    return PublishStrings.ADDRESS_REQUIRED;
                   }
                   return null;
                 },
@@ -503,34 +561,29 @@ class _AppPublishPetFormState extends State<AppPublishPetForm> {
 
               const SizedBox(height: 20),
 
-
               // DESCRIÇÃO (opcional)
-              AppFieldLabel(text: AppStrings.aboutPet),
+              WGFieldLabel(text: PublishStrings.ABOUT_PET),
 
-              AppTextField(
+              WGTextField(
                 controller: _descriptionController,
-                hintText: AppStrings.aboutPetHint,
+                hintText: PublishStrings.ABOUT_PET_HINT,
                 maxLines: 6,
               ),
 
               const SizedBox(height: 32),
 
-
               // PUBLICAR
-              AppButton(
-
-                text: AppStrings.publishButton,
+              WGButton(
+                text: PublishStrings.PUBLISH_BUTTON,
 
                 onPressed: _publishPet,
 
                 backgroundColor: _isFormComplete
                     ? ThemeColors.success
                     : ThemeColors.disabled,
-
               ),
 
               const SizedBox(height: 20),
-
             ],
           ),
         ),

@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
-
-import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
+import 'package:flutter/material.dart';
 
 /// Campos de idade reutilizáveis do formulário de publicação.
 ///
@@ -11,8 +10,8 @@ import 'package:appets/models/enums/enums_app.dart';
 /// conforme a unidade selecionada.
 ///
 /// Notifica o pai a cada alteração através de [onChanged].
-class AppAgeFields extends StatefulWidget {
-  const AppAgeFields({
+class WGAgeFields extends StatefulWidget {
+  const WGAgeFields({
     super.key,
     this.initialValue,
     this.initialUnit = AppPetAgeUnit.years,
@@ -27,10 +26,10 @@ class AppAgeFields extends StatefulWidget {
   final void Function(int? value, AppPetAgeUnit unit)? onChanged;
 
   @override
-  State<AppAgeFields> createState() => _AppAgeFieldsState();
+  State<WGAgeFields> createState() => _WGAgeFieldsState();
 }
 
-class _AppAgeFieldsState extends State<AppAgeFields> {
+class _WGAgeFieldsState extends State<WGAgeFields> {
   // Estado dos campos de idade.
   int? _selectedValue;
   AppPetAgeUnit _selectedUnit = AppPetAgeUnit.years;
@@ -96,15 +95,12 @@ class _AppAgeFieldsState extends State<AppAgeFields> {
               _notifyChanged();
             },
             validator: (value) {
-              if (value == null) return AppStrings.ageRequired;
+              if (value == null) return PublishStrings.AGE_REQUIRED;
               return null;
             },
             items: [
               for (var i = 1; i <= _maxValue; i++)
-                DropdownMenuItem<int>(
-                  value: i,
-                  child: Text(i.toString()),
-                ),
+                DropdownMenuItem<int>(value: i, child: Text(i.toString())),
             ],
           ),
         ),
@@ -130,10 +126,7 @@ class _AppAgeFieldsState extends State<AppAgeFields> {
               _notifyChanged();
             },
             items: AppPetAgeUnit.values.map((unit) {
-              return DropdownMenuItem(
-                value: unit,
-                child: Text(unit.label),
-              );
+              return DropdownMenuItem(value: unit, child: Text(unit.label));
             }).toList(),
           ),
         ),
@@ -145,12 +138,8 @@ class _AppAgeFieldsState extends State<AppAgeFields> {
 /// Campos de gênero reutilizáveis do formulário de publicação.
 ///
 /// Exibe as opções "Macho" e "Fêmea" lado a lado.
-class AppGenderFields extends StatelessWidget {
-  const AppGenderFields({
-    super.key,
-    this.groupValue,
-    required this.onChanged,
-  });
+class WGGenderFields extends StatelessWidget {
+  const WGGenderFields({super.key, this.groupValue, required this.onChanged});
 
   // PROPERTIES
 

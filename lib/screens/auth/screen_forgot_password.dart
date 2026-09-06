@@ -1,15 +1,14 @@
-import 'package:flutter/material.dart';
-
-import 'package:appets/core/constants/constants_strings.dart';
+import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/services/auth_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
-import 'package:appets/widgets/auth/widget_auth.dart';
-import 'package:appets/widgets/common/buttons/widget_buttons.dart';
-import 'package:appets/widgets/common/feedback/widget_process_loading.dart';
-import 'package:appets/widgets/common/feedback/widget_snack_bar.dart';
-import 'package:appets/widgets/common/fields/widget_fields.dart';
+import 'package:appets/widgets/auth/widget_auth_button.dart';
+import 'package:appets/widgets/auth/widget_auth_header.dart';
+import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
+import 'package:appets/widgets/feedback/widget_process.dart';
+import 'package:appets/widgets/feedback/widget_snack_bar.dart';
+import 'package:appets/widgets/fields/widget_email_field.dart';
+import 'package:flutter/material.dart';
 
 /// Tela para solicitar recuperação de senha pelo e-mail cadastrado.
 class ForgotPasswordScreen extends StatefulWidget {
@@ -19,12 +18,10 @@ class ForgotPasswordScreen extends StatefulWidget {
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
+    with WGProcessMixin {
   // Controla a validação do formulário de recuperação.
   final _formKey = GlobalKey<FormState>();
-
-  // Evita envio duplicado enquanto o link é gerado.
-  bool _isSubmitting = false;
 
   // Armazena o e-mail informado pelo usuário.
   final _emailController = TextEditingController();
@@ -44,59 +41,47 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   /// Envia o link de recuperação de senha para o e-mail informado.
   void _sendRecoveryEmail() async {
-    if (_isSubmitting) return;
-
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    _isSubmitting = true;
-    FocusManager.instance.primaryFocus?.unfocus();
-
-    final result = await Navigator.push<AppProcessResult>(
-      context,
-      MaterialPageRoute<AppProcessResult>(
-        builder: (_) => AppProcessLoadingScreen(
-          message: AppStrings.recoverLoading,
-          task: () async {
-            try {
-              final authService = AuthService();
-              await authService.sendPasswordResetEmail(
-                _emailController.text.trim(),
-              );
-              return const AppProcessResult.success();
-            } on Exception catch (e) {
-              return AppProcessResult.failure(
-                e.authMessage(AppStrings.recoverError, {
-                  'user-not-found': AppStrings.emailNotRegistered,
-                  'invalid-email': AppStrings.invalidEmail,
-                }),
-              );
-            }
-          },
-        ),
-      ),
+    final result = await pushProcess(
+      message: AuthStrings.RECOVER_LOADING,
+      task: () async {
+        try {
+          final authService = AuthService.instance;
+          await authService.sendPasswordResetEmail(
+            _emailController.text.trim(),
+          );
+          return const WGProcessResult.success();
+        } on Exception catch (e) {
+          return WGProcessResult.failure(
+            e.authMessage(AuthStrings.RECOVER_ERROR, {
+              'user-not-found': AuthStrings.EMAIL_NOT_REGISTERED,
+              'invalid-email': AuthStrings.INVALID_EMAIL,
+            }),
+          );
+        }
+      },
     );
     if (!mounted) return;
 
     switch (result?.status) {
-      case AppProcessStatus.success:
-        AppSnackBar.show(context, AppStrings.recoverLinkSent);
+      case WGProcessStatus.success:
+        WGSnackBar.show(context, AuthStrings.RECOVER_LINK_SENT);
         Navigator.pop(context);
-      case AppProcessStatus.failure:
-        AppSnackBar.show(context, result!.message!);
-      case AppProcessStatus.canceled:
+      case WGProcessStatus.failure:
+        WGSnackBar.show(context, result!.message!);
+      case WGProcessStatus.canceled:
       case null:
         break;
     }
-
-    _isSubmitting = false;
   }
 
   // Constrói a tela de recuperação de senha.
   @override
   Widget build(BuildContext context) {
-    return AppAuthPageLayout(
+    return WGAuthPageLayout(
       formKey: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
 
@@ -107,18 +92,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           const SizedBox(height: 8),
 
           // Cabeçalho da tela
-          const AppAuthHeader(
-            logoWidth: 240,
-            headline: AppStrings.recoverTitle,
-            description: '',
-            textColor: ThemeColors.white,
-          ),
+          const WGAuthHeader.auth(headline: AuthStrings.RECOVER_TITLE),
 
           const SizedBox(height: 8),
 
           // Texto informativo
           Text(
-            AppStrings.recoverDescription,
+            AuthStrings.RECOVER_DESCRIPTION,
             textAlign: TextAlign.center,
             style: ThemeTextStyles.authBody,
           ),
@@ -126,37 +106,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           const SizedBox(height: 16),
 
           // Campo de E-mail
-          AppTextField(
+          WGEmailField(
             controller: _emailController,
-            label: AppStrings.email,
-            labelStyle: ThemeTextStyles.authBody,
-            hintText: AppStrings.emailHint,
-            keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
-            prefixIcon: Icons.email_outlined,
           ),
 
           const SizedBox(height: 12),
 
           // Botão Enviar
-          AppButton(
-            text: AppStrings.recoverButton,
+          WGAuthButton(
+            text: AuthStrings.RECOVER_BUTTON,
             onPressed: _sendRecoveryEmail,
-            height: 48,
-            backgroundColor: ThemeColors.white,
-            foregroundColor: ThemeColors.secondary,
-            borderColor: ThemeColors.secondary,
           ),
 
           const SizedBox(height: 12),
 
           // Botão Voltar
-          AppOutlinedButton(
-            text: AppStrings.backToLogin,
+          WGAuthSecondaryButton(
+            text: AuthStrings.BACK_TO_LOGIN,
             onPressed: _goBack,
-            height: 48,
-            textColor: ThemeColors.white,
-            borderColor: ThemeColors.white,
           ),
         ],
       ),

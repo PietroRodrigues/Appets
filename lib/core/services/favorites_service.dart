@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:appets/core/services/firestore_service.dart';
@@ -18,8 +19,9 @@ class FavoritesService {
 
   static final FavoritesService instance = FavoritesService._();
 
-  final ValueNotifier<Set<String>> _favoriteIds =
-      ValueNotifier<Set<String>>(<String>{});
+  final ValueNotifier<Set<String>> _favoriteIds = ValueNotifier<Set<String>>(
+    <String>{},
+  );
 
   /// Notificador do conjunto de IDs favoritados. Escute para reagir
   /// às mudanças de favorito em qualquer tela.
@@ -34,7 +36,7 @@ class FavoritesService {
   /// Carrega os favoritos do usuário a partir do Firestore,
   /// substituindo o estado local.
   Future<void> loadForUser(String uid) async {
-    final user = await FirestoreService().getUser(uid);
+    final user = await FirestoreService.instance.getUser(uid);
     _favoriteIds.value = (user?.favoritePetIds ?? const <String>[]).toSet();
   }
 
@@ -45,7 +47,7 @@ class FavoritesService {
     final next = Set<String>.from(_favoriteIds.value)..add(petId);
     _favoriteIds.value = next;
     try {
-      await FirestoreService().addFavorite(uid, petId);
+      await FirestoreService.instance.addFavorite(uid, petId);
       return true;
     } catch (_) {
       _favoriteIds.value = _favoriteIds.value.difference({petId});
@@ -60,7 +62,7 @@ class FavoritesService {
     final next = Set<String>.from(_favoriteIds.value)..remove(petId);
     _favoriteIds.value = next;
     try {
-      await FirestoreService().removeFavorite(uid, petId);
+      await FirestoreService.instance.removeFavorite(uid, petId);
       return true;
     } catch (_) {
       final restored = Set<String>.from(_favoriteIds.value)..add(petId);
@@ -91,5 +93,26 @@ class FavoritesService {
   /// Zera o estado (uso em testes e ao deslogar).
   void reset() {
     _favoriteIds.value = <String>{};
+  }
+
+  /// Remove dos favoritos (local + Firestore) os IDs que não constam
+  /// mais entre os pets existentes. Usado ao carregar favoritos para
+  /// limpar "órfãos" (pets deletados que ainda estavam marcados).
+  Future<void> cleanOrphans(String uid, Iterable<String> existingIds) async {
+    final known = existingIds.toSet();
+    final orphans = _favoriteIds.value.difference(known).toList();
+
+    if (orphans.isEmpty) return;
+
+    removeLocalMany(orphans);
+
+    try {
+      await FirestoreService.instance.updateUser(uid, {
+        'favoritePetIds': FieldValue.arrayRemove(orphans),
+      });
+    } catch (_) {
+      // Melhor esforço: a remoção local já foi feita; se a escrita no
+      // Firestore falhar, os favoritos voltarão ao normal ao recarregar.
+    }
   }
 }

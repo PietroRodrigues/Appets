@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/models/enums/enums_app.dart';
 
 /// Modelo de dados de um pet.
@@ -23,6 +25,8 @@ class Pet {
     this.description,
     this.ageUnit = AppPetAgeUnit.years,
     this.publicationType = AppPetPublicationType.adoption,
+    this.species = AppPetSpecies.dog,
+    this.race = '',
   });
 
   //══════════════════════════════════════════════════════════════
@@ -63,6 +67,12 @@ class Pet {
   /// Tipo de publicação: adoção ou perdido.
   final AppPetPublicationType publicationType;
 
+  /// Espécie do pet (cachorro, gato, coelho, pássaro, etc.).
+  final AppPetSpecies species;
+
+  /// Raça do pet, opcional (ex.: "Poodle", "SRD").
+  final String race;
+
   // Converte o pet em um mapa para persistência no Firestore.
   Map<String, dynamic> toMap() {
     return {
@@ -76,6 +86,9 @@ class Pet {
       'ownerAddress': ownerAddress,
       'description': description ?? '',
       'publicationType': publicationType.name,
+      'species': species.name,
+      'race': race,
+      'searchTokens': buildSearchTokens(name: name, description: description),
       'images': images,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -110,6 +123,11 @@ class Pet {
         (e) => e.name == data['publicationType'],
         orElse: () => AppPetPublicationType.adoption,
       ),
+      species: AppPetSpecies.values.firstWhere(
+        (e) => e.name == data['species'],
+        orElse: () => AppPetSpecies.dog,
+      ),
+      race: data['race'] ?? '',
       images: _stringList(data['images']),
     );
   }

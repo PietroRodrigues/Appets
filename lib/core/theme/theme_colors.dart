@@ -34,6 +34,9 @@ class ThemeColors {
   static const Color error = Color(0xFFE53935);
   static const Color info = Color(0xFF42A5F5);
 
+  /// Cor clara para ícones e textos sobre fundo de erro.
+  static const Color errorOnPrimary = Color(0xFFFFFFFF);
+
   /// Azul usado para indicar pet macho.
   static const Color genderMale = Color(0xFF42A5F5);
 

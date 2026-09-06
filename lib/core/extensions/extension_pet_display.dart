@@ -46,4 +46,12 @@ extension AppPetDisplayX on Pet {
         return ThemeColors.genderFemale;
     }
   }
+
+  /// Espécie e raça formatadas ("Cachorro · Poodle"), apenas a espécie
+  /// quando a raça não foi informada.
+  String get speciesRaceLabel {
+    final trimmedRace = race.trim();
+    if (trimmedRace.isEmpty) return species.label;
+    return '${species.label} · $trimmedRace';
+  }
 }

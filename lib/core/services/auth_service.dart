@@ -6,6 +6,10 @@ import 'package:appets/models/user_model.dart';
 
 /// Encapsula as operações de autenticação do Firebase Auth.
 class AuthService {
+  AuthService._();
+
+  static final AuthService instance = AuthService._();
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _google = GoogleSignIn();
 
@@ -66,28 +70,24 @@ class AuthService {
   /// Se o documento ainda não existir (ex.: primeiro acesso via Google),
   /// cria-o com [user]. Retorna o [UserModel] persistido.
   Future<UserModel> ensureUserDocument(UserModel user) async {
-    final existing = await FirestoreService().getUser(user.id);
+    final existing = await FirestoreService.instance.getUser(user.id);
     if (existing != null) return existing;
 
-    await FirestoreService().createUser(user);
+    await FirestoreService.instance.createUser(user);
     return user;
   }
 
   /// Indica se a conta atual usa o provedor de e-mail/senha.
   bool get usesPasswordProvider {
     final user = _auth.currentUser;
-    return user?.providerData.any(
-          (info) => info.providerId == 'password',
-        ) ??
+    return user?.providerData.any((info) => info.providerId == 'password') ??
         false;
   }
 
   /// Indica se a conta atual foi criada com o Google.
   bool get usesGoogleProvider {
     final user = _auth.currentUser;
-    return user?.providerData.any(
-          (info) => info.providerId == 'google.com',
-        ) ??
+    return user?.providerData.any((info) => info.providerId == 'google.com') ??
         false;
   }
 

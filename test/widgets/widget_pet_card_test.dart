@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
-import 'package:appets/widgets/main/widget_pet_card.dart';
+import 'package:appets/widgets/feed/widget_pet_card.dart';
 
 /// Dados de teste para um pet.
 Pet _createTestPet({
@@ -31,14 +31,13 @@ Pet _createTestPet({
 }
 
 void main() {
-  group('AppPetCard', () {    testWidgets('exibe o nome do pet', (tester) async {
+  group('WGPetCard', () {
+    testWidgets('exibe o nome do pet', (tester) async {
       final pet = _createTestPet(name: 'Thor');
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(pet: pet),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 
@@ -50,9 +49,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(pet: pet),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 
@@ -64,9 +61,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(pet: pet),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 
@@ -80,9 +75,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(pet: pet),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 
@@ -90,15 +83,11 @@ void main() {
     });
 
     testWidgets('exibe tipo de publicação "Perdido"', (tester) async {
-      final pet = _createTestPet(
-        publicationType: AppPetPublicationType.lost,
-      );
+      final pet = _createTestPet(publicationType: AppPetPublicationType.lost);
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(pet: pet),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 
@@ -112,10 +101,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: AppPetCard(
-              pet: pet,
-              onTap: () => tapped = true,
-            ),
+            body: WGPetCard(pet: pet, onTap: () => tapped = true),
           ),
         ),
       );
@@ -126,83 +112,72 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets('exibe botão de edição quando isMyPublication é true',
-        (tester) async {
+    testWidgets('exibe botão de edição quando isMyPublication é true', (
+      tester,
+    ) async {
       final pet = _createTestPet();
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(
-              pet: pet,
-              isMyPublication: true,
-            ),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet, isMyPublication: true)),
         ),
       );
 
       expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
     });
 
-    testWidgets('não exibe botão de edição quando isMyPublication é false',
-        (tester) async {
+    testWidgets('não exibe botão de edição quando isMyPublication é false', (
+      tester,
+    ) async {
       final pet = _createTestPet();
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(
-              pet: pet,
-              isMyPublication: false,
-            ),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet, isMyPublication: false)),
         ),
       );
 
       expect(find.byIcon(Icons.edit_outlined), findsNothing);
     });
 
-    testWidgets('exibe estrela preenchida quando o pet já é favorito',
-        (tester) async {
+    testWidgets('exibe estrela preenchida quando o pet já é favorito', (
+      tester,
+    ) async {
       final pet = _createTestPet();
       FavoritesService.instance.favoriteIds.value = {pet.id};
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(pet: pet),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 
       expect(find.byIcon(Icons.star_rounded), findsOneWidget);
     });
 
-    testWidgets('exibe estrela vazia quando o pet não é favorito',
-        (tester) async {
+    testWidgets('exibe estrela vazia quando o pet não é favorito', (
+      tester,
+    ) async {
       FavoritesService.instance.reset();
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(pet: _createTestPet()),
-          ),
+          home: Scaffold(body: WGPetCard(pet: _createTestPet())),
         ),
       );
 
       expect(find.byIcon(Icons.star_border_rounded), findsOneWidget);
     });
 
-    testWidgets('sincroniza a estrela quando o favorito muda externamente',
-        (tester) async {
+    testWidgets('sincroniza a estrela quando o favorito muda externamente', (
+      tester,
+    ) async {
       final pet = _createTestPet();
       FavoritesService.instance.reset();
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: AppPetCard(pet: pet),
-          ),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 

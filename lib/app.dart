@@ -5,10 +5,10 @@ import 'package:appets/core/theme/theme_app.dart';
 import 'package:appets/screens/auth/screen_login.dart';
 import 'package:appets/screens/auth/screen_register.dart';
 import 'package:appets/screens/auth/screen_forgot_password.dart';
-import 'package:appets/screens/splash/screen_splash.dart';
-import 'package:appets/screens/main/screen_home.dart';
-import 'package:appets/screens/settings/screen_settings.dart';
-import 'package:appets/screens/settings/screen_account_data.dart';
+import 'package:appets/screens/screen_splash.dart';
+import 'package:appets/screens/screen_home.dart';
+import 'package:appets/screens/screen_settings.dart';
+import 'package:appets/screens/screen_account_data.dart';
 
 /// Widget raiz do app: define o tema e o mapa de rotas.
 class App extends StatelessWidget {
