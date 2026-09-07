@@ -43,7 +43,21 @@ enum AppPetAgeUnit {
 
 // ── Tipo de publicação ──────────────────────────────────
 
-enum AppPetPublicationType { adoption, lost }
+enum AppPetPublicationType {
+  adoption,
+  lost;
+
+  /// Rótulo exibido na interface.
+  String get label {
+    switch (this) {
+      case AppPetPublicationType.adoption:
+        return 'Adoção';
+
+      case AppPetPublicationType.lost:
+        return 'Perdido';
+    }
+  }
+}
 
 // ── Espécie ─────────────────────────────────────────────
 
@@ -52,7 +66,6 @@ enum AppPetSpecies {
   cat,
   rabbit,
   hamster,
-  fish,
   bird,
   turtle,
   reptile,
@@ -72,9 +85,6 @@ enum AppPetSpecies {
 
       case AppPetSpecies.hamster:
         return 'Hamster';
-
-      case AppPetSpecies.fish:
-        return 'Peixe';
 
       case AppPetSpecies.bird:
         return 'Pássaro';

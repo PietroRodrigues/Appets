@@ -1,15 +1,18 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/core/utils/pet_filters.dart';
 import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
+import 'package:appets/widgets/filters/widget_pet_filters_sheet.dart';
 
 /// Grid responsivo para listas de pets com lista global interna.
 ///
@@ -26,15 +29,23 @@ import 'package:appets/models/model_pet.dart';
 ///
 /// Quando [searchQuery] não está vazio, a busca é executada no servidor
 /// (tokens) para Home, e client-side para Favoritos e Minhas Publicações.
+///
+/// Quando [filterOptions] está ativo, o Home usa um pré-filtro do servidor
+/// (`specifications` via `arrayContainsAny`, quando houver até 10 tags e não
+/// houver busca) e o **AND exato por categoria é sempre aplicado no cliente**
+/// às páginas recebidas — a autoridade final do resultado. Favoritos e
+/// Minhas Publicações filtra direto em memória.
 class WGResponsivePetGrid extends StatefulWidget {
   const WGResponsivePetGrid({
     super.key,
     required this.filter,
     required this.itemBuilder,
     this.searchQuery = '',
+    this.filterOptions,
     this.emptyBuilder,
     this.padding,
-    this.bottomPadding = 120,
+    this.bottomPadding = 16,
+    this.topSliverPadding = 8,
     this.physics,
   });
 
@@ -43,6 +54,9 @@ class WGResponsivePetGrid extends StatefulWidget {
 
   /// Termo de busca enviado pelo usuário (via botão 🔍 ou Enter).
   final String searchQuery;
+
+  /// Filtros ativos compartilhados com o cabeçalho (opcional).
+  final ValueListenable<List<PetFilterOption>>? filterOptions;
 
   /// Builder que constrói cada card do grid.
   final Widget Function(BuildContext context, Pet pet) itemBuilder;
@@ -55,6 +69,9 @@ class WGResponsivePetGrid extends StatefulWidget {
 
   /// Padding inferior para ultrapassar a barra de navegação.
   final double bottomPadding;
+
+  /// Padding superior da primeira sliver do grid.
+  final double topSliverPadding;
 
   /// Física de rolagem do grid.
   final ScrollPhysics? physics;
@@ -74,10 +91,31 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   StreamSubscription<PetsPage>? _sub;
   final ScrollController _scrollController = ScrollController();
 
+  /// Listenable de filtros atualmente observado.
+  ValueListenable<List<PetFilterOption>>? _filterListenable;
+
+  /// Tags usadas no pré-filtro do feed Home atual (com paginação).
+  List<String>? _prefilterTags;
+
   /// Identificador da consulta atual; consultas antigas são ignoradas.
   int _loadId = 0;
 
   bool get _isSearching => widget.searchQuery.trim().isNotEmpty;
+
+  /// Opções de filtro ativas (compartilhadas com o cabeçalho).
+  List<PetFilterOption> get _activeFilterOptions =>
+      widget.filterOptions?.value ?? const [];
+
+  /// Tags para o pré-filtro do servidor no Home: somente com filtros
+  /// ativos, sem busca e com no máximo 10 valores (limite do Firestore).
+  /// `null` → feed paginado normal (o AND do cliente ainda vale).
+  List<String>? get _serverPrefilterTags {
+    final options = _activeFilterOptions;
+    if (options.isEmpty || _isSearching) return null;
+    final tags = options.map((o) => o.value).toSet().toList();
+    if (tags.length > 10) return null;
+    return tags;
+  }
 
   @override
   void initState() {
@@ -85,12 +123,19 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     _scrollController.addListener(_onScroll);
     FavoritesService.instance.favoriteIds.addListener(_onFavoritesChanged);
     MyPublicationsService.instance.myPetIds.addListener(_onMyPublicationsChanged);
+    _filterListenable = widget.filterOptions;
+    _filterListenable?.addListener(_onFiltersChanged);
     _setup();
   }
 
   @override
   void didUpdateWidget(covariant WGResponsivePetGrid oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.filterOptions != widget.filterOptions) {
+      oldWidget.filterOptions?.removeListener(_onFiltersChanged);
+      _filterListenable = widget.filterOptions;
+      _filterListenable?.addListener(_onFiltersChanged);
+    }
     if (oldWidget.filter != widget.filter ||
         oldWidget.searchQuery != widget.searchQuery) {
       _setup();
@@ -99,6 +144,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
   @override
   void dispose() {
+    _filterListenable?.removeListener(_onFiltersChanged);
     _sub?.cancel();
     FavoritesService.instance.favoriteIds.removeListener(_onFavoritesChanged);
     MyPublicationsService.instance.myPetIds
@@ -106,6 +152,11 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Recarrega quando o conjunto de filtros muda.
+  void _onFiltersChanged() {
+    if (mounted) _setup();
   }
 
   void _onFavoritesChanged() {
@@ -129,6 +180,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     _isLoading = true;
     _hasMore = false;
     _lastDoc = null;
+    _prefilterTags = null;
     setState(() {});
 
     if (_isSearching) {
@@ -143,6 +195,15 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     switch (widget.filter) {
       case AppPetFilter.all:
         _hasMore = true;
+        final tags = _serverPrefilterTags;
+        _prefilterTags = tags;
+        if (tags != null) {
+          _sub = PetService.instance.watchFilteredFirstPage(tags).listen(
+            (page) => _onFeedPage(id, page),
+            onError: (Object e, StackTrace st) => _onLoadError(id, e, st),
+          );
+          return;
+        }
         _sub = PetService.instance.watchFirstPage().listen(
           (page) => _onFeedPage(id, page),
           onError: (Object e, StackTrace st) => _onLoadError(id, e, st),
@@ -222,9 +283,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       if (!mounted || id != _loadId) return;
 
       setState(() {
-        _items = _isSearching
-            ? _filterBySearch(pets, widget.searchQuery)
-            : List.of(pets);
+        _items = _applyLocalFilters(pets);
         _isLoading = false;
       });
     } on Exception catch (e, st) {
@@ -243,12 +302,26 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     }).toList();
   }
 
+  /// Autoridade final do resultado: aplica a busca (quando há termo)
+  /// e o AND exato por categoria dos filtros às páginas recebidas.
+  List<Pet> _applyLocalFilters(List<Pet> pets) {
+    var result = pets;
+    if (_isSearching) {
+      result = _filterBySearch(result, widget.searchQuery);
+    }
+    final options = _activeFilterOptions;
+    if (options.isNotEmpty) {
+      result = result.where((p) => petMatchesFilters(p, options)).toList();
+    }
+    return result;
+  }
+
   // ── Recepção de resultados ────────────────────────────────────────
 
   void _onFeedPage(int id, PetsPage page) {
     if (!mounted || id != _loadId) return;
     setState(() {
-      _items = page.pets;
+      _items = _applyLocalFilters(page.pets);
       _lastDoc = page.lastDoc;
       _hasMore = page.hasMore;
       _isLoading = false;
@@ -259,7 +332,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   void _onSearchResult(int id, List<Pet> pets) {
     if (!mounted || id != _loadId) return;
     setState(() {
-      _items = pets;
+      _items = _applyLocalFilters(pets);
       _isLoading = false;
     });
   }
@@ -305,7 +378,11 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       final PetsPage page;
       switch (widget.filter) {
         case AppPetFilter.all:
-          page = await PetService.instance.getNextPage(_lastDoc!);
+          final tags = _prefilterTags;
+          page = tags != null
+              ? await PetService.instance
+                  .getFilteredNextPage(tags, _lastDoc!)
+              : await PetService.instance.getNextPage(_lastDoc!);
         case AppPetFilter.myPublications:
         case AppPetFilter.favorites:
           return;
@@ -385,7 +462,10 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
             physics: widget.physics,
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                padding: EdgeInsets.only(
+                  top: widget.topSliverPadding,
+                  bottom: 8,
+                ),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,

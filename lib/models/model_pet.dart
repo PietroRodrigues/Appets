@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:appets/core/utils/pet_filters.dart';
 import 'package:appets/core/utils/search_tokens.dart';
+import 'package:appets/core/utils/storage_tokens.dart';
 import 'package:appets/models/enums/enums_app.dart';
 
 /// Modelo de dados de um pet.
@@ -73,22 +75,39 @@ class Pet {
   /// Raça do pet, opcional (ex.: "Poodle", "SRD").
   final String race;
 
+  /// Tokens de filtro (1 por categoria, normalizados), gravados no
+  /// documento e consultados pelo servidor com `arrayContainsAny`.
+  ///
+  /// Sempre derivado dos campos atuais (nunca armazenado no objeto),
+  /// garantindo consistência com espécie/gênero/tipo/idade exibidos.
+  List<String> get specifications => buildFilterTokens(
+        species: species,
+        gender: gender,
+        publicationType: publicationType,
+        age: age,
+        ageUnit: ageUnit,
+      );
+
   // Converte o pet em um mapa para persistência no Firestore.
+  //
+  // Os códigos de espécie, gênero, unidade de idade e tipo são gravados
+  // em tokens PT normalizados (ver [storage_tokens]).
   Map<String, dynamic> toMap() {
     return {
       'ownerId': ownerId,
       'name': name,
       'age': age,
-      'ageUnit': ageUnit.name,
-      'gender': gender.name,
+      'ageUnit': ageUnitStorageToken(ageUnit),
+      'gender': genderStorageToken(gender),
       'address': address,
       'ownerPhone': ownerPhone,
       'ownerAddress': ownerAddress,
       'description': description ?? '',
-      'publicationType': publicationType.name,
-      'species': species.name,
+      'publicationType': publicationTypeStorageToken(publicationType),
+      'species': speciesStorageToken(species),
       'race': race,
       'searchTokens': buildSearchTokens(name: name, description: description),
+      'specifications': specifications,
       'images': images,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -107,26 +126,14 @@ class Pet {
       ownerId: data['ownerId'] ?? '',
       name: data['name'] ?? '',
       age: data['age'] ?? 0,
-      ageUnit: AppPetAgeUnit.values.firstWhere(
-        (e) => e.name == data['ageUnit'],
-        orElse: () => AppPetAgeUnit.years,
-      ),
-      gender: AppPetGender.values.firstWhere(
-        (e) => e.name == data['gender'],
-        orElse: () => AppPetGender.male,
-      ),
+      ageUnit: ageUnitFromStored(data['ageUnit']),
+      gender: genderFromStored(data['gender']),
       address: data['address'] ?? data['city'] ?? '',
       ownerPhone: data['ownerPhone'] ?? '',
       ownerAddress: data['ownerAddress'] ?? '',
       description: data['description'],
-      publicationType: AppPetPublicationType.values.firstWhere(
-        (e) => e.name == data['publicationType'],
-        orElse: () => AppPetPublicationType.adoption,
-      ),
-      species: AppPetSpecies.values.firstWhere(
-        (e) => e.name == data['species'],
-        orElse: () => AppPetSpecies.dog,
-      ),
+      publicationType: publicationTypeFromStored(data['publicationType']),
+      species: speciesFromStored(data['species']),
       race: data['race'] ?? '',
       images: _stringList(data['images']),
     );

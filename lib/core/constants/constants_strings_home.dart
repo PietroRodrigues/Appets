@@ -28,6 +28,28 @@ class HomeStrings {
 
   static const FILTERS = 'Filtros';
 
+  // ── Filtros ────────────────────────────────────────────
+
+  static const FILTERS_TITLE = 'Filtros';
+
+  static const FILTER_SPECIES = 'Espécie';
+
+  static const FILTER_GENDER = 'Gênero';
+
+  static const FILTER_PUBLICATION_TYPE = 'Tipo';
+
+  static const FILTER_AGE = 'Idade';
+
+  static const FILTER_APPLY = 'Filtrar';
+
+  static const FILTER_REMOVE = 'Remover filtro';
+
+  static const FILTER_AGE_PUPPY = 'Filhote';
+
+  static const FILTER_AGE_YOUNG = 'Jovem';
+
+  static const FILTER_AGE_ADULT = 'Adulto';
+
   // ── Home ───────────────────────────────────────────────
 
   static const EMPTY_PETS_TITLE = 'Nenhum pet por aqui';

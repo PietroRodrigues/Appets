@@ -38,6 +38,7 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | 🔐 **Autenticação** | E-mail/senha, **Google**, recuperação de senha, reautenticação e exclusão de conta. Perfil é criado automaticamente no Firestore |
 | 🏠 **Feed** | Lista paginada de todos os pets (stream + *load more* ao rolar), pull-to-refresh e estados de vazio/busca |
 | 🔎 **Busca por tokens** | Home busca no servidor (`arrayContainsAny` sobre `searchTokens`, sem dependência de texto exato); Favoritos e Minhas Publicações filtram client-side |
+| 🎛️ **Filtros** | Espécie, gênero, faixa de idade e tipo (adoção/perdido) em bottom sheet; pré-filtro no servidor + filtro exato no cliente (`petMatchesFilters`); chips ativos com limpeza |
 | 🐕 **Detalhes** | Galeria de fotos, espécie · raça, idade, gênero, endereço, descrição e contato via WhatsApp |
 | ➕ **Publicar** | Formulário com validação, tipo de publicação (adoção/perdido), espécie (9 opções) e gestão de fotos |
 | ⭐ **Favoritos** | Estado global reativo com atualização otimista, rollback e limpeza de órfãos |
@@ -59,7 +60,7 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | url_launcher | ^6.3.1 | Contato via WhatsApp |
 | google_fonts | ^8.1.0 | Fonte Poppins |
 | flutter_lints | ^6.0.0 | Qualidade de código |
-| flutter_test | SDK | 104 testes automatizados |
+| flutter_test | SDK | 150 testes automatizados |
 
 Versão atual do app: **1.0.0+1** · Orientação fixa **retrato**.
 
@@ -78,11 +79,11 @@ lib/
 │   ├── navigation/     # navegação por abas
 │   ├── services/       # Auth, Firestore, Pet, Storage, Favorites, MyPublications
 │   ├── theme/          # cores e tema
-│   ├── utils/          # busca: tokens normalizados + controlador de query
+│   ├── utils/          # busca e filtros: tokens, controladores e storage_tokens (PT)
 │   └── validators/     # validação de telefone BR com máscara
 ├── models/             # Pet, UserModel e enums (espécie, tipo, filtro, gênero)
 ├── screens/            # telas (login, home, favoritos, publicações, perfil…)
-└── widgets/            # componentes por tema (auth, feed, fields, feedback…)
+└── widgets/            # componentes por tema (auth, feed, fields, filters, feedback…)
 ```
 
 ### Decisões técnicas que merecem destaque
@@ -99,6 +100,14 @@ lib/
 - **Exclusão de conta segura** — apaga pets (Firestore + Storage) **antes**
   do Auth; se a limpeza falhar, a exclusão é abortada para nunca deixar
   dados órfãos.
+- **Filtros híbridos** — a Home pré-filtra no servidor com
+  `arrayContainsAny` sobre `specifications` (superset) e o cliente aplica o
+  AND exato por categoria (`petMatchesFilters`); evita trazer a coleção
+  inteira sem perder precisão.
+- **Dados padronizados em PT‑BR** — species, gender, ageUnit,
+  publicationType e specifications são persistidos em PT normalizado (sem
+  acento); a leitura tolera valores legados em inglês e um backfill isolado
+  (`lib/core/backfill/pet_tokens_*`) migra os pets do dono a cada login.
 - **UI responsiva** — grid que alterna 1/2/3 colunas conforme a largura,
   tipografia Poppins e widgets reutilizáveis por tema.
 
@@ -119,7 +128,7 @@ flutter run
 ### Testes
 
 ```bash
-flutter test        # 104 testes
+flutter test        # 150 testes
 flutter analyze     # sem issues
 ```
 
@@ -127,11 +136,12 @@ flutter analyze     # sem issues
 
 ## Status do projeto
 
-Em desenvolvimento ativo. O backbone (auth, backend, feed paginado e busca)
-está funcional; a busca da Home precisa de **um índice composto** no
-console do Firestore. Faltam: filtro por tipo, edição de pet, edição de
-e-mail/senha, troca de avatar, GPS, permissões/fotos com Storage ativo e
-polish (compartilhar). O plano detalhado está em [`BACKLOG.txt`](./BACKLOG.txt).
+Em desenvolvimento ativo. O backbone (auth, backend, feed paginado, busca e
+filtros) está funcional; a busca e o filtro da Home exigem os índices
+compostos no console do Firestore (`searchTokens` já criado; `specifications`
+a criar). Faltam: edição de pet, edição de e-mail/senha, troca de avatar,
+GPS, permissões/fotos com Storage ativo e polish (compartilhar). Suíte com
+150 testes. O plano detalhado está em [`BACKLOG.txt`](./BACKLOG.txt).
 
 ---
 

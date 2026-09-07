@@ -5,6 +5,7 @@ import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/utils/pet_filters_controller.dart';
 import 'package:appets/core/utils/search_query_controller.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/user_model.dart';
@@ -16,7 +17,6 @@ import 'package:appets/screens/screen_publish_pet.dart';
 import 'package:appets/widgets/feed/widget_pet_card.dart';
 import 'package:appets/widgets/feed/widget_responsive_pet_grid.dart';
 import 'package:appets/widgets/feedback/widget_page_states.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:appets/widgets/layout/widget_layout.dart';
 import 'package:appets/widgets/navigation/widget_bottom_navigation.dart';
@@ -34,7 +34,11 @@ class _HomeScreenState extends State<HomeScreen> {
   UserModel? _user;
   bool _isLoading = true;
   final ValueNotifier<String> _search = SearchQueryController();
+  final PetFiltersController _filters = PetFiltersController();
   final GlobalKey<WGResponsivePetGridState> _gridKey = GlobalKey();
+
+  /// Altura do cabeçalho flutuante; usada para posicionar o grid por trás.
+  double _headerHeight = 170;
 
   @override
   void initState() {
@@ -48,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     AppNavigation.selectedPage.removeListener(_clearSearch);
     _search.dispose();
+    _filters.dispose();
     super.dispose();
   }
 
@@ -74,10 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
     AppNavigation.selectedPage.value = page;
   }
 
-  void _onFilterPressed() {
-    WGSnackBar.development(context, HomeStrings.FILTERS);
-  }
-
   Future<void> _openPublishPet() async {
     await Navigator.push<bool>(
       context,
@@ -92,15 +93,9 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return Column(
+    return Stack(
       children: [
-        WGPageHeader.user(
-          userName: _user?.name ?? HomeStrings.DEFAULT_USER_NAME,
-          hintText: HomeStrings.SEARCH_DEFAULT_HINT,
-          searchQuery: _search,
-          onFilterPressed: _onFilterPressed,
-        ),
-        Expanded(
+        Positioned.fill(
           child: RefreshIndicator(
             onRefresh: () async {
               await _loadData();
@@ -112,6 +107,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 key: _gridKey,
                 filter: AppPetFilter.all,
                 searchQuery: query,
+                filterOptions: _filters,
+                topSliverPadding: _headerHeight + 8,
                 physics: const AlwaysScrollableScrollPhysics(),
                 emptyBuilder: (context) => _refreshableEmptyState(
                   icon: Icons.pets_outlined,
@@ -136,6 +133,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: WGPageHeader.user(
+            userName: _user?.name ?? HomeStrings.DEFAULT_USER_NAME,
+            hintText: HomeStrings.SEARCH_DEFAULT_HINT,
+            searchQuery: _search,
+            filters: _filters,
+            onHeightChanged: (height) {
+              if (mounted && height != _headerHeight) {
+                setState(() => _headerHeight = height);
+              }
+            },
           ),
         ),
       ],

@@ -35,7 +35,11 @@ class WGScaffold extends StatelessWidget {
     }
 
     if (useSafeArea) {
-      body = SafeArea(child: body);
+      body = SafeArea(
+        top: true,
+        bottom: bottomNavigationBar == null,
+        child: body,
+      );
     }
 
     return Scaffold(

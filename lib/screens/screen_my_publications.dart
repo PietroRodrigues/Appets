@@ -1,5 +1,6 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
+import 'package:appets/core/utils/pet_filters_controller.dart';
 import 'package:appets/core/utils/search_query_controller.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -27,7 +28,11 @@ class MyPublicationsScreen extends StatefulWidget {
 
 class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
   final ValueNotifier<String> _search = SearchQueryController();
+  final PetFiltersController _filters = PetFiltersController();
   final GlobalKey<WGResponsivePetGridState> _gridKey = GlobalKey();
+
+  /// Altura do cabeçalho flutuante; usada para posicionar o grid por trás.
+  double _headerHeight = 170;
 
   @override
   void initState() {
@@ -39,6 +44,7 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
   void dispose() {
     AppNavigation.selectedPage.removeListener(_clearSearch);
     _search.dispose();
+    _filters.dispose();
     super.dispose();
   }
 
@@ -47,27 +53,15 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
     _search.value = '';
   }
 
-  void _onFilterPressed() {
-    WGSnackBar.development(context, HomeStrings.FILTERS);
-  }
-
   void _editPet(Pet pet) {
     WGSnackBar.show(context, HomeStrings.editingPet(pet.name));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        WGPageHeader.title(
-          title: HomeStrings.MY_PUBLICATIONS_TITLE,
-          description: HomeStrings.MY_PUBLICATIONS_DESCRIPTION,
-          hintText: HomeStrings.PUBLICATIONS_SEARCH_HINT,
-          searchQuery: _search,
-          onFilterPressed: _onFilterPressed,
-        ),
-
-        Expanded(
+        Positioned.fill(
           child: RefreshIndicator(
             onRefresh: () async {
               await _gridKey.currentState?.reload();
@@ -78,6 +72,8 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
                 key: _gridKey,
                 filter: AppPetFilter.myPublications,
                 searchQuery: query,
+                filterOptions: _filters,
+                topSliverPadding: _headerHeight + 8,
                 physics: const AlwaysScrollableScrollPhysics(),
                 emptyBuilder: (context) => _refreshableEmptyState(),
                 itemBuilder: (context, pet) {
@@ -97,6 +93,23 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
                 },
               ),
             ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: WGPageHeader.title(
+            title: HomeStrings.MY_PUBLICATIONS_TITLE,
+            description: HomeStrings.MY_PUBLICATIONS_DESCRIPTION,
+            hintText: HomeStrings.PUBLICATIONS_SEARCH_HINT,
+            searchQuery: _search,
+            filters: _filters,
+            onHeightChanged: (height) {
+              if (mounted && height != _headerHeight) {
+                setState(() => _headerHeight = height);
+              }
+            },
           ),
         ),
       ],

@@ -27,15 +27,6 @@ class PetService {
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Retorna todos os pets, dos mais recentes aos mais antigos.
-  Future<List<Pet>> getAllPets() async {
-    final snapshot = await _db
-        .collection('pets')
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snapshot.docs.map((doc) => Pet.fromFirestore(doc)).toList();
-  }
-
   // Retorna os pets publicados por um determinado dono (UID).
   Future<List<Pet>> getPetsByOwner(String ownerId) async {
     final snapshot = await _db
@@ -46,11 +37,34 @@ class PetService {
     return snapshot.docs.map((doc) => Pet.fromFirestore(doc)).toList();
   }
 
-  // Retorna um pet pelo seu ID (documento); `null` se não existir.
-  Future<Pet?> getPetById(String petId) async {
-    final doc = await _db.collection('pets').doc(petId).get();
-    if (!doc.exists) return null;
-    return Pet.fromFirestore(doc);
+  // Retorna os documentos crus dos pets publicados por um dono (UID),
+  // dos mais recentes aos mais antigos.
+  //
+  // Exposto para a migração de `specifications` (backfill) inspecionar o
+  // campo persistido antes de decidir o que regravar.
+  Future<List<DocumentSnapshot>> getOwnerPetDocuments(String ownerId) async {
+    final snapshot = await _db
+        .collection('pets')
+        .where('ownerId', isEqualTo: ownerId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    return snapshot.docs.toList();
+  }
+
+  // Grava campos de vários pets em um único WriteBatch.
+  //
+  // Devolve quantos documentos foram atualizados (0 se nada pendente).
+  Future<int> updatePetsBatch(
+    Map<String, Map<String, dynamic>> updatesByPetId,
+  ) async {
+    if (updatesByPetId.isEmpty) return 0;
+
+    final batch = _db.batch();
+    for (final entry in updatesByPetId.entries) {
+      batch.update(_db.collection('pets').doc(entry.key), entry.value);
+    }
+    await batch.commit();
+    return updatesByPetId.length;
   }
 
   // Cria um pet e retorna o ID gerado pelo Firestore.
@@ -105,11 +119,15 @@ class PetService {
         .map((snapshot) => _toPage(snapshot));
   }
 
-  // ── Página inicial do feed de pets de um dono ────────────────────
-  Stream<PetsPage> watchMyPetsFirstPage(String ownerId) {
+  // ── Feed de todos os pets com pré-filtro por tokens de filtro ──
+  //
+  // Combina os valores das categorias num `arrayContainsAny` (OR/superset);
+  // o AND exato é aplicado no cliente. A paginação continua sobre a mesma
+  // consulta. Requer índice composto (specifications + createdAt desc).
+  Stream<PetsPage> watchFilteredFirstPage(List<String> specifications) {
     return _db
         .collection('pets')
-        .where('ownerId', isEqualTo: ownerId)
+        .where('specifications', arrayContainsAny: specifications)
         .orderBy('createdAt', descending: true)
         .limit(pageSize + 1)
         .snapshots()
@@ -127,14 +145,14 @@ class PetService {
     return _toPage(snapshot);
   }
 
-  // ── Próxima página do feed de pets de um dono ────────────────────
-  Future<PetsPage> getMyPetsNextPage(
-    String ownerId,
+  // ── Próxima página do feed com pré-filtro por specifications ────
+  Future<PetsPage> getFilteredNextPage(
+    List<String> specifications,
     QueryDocumentSnapshot lastDoc,
   ) async {
     final snapshot = await _db
         .collection('pets')
-        .where('ownerId', isEqualTo: ownerId)
+        .where('specifications', arrayContainsAny: specifications)
         .orderBy('createdAt', descending: true)
         .startAfterDocument(lastDoc)
         .limit(pageSize + 1)

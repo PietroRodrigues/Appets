@@ -84,15 +84,37 @@ void main() {
       expect(map['ownerId'], 'user_001');
       expect(map['name'], 'Rex');
       expect(map['age'], 2);
-      expect(map['ageUnit'], 'years');
-      expect(map['gender'], 'male');
+      expect(map['ageUnit'], 'anos');
+      expect(map['gender'], 'macho');
       expect(map['address'], 'São Paulo');
       expect(map['description'], 'Muito dócil.');
-      expect(map['publicationType'], 'adoption');
-      expect(map['species'], 'dog');
+      expect(map['publicationType'], 'adocao');
+      expect(map['species'], 'cachorro');
       expect(map['race'], 'Poodle');
       expect(map['images'], ['a.png', 'b.png']);
       expect(map['createdAt'], isNotNull);
+    });
+
+    test('toMap persiste specifications (1 token por categoria, em PT)', () {
+      expect(map['specifications'], ['cachorro', 'macho', 'adocao', 'jovem']);
+    });
+
+    test('pet.specifications deriva dos campos atuais', () {
+      expect(original.specifications, ['cachorro', 'macho', 'adocao', 'jovem']);
+
+      final diferente = Pet(
+        id: 'pet_001',
+        ownerId: 'user_001',
+        name: 'Frajola',
+        age: 6,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.female,
+        address: 'Rio',
+        publicationType: AppPetPublicationType.lost,
+        species: AppPetSpecies.cat,
+        images: [],
+      );
+      expect(diferente.specifications, ['gato', 'femea', 'perdido', 'adulto']);
     });
 
     test('toMap persiste searchTokens normalizados para a busca', () {
@@ -129,6 +151,27 @@ void main() {
 
       expect(legacy.species, AppPetSpecies.dog);
       expect(legacy.race, isEmpty);
+      // Sem specifications no documento, o getter recalcula dos campos.
+      expect(legacy.specifications, ['cachorro', 'macho', 'adocao', 'jovem']);
+    });
+
+    test('fromMap tolera os códigos legados em inglês', () {
+      final legacy = Pet.fromMap('pet_001', {
+        'ownerId': 'user_001',
+        'name': 'Rex',
+        'age': 2,
+        'ageUnit': 'years',
+        'gender': 'male',
+        'address': 'São Paulo',
+        'publicationType': 'adoption',
+        'species': 'dog',
+      });
+
+      expect(legacy.ageUnit, AppPetAgeUnit.years);
+      expect(legacy.gender, AppPetGender.male);
+      expect(legacy.publicationType, AppPetPublicationType.adoption);
+      expect(legacy.species, AppPetSpecies.dog);
+      expect(legacy.specifications, ['cachorro', 'macho', 'adocao', 'jovem']);
     });
 
     test('fromMap ignora espécie desconhecida com fallback', () {
@@ -370,7 +413,7 @@ void main() {
 
   group('AppPetSpecies', () {
     test('expõe todas as espécies com rótulos', () {
-      expect(AppPetSpecies.values, hasLength(9));
+      expect(AppPetSpecies.values, hasLength(8));
       expect(AppPetSpecies.dog.label, 'Cachorro');
       expect(AppPetSpecies.cat.label, 'Gato');
       expect(AppPetSpecies.rabbit.label, 'Coelho');

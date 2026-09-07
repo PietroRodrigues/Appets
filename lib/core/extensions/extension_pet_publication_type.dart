@@ -5,17 +5,6 @@ import 'package:appets/models/enums/enums_app.dart';
 
 /// Extensões visuais do tipo de publicação do pet.
 extension AppPetPublicationTypeX on AppPetPublicationType {
-  /// Rótulo exibido na interface.
-  String get label {
-    switch (this) {
-      case AppPetPublicationType.adoption:
-        return 'Adoção';
-
-      case AppPetPublicationType.lost:
-        return 'Perdido';
-    }
-  }
-
   /// Ícone representativo.
   IconData get icon {
     switch (this) {
