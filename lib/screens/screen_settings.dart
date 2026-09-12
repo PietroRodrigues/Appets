@@ -1,6 +1,7 @@
 import 'package:appets/core/constants/constants_strings_settings.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/widgets/display/widget_option_tile.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
+import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:appets/widgets/layout/widget_layout.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,11 @@ class SettingsScreen extends StatelessWidget {
 
   /// Exibe aviso de recurso em desenvolvimento.
   void _showDevelopmentMessage(BuildContext context, String feature) {
-    WGSnackBar.development(context, feature);
+    WGDialog.showAction(
+      context,
+      title: SharedStrings.DEVELOPMENT_TITLE,
+      message: SharedStrings.featureInDevelopment(feature),
+    );
   }
 
   // UI

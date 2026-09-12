@@ -23,10 +23,4 @@ class PetDetailsStrings {
   static const ABOUT_SECTION = 'Sobre';
 
   static const DESCRIPTION_NOT_INFORMED = 'Descrição não informada.';
-
-  static String petAddedToFavorites(String petName) =>
-      '$petName adicionado aos favoritos';
-
-  static String petRemovedFromFavorites(String petName) =>
-      '$petName removido dos favoritos';
 }

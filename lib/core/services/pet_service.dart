@@ -67,6 +67,15 @@ class PetService {
     return updatesByPetId.length;
   }
 
+  // Atualiza o telefone de contato em todos os pets de um dono (batch).
+  Future<void> updateOwnerPhone(String ownerId, String phone) async {
+    final myPets = await getPetsByOwner(ownerId);
+    if (myPets.isEmpty) return;
+    await updatePetsBatch({
+      for (final pet in myPets) pet.id: {'ownerPhone': phone},
+    });
+  }
+
   // Cria um pet e retorna o ID gerado pelo Firestore.
   Future<String> createPet(Pet pet) async {
     final docRef = await _db.collection('pets').add(pet.toMap());

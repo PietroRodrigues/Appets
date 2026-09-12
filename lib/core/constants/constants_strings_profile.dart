@@ -14,8 +14,6 @@ class ProfileStrings {
 
   static const LOGOUT_MESSAGE = 'Deseja realmente sair da sua conta?';
 
-  static const LOGOUT_CONFIRM = 'Sim, sair';
-
   static const CHANGE_AVATAR_FEATURE = 'Alterar avatar';
 
   // ── Dados da conta ─────────────────────────────────────
@@ -44,14 +42,19 @@ class ProfileStrings {
 
   static const CONTACT_SAVE_ERROR = 'Não foi possível salvar. Tente novamente.';
 
+  static const UPDATE_CONTACT_TITLE = 'Atualizar publicações?';
+
+  static const UPDATE_CONTACT_UPDATED = 'Telefone atualizado em todos os seus pets!';
+
+  static String updatePublicationsMessage(String phone) =>
+      'Deseja atualizar o telefone de contato para "$phone" em todos os seus pets?';
+
   static const EDIT_HINT = 'Toque para editar';
 
   static const DISCARD_CHANGES_TITLE = 'Alterações não salvas';
 
   static const DISCARD_CHANGES_MESSAGE =
       'Você tem alterações que ainda não foram salvas. Descartá-las?';
-
-  static const DISCARD_DRAFT_CONFIRM = 'Descartar';
 
   static const SECURITY_SECTION = 'Segurança';
 
@@ -60,6 +63,4 @@ class ProfileStrings {
   static const CHANGE_PASSWORD_FEATURE = 'Alteração de senha';
 
   static const DANGER_ZONE = 'Gerenciar conta';
-
-  static const CANCEL = 'Cancelar';
 }

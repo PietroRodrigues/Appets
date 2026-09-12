@@ -113,6 +113,29 @@ class Pet {
     };
   }
 
+  // Converte o pet em um mapa para atualização no Firestore.
+  //
+  // Diferente do [toMap]: não grava `id`, `ownerId` nem `createdAt`
+  // (evita reordernar o feed) e não toca em `images`, que são gerenciadas
+  // à parte pelo fluxo de fotos.
+  Map<String, dynamic> toUpdateMap() {
+    return {
+      'name': name,
+      'age': age,
+      'ageUnit': ageUnitStorageToken(ageUnit),
+      'gender': genderStorageToken(gender),
+      'address': address,
+      'ownerPhone': ownerPhone,
+      'ownerAddress': ownerAddress,
+      'description': description ?? '',
+      'publicationType': publicationTypeStorageToken(publicationType),
+      'species': speciesStorageToken(species),
+      'race': race,
+      'searchTokens': buildSearchTokens(name: name, description: description),
+      'specifications': specifications,
+    };
+  }
+
   // Cria um pet a partir de um documento do Firestore.
   factory Pet.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;

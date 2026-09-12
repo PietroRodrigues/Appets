@@ -1,14 +1,20 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
+import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/my_publications_service.dart';
+import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/utils/pet_filters_controller.dart';
 import 'package:appets/core/utils/search_query_controller.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/screens/screen_pet_details.dart';
+import 'package:appets/screens/screen_publish_pet.dart';
 import 'package:appets/widgets/feed/widget_pet_card.dart';
 import 'package:appets/widgets/feed/widget_responsive_pet_grid.dart';
+import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_page_states.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:flutter/material.dart';
 
@@ -53,8 +59,53 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
     _search.value = '';
   }
 
-  void _editPet(Pet pet) {
-    WGSnackBar.show(context, HomeStrings.editingPet(pet.name));
+  // Abre a tela de edição do pet e recarrega a grade ao salvar.
+  Future<void> _editPet(Pet pet) async {
+    final edited = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(builder: (_) => PublishPetScreen(pet: pet)),
+    );
+    if (edited == true && mounted) {
+      await _gridKey.currentState?.reload();
+    }
+  }
+
+  // Confirma e exclui uma publicação, refletindo na grade automaticamente
+  // (o `remove` dispara o notifier `myPetIds`, que recarrega a grade).
+  Future<void> _deletePet(Pet pet) async {
+    final confirmed = await WGDialog.showConfirm(
+      context,
+      title: HomeStrings.DELETE_PET_CONFIRM_TITLE,
+      message: HomeStrings.deletePetConfirmMessage(pet.name),
+      messageHighlight: pet.name,
+    );
+    if (!confirmed || !mounted) return;
+
+    try {
+      final uid = AuthService.instance.currentUser?.uid;
+      await PetService.instance.deletePet(pet.id);
+      if (uid != null) {
+        // Best-effort: se a persistência falhar, o ID órfão é limpo
+        // pelo `cleanOrphans` na próxima carga.
+        await MyPublicationsService.instance.remove(uid, pet.id);
+      }
+      if (mounted) {
+        WGDialog.showAction(
+          context,
+          title: SharedStrings.SUCCESS_TITLE,
+          message: HomeStrings.DELETE_PET_SUCCESS,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        WGDialog.showAction(
+          context,
+          title: SharedStrings.ERROR_TITLE,
+          message: HomeStrings.DELETE_PET_ERROR,
+          actionColor: ThemeColors.error,
+        );
+      }
+    }
   }
 
   @override
@@ -89,6 +140,7 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
                       );
                     },
                     onEdit: () => _editPet(pet),
+                    onDelete: () => _deletePet(pet),
                   );
                 },
               ),

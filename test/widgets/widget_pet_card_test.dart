@@ -140,6 +140,54 @@ void main() {
       expect(find.byIcon(Icons.edit_outlined), findsNothing);
     });
 
+    testWidgets('exibe botão de excluir quando isMyPublication é true', (
+      tester,
+    ) async {
+      final pet = _createTestPet();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPetCard(pet: pet, isMyPublication: true)),
+        ),
+      );
+
+      expect(find.byIcon(Icons.close), findsOneWidget);
+    });
+
+    testWidgets('não exibe botão de excluir quando isMyPublication é false', (
+      tester,
+    ) async {
+      final pet = _createTestPet();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPetCard(pet: pet, isMyPublication: false)),
+        ),
+      );
+
+      expect(find.byIcon(Icons.close), findsNothing);
+    });
+
+    testWidgets('chama onDelete ao tocar no X', (tester) async {
+      var deleted = false;
+      final pet = _createTestPet();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WGPetCard(
+              pet: pet,
+              isMyPublication: true,
+              onDelete: () => deleted = true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.close));
+      expect(deleted, isTrue);
+    });
+
     testWidgets('exibe estrela preenchida quando o pet já é favorito', (
       tester,
     ) async {
@@ -167,6 +215,28 @@ void main() {
       );
 
       expect(find.byIcon(Icons.star_border_rounded), findsOneWidget);
+    });
+
+    testWidgets('estrela de favorito fica ancorada no lado esquerdo', (
+      tester,
+    ) async {
+      FavoritesService.instance.reset();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPetCard(pet: _createTestPet())),
+        ),
+      );
+
+      final star = find.byIcon(Icons.star_border_rounded);
+      final anchored = find.ancestor(
+        of: star,
+        matching: find.byType(Positioned),
+      );
+      final positioned = tester.widget<Positioned>(anchored);
+
+      expect(positioned.left, 2);
+      expect(positioned.right, isNull);
     });
 
     testWidgets('sincroniza a estrela quando o favorito muda externamente', (

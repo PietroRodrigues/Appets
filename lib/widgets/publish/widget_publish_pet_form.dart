@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_publish.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
@@ -15,7 +16,6 @@ import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/buttons/widget_buttons.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_process.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/fields/widget_field_label.dart';
 import 'package:appets/widgets/fields/widget_phone_field.dart';
 import 'package:appets/widgets/fields/widget_text_field.dart';
@@ -24,13 +24,20 @@ import 'package:appets/widgets/publish/widget_image_slots_grid.dart';
 import 'package:appets/widgets/publish/widget_publication_type_selector.dart';
 import 'package:flutter/material.dart';
 
-/// Formulário reutilizável de publicação de pet.
+/// Formulário reutilizável de publicação/edição de pet.
 ///
 /// Contém todos os campos (fotos, tipo, nome, idade,
 /// gênero, cidade e descrição), a validação e a
 /// confirmação de descarte ao voltar.
+///
+/// Sem [pet], opera em modo publicação (cria um pet novo). Com [pet],
+/// opera em modo edição: pré-preenche os dados e atualiza [pet] ao salvar
+/// (as fotos permanecem intocadas, já que o Storage ainda está bloqueado).
 class WGPublishPetForm extends StatefulWidget {
-  const WGPublishPetForm({super.key});
+  const WGPublishPetForm({super.key, this.pet});
+
+  /// Pet em edição. Quando `null`, o formulário está em modo publicação.
+  final Pet? pet;
 
   @override
   State<WGPublishPetForm> createState() => _WGPublishPetFormState();
@@ -71,19 +78,41 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
   AppPetPublicationType _selectedPublicationType =
       AppPetPublicationType.adoption;
 
-  // Indica se o usuário já adicionou alguma foto.
-  bool _hasImages = false;
-
   // Evita publicações duplicadas enquanto o envio está em andamento.
-  bool _isPublishing = false;
+  bool _isSaving = false;
 
   // Lista de caminhos das imagens selecionadas.
   List<String> _imagePaths = [];
 
+  /// Indica se o formulário está em modo edição.
+  bool get _isEditing => widget.pet != null;
+
+  /// Indica se houve qualquer alteração nos campos desde o carregamento.
+  bool _isDirty = false;
+
   @override
   void initState() {
     super.initState();
-    _loadOwnerContact();
+    if (_isEditing) {
+      _prefillPet();
+    } else {
+      _loadOwnerContact();
+    }
+  }
+
+  /// Pré-preenche os campos com os dados do pet em edição.
+  void _prefillPet() {
+    final pet = widget.pet!;
+    _nameController.text = pet.name;
+    _raceController.text = pet.race;
+    _phoneController.text = pet.ownerPhone;
+    _addressController.text = pet.ownerAddress;
+    _descriptionController.text = pet.description ?? '';
+    _selectedGender = pet.gender;
+    _selectedSpecies = pet.species;
+    _selectedAgeValue = pet.age;
+    _selectedAgeUnit = pet.ageUnit;
+    _selectedPublicationType = pet.publicationType;
   }
 
   // Carrega o contato da conta do dono para pré-preencher os campos.
@@ -125,27 +154,16 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   // ACTIONS
 
-  /// Indica se o usuário já preencheu algo no formulário.
-  bool get _hasUnsavedChanges {
-    return _nameController.text.trim().isNotEmpty ||
-        _raceController.text.trim().isNotEmpty ||
-        _phoneController.text.trim().isNotEmpty ||
-        _addressController.text.trim().isNotEmpty ||
-        _descriptionController.text.trim().isNotEmpty ||
-        _hasImages;
-  }
-
   /// Exibe confirmação antes de descartar o formulário preenchido.
   Future<bool> _confirmDiscard() async {
-    if (!_hasUnsavedChanges) {
+    if (!_isDirty) {
       return true;
     }
 
-    final shouldDiscard = await WGConfirmDialog.show(
+    final shouldDiscard = await WGDialog.showConfirm(
       context,
       title: PublishStrings.DISCARD_TITLE,
       message: PublishStrings.DISCARD_MESSAGE,
-      confirmLabel: PublishStrings.DISCARD_CONFIRM,
     );
 
     return shouldDiscard;
@@ -164,12 +182,13 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   /// Atualiza o estado das fotos ao receber alterações da grade de slots.
   void _onImageSlotsChanged(List<String> paths) {
-    _hasImages = paths.isNotEmpty;
+    _isDirty = true;
     _imagePaths = paths;
   }
 
   /// Atualiza o tipo de publicação selecionado.
   void _onPublicationTypeChanged(AppPetPublicationType type) {
+    _isDirty = true;
     setState(() {
       _selectedPublicationType = type;
     });
@@ -177,6 +196,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   /// Atualiza a idade selecionada a partir dos campos reutilizáveis.
   void _onAgeChanged(int? value, AppPetAgeUnit unit) {
+    _isDirty = true;
     setState(() {
       _selectedAgeValue = value;
       _selectedAgeUnit = unit;
@@ -185,6 +205,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   /// Atualiza o gênero selecionado.
   void _onGenderChanged(AppPetGender? gender) {
+    _isDirty = true;
     setState(() {
       _selectedGender = gender;
     });
@@ -194,9 +215,30 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
   String? _validatePhone(String? value) =>
       AppValidators.validateCellPhone(value);
 
-  /// Publica o pet após validar o formulário.
-  void _publishPet() async {
-    if (_isPublishing) return;
+  /// Monta o pet com os dados atuais do formulário.
+  Pet _buildPet(String ownerId) {
+    return Pet(
+      id: _isEditing ? widget.pet!.id : '',
+      ownerId: ownerId,
+      name: _nameController.text.trim(),
+      race: _raceController.text.trim(),
+      species: _selectedSpecies,
+      age: _selectedAgeValue ?? 1,
+      ageUnit: _selectedAgeUnit,
+      gender: _selectedGender ?? AppPetGender.male,
+      address: _addressController.text.trim(),
+      ownerPhone: _phoneController.text.trim(),
+      ownerAddress: _addressController.text.trim(),
+      description: _descriptionController.text.trim(),
+      publicationType: _selectedPublicationType,
+      images: _isEditing ? widget.pet!.images : [],
+    );
+  }
+
+  /// Salva o pet: publica um novo (sem [pet]) ou atualiza os dados do
+  /// existente (com [pet]). As fotos não são alteradas na edição.
+  void _savePet() async {
+    if (_isSaving) return;
 
     final user = AuthService.instance.currentUser;
     if (user == null) return;
@@ -212,76 +254,71 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
       return;
     }
 
-    _isPublishing = true;
+    _isSaving = true;
     FocusManager.instance.primaryFocus?.unfocus();
 
     final phone = _phoneController.text.trim();
     final address = _addressController.text.trim();
+    final pet = _buildPet(user.uid);
 
     final result = await Navigator.push<WGProcessResult>(
       context,
       MaterialPageRoute<WGProcessResult>(
         builder: (_) => WGProcessLoadingScreen(
-          message: PublishStrings.PUBLISH_LOADING,
+          message: _isEditing
+              ? PublishStrings.SAVE_LOADING
+              : PublishStrings.PUBLISH_LOADING,
           task: () async {
             try {
-              // 1. Criar pet no Firestore
-              final newPet = Pet(
-                id: '',
-                ownerId: user.uid,
-                name: _nameController.text.trim(),
-                race: _raceController.text.trim(),
-                species: _selectedSpecies,
-                age: _selectedAgeValue ?? 1,
-                ageUnit: _selectedAgeUnit,
-                gender: _selectedGender ?? AppPetGender.male,
-                address: address,
-                ownerPhone: phone,
-                ownerAddress: address,
-                description: _descriptionController.text.trim(),
-                publicationType: _selectedPublicationType,
-                images: [],
-              );
+              final String petId;
+              if (_isEditing) {
+                // Atualiza apenas os dados; as fotos ficam intocadas.
+                await PetService.instance.updatePet(pet.id, pet.toUpdateMap());
+                petId = pet.id;
+              } else {
+                // 1. Criar pet no Firestore
+                petId = await PetService.instance.createPet(pet);
+                await MyPublicationsService.instance.add(user.uid, petId);
 
-              final petId = await PetService.instance.createPet(newPet);
-              await MyPublicationsService.instance.add(user.uid, petId);
-
-              // 2. Upload das imagens (se houver). Se o Storage falhar
-              //    (ex.: ainda não configurado no Firebase), desfaz a
-              //    publicação criada para não deixar um pet órfão sem fotos.
-              if (_imagePaths.isNotEmpty) {
-                try {
-                  final imageUrls = <String>[];
-                  for (int i = 0; i < _imagePaths.length; i++) {
-                    final url = await StorageService.instance.uploadPetImage(
-                      petId,
-                      i,
-                      File(_imagePaths[i]),
-                    );
-                    imageUrls.add(url);
-                  }
-                  await PetService.instance.updatePet(petId, {
-                    'images': imageUrls,
-                  });
-                } catch (_) {
+                // 2. Upload das imagens (se houver). Se o Storage falhar
+                //    (ex.: ainda não configurado no Firebase), desfaz a
+                //    publicação criada para não deixar um pet órfão sem fotos.
+                if (_imagePaths.isNotEmpty) {
                   try {
-                    await PetService.instance.deletePet(petId);
-                    await MyPublicationsService.instance.remove(
-                      user.uid,
-                      petId,
-                    );
+                    final imageUrls = <String>[];
+                    for (int i = 0; i < _imagePaths.length; i++) {
+                      final url = await StorageService.instance.uploadPetImage(
+                        petId,
+                        i,
+                        File(_imagePaths[i]),
+                      );
+                      imageUrls.add(url);
+                    }
+                    await PetService.instance.updatePet(petId, {
+                      'images': imageUrls,
+                    });
                   } catch (_) {
-                    // Melhor esforço: se o rollback falhar, o usuário é
-                    // informado do erro e o pet pode ser removido depois.
+                    try {
+                      await PetService.instance.deletePet(petId);
+                      await MyPublicationsService.instance.remove(
+                        user.uid,
+                        petId,
+                      );
+                    } catch (_) {
+                      // Melhor esforço: se o rollback falhar, o usuário é
+                      // informado do erro e o pet pode ser removido depois.
+                    }
+                    rethrow;
                   }
-                  rethrow;
                 }
               }
 
               return const WGProcessResult.success();
             } on Exception {
-              return const WGProcessResult.failure(
-                PublishStrings.PUBLISH_ERROR,
+              return WGProcessResult.failure(
+                _isEditing
+                    ? PublishStrings.SAVE_ERROR
+                    : PublishStrings.PUBLISH_ERROR,
               );
             }
           },
@@ -292,9 +329,21 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
     switch (result?.status) {
       case WGProcessStatus.success:
-        WGSnackBar.show(context, PublishStrings.PET_PUBLISHED);
+        if (mounted) {
+          await WGDialog.showAction(
+            context,
+            title: SharedStrings.SUCCESS_TITLE,
+            message: _isEditing
+                ? PublishStrings.PET_UPDATED
+                : PublishStrings.PET_PUBLISHED,
+          );
+        }
+        if (_isEditing) {
+          if (mounted) Navigator.pop(context, true);
+          return;
+        }
         // D1: contato alterado em relação à conta -> perguntar se atualiza tudo.
-        if (_contactChanged(phone, address)) {
+        if (mounted && _contactChanged(phone, address)) {
           final shouldUpdate = await _confirmUpdateAllPublications();
           if (shouldUpdate && mounted) {
             await _updateAllPublications(user.uid, phone, address);
@@ -302,13 +351,20 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
         }
         if (mounted) Navigator.pop(context, true);
       case WGProcessStatus.failure:
-        WGSnackBar.show(context, result!.message!);
+        if (mounted) {
+          await WGDialog.showAction(
+            context,
+            title: SharedStrings.ERROR_TITLE,
+            message: result!.message!,
+            actionColor: ThemeColors.error,
+          );
+        }
       case WGProcessStatus.canceled:
       case null:
         break;
     }
 
-    _isPublishing = false;
+    _isSaving = false;
   }
 
   // Indica se os campos de contato obrigatórios estão corretos
@@ -330,6 +386,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   // Recalcula o estado para atualizar a cor do botão ao digitar.
   void _onFieldChanged(String _) {
+    _isDirty = true;
     setState(() {});
   }
 
@@ -341,14 +398,12 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
   }
 
   /// Mostra o diálogo orientando a completar o cadastro e, ao clicar em
-  /// "Completar cadastro", navega para a tela de dados da conta.
+  /// "Sim", navega para a tela de dados da conta.
   Future<void> _redirectToCompleteProfile() async {
-    final shouldComplete = await WGActionDialog.show(
+    final shouldComplete = await WGDialog.showConfirm(
       context,
       title: PublishStrings.INCOMPLETE_PROFILE_TITLE,
       message: PublishStrings.INCOMPLETE_PROFILE_MESSAGE,
-      actionLabel: PublishStrings.COMPLETE_PROFILE_BUTTON,
-      actionIcon: Icons.edit_outlined,
     );
 
     if (shouldComplete && mounted) {
@@ -358,12 +413,10 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   /// Abre o diálogo Sim/Não para atualizar todas as publicações.
   Future<bool> _confirmUpdateAllPublications() {
-    return WGConfirmDialog.show(
+    return WGDialog.showConfirm(
       context,
       title: PublishStrings.UPDATE_ALL_PUBLICATIONS_TITLE,
       message: PublishStrings.UPDATE_ALL_PUBLICATIONS_MESSAGE,
-      confirmLabel: PublishStrings.UPDATE_ALL_PUBLICATIONS_CONFIRM,
-      cancelLabel: PublishStrings.UPDATE_ALL_PUBLICATIONS_CANCEL,
     );
   }
 
@@ -472,6 +525,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                 ),
                 onChanged: (value) {
                   setState(() {
+                    _isDirty = true;
                     _selectedSpecies = value ?? AppPetSpecies.dog;
                   });
                 },
@@ -572,11 +626,13 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
               const SizedBox(height: 32),
 
-              // PUBLICAR
+              // SALVAR / PUBLICAR
               WGButton(
-                text: PublishStrings.PUBLISH_BUTTON,
+                text: _isEditing
+                    ? PublishStrings.SAVE_BUTTON
+                    : PublishStrings.PUBLISH_BUTTON,
 
-                onPressed: _publishPet,
+                onPressed: _savePet,
 
                 backgroundColor: _isFormComplete
                     ? ThemeColors.success

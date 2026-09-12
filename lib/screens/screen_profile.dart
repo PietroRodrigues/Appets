@@ -1,6 +1,7 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_settings.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
@@ -14,7 +15,6 @@ import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/display/widget_avatar.dart';
 import 'package:appets/widgets/display/widget_option_tile.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:flutter/material.dart';
 
@@ -68,11 +68,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// Usa [Navigator.pushReplacementNamed] para limpar a pilha
   /// de navegação, impedindo que o volte com o botão voltar.
   void _logout() async {
-    final shouldLogout = await WGConfirmDialog.show(
+    final shouldLogout = await WGDialog.showConfirm(
       context,
       title: ProfileStrings.LOGOUT_TITLE,
       message: ProfileStrings.LOGOUT_MESSAGE,
-      confirmLabel: ProfileStrings.LOGOUT_CONFIRM,
     );
 
     if (shouldLogout && mounted) {
@@ -90,12 +89,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   /// Exibe aviso de recurso em desenvolvimento (troca de avatar).
   void _showAvatarInDevelopment() {
-    WGSnackBar.development(context, ProfileStrings.CHANGE_AVATAR_FEATURE);
+    WGDialog.showAction(
+      context,
+      title: SharedStrings.DEVELOPMENT_TITLE,
+      message: SharedStrings.featureInDevelopment(
+        ProfileStrings.CHANGE_AVATAR_FEATURE,
+      ),
+    );
   }
 
   /// Exibe aviso de recurso em desenvolvimento (edição de nome).
   void _showEditNameInDevelopment() {
-    WGSnackBar.development(context, ProfileStrings.EDIT_NAME_FEATURE);
+    WGDialog.showAction(
+      context,
+      title: SharedStrings.DEVELOPMENT_TITLE,
+      message: SharedStrings.featureInDevelopment(
+        ProfileStrings.EDIT_NAME_FEATURE,
+      ),
+    );
   }
 
   // UI

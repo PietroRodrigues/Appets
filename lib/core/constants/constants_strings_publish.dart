@@ -8,17 +8,26 @@ class PublishStrings {
   static const PUBLISH_PET_DESCRIPTION =
       'Informe os dados para publicar o pet.';
 
+  static const EDIT_PET_DESCRIPTION =
+      'Ajuste os dados publicados do pet. As fotos não mudam por enquanto.';
+
   static const DISCARD_TITLE = 'Descartar alterações?';
 
   static const DISCARD_MESSAGE = 'As informações preenchidas serão perdidas.';
-
-  static const DISCARD_CONFIRM = 'Sim, descartar';
 
   static const PET_PUBLISHED = 'Pet publicado com sucesso!';
 
   static const PUBLISH_LOADING = 'Publicando anúncio...';
 
   static const PUBLISH_ERROR = 'Erro ao publicar o pet. Tente novamente.';
+
+  static const SAVE_BUTTON = 'Salvar Alterações';
+
+  static const SAVE_LOADING = 'Salvando alterações...';
+
+  static const PET_UPDATED = 'Alterações salvas com sucesso!';
+
+  static const SAVE_ERROR = 'Erro ao salvar as alterações. Tente novamente.';
 
   static const PHOTOS_TITLE = 'Fotos do pet';
 
@@ -73,9 +82,8 @@ class PublishStrings {
   static const INCOMPLETE_PROFILE_TITLE = 'Complete seu cadastro';
 
   static const INCOMPLETE_PROFILE_MESSAGE =
-      'Para publicar um pet é preciso ter celular e endereço cadastrados na sua conta.';
-
-  static const COMPLETE_PROFILE_BUTTON = 'Completar cadastro';
+      'Para publicar um pet, é preciso ter celular e endereço cadastrados '
+      'na sua conta. Deseja completar o cadastro agora?';
 
   // ── Atualização de contato em publicações ──────────────
 
@@ -84,17 +92,11 @@ class PublishStrings {
   static const UPDATE_ALL_PUBLICATIONS_MESSAGE =
       'Atualizar todas as publicações com o telefone novo?';
 
-  static const UPDATE_ALL_PUBLICATIONS_CONFIRM = 'Sim';
-
-  static const UPDATE_ALL_PUBLICATIONS_CANCEL = 'Não';
-
   // ── Fotos ──────────────────────────────────────────────
 
   static const PHOTO_REMOVE_TITLE = 'Remover foto?';
 
   static const PHOTO_REMOVE_MESSAGE = 'Deseja remover esta foto da publicação?';
-
-  static const PHOTO_REMOVE_CONFIRM = 'Sim, remover';
 
   static const MAIN_PHOTO_BADGE = 'Principal';
 

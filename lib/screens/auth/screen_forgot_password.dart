@@ -1,12 +1,14 @@
 import 'package:appets/core/constants/constants_strings_auth.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/auth/widget_auth_button.dart';
 import 'package:appets/widgets/auth/widget_auth_header.dart';
 import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
+import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_process.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/fields/widget_email_field.dart';
 import 'package:flutter/material.dart';
 
@@ -68,10 +70,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
     switch (result?.status) {
       case WGProcessStatus.success:
-        WGSnackBar.show(context, AuthStrings.RECOVER_LINK_SENT);
-        Navigator.pop(context);
+        if (mounted) {
+          await WGDialog.showAction(
+            context,
+            title: SharedStrings.SUCCESS_TITLE,
+            message: AuthStrings.RECOVER_LINK_SENT,
+          );
+        }
+        if (mounted) {
+          Navigator.pop(context);
+        }
       case WGProcessStatus.failure:
-        WGSnackBar.show(context, result!.message!);
+        if (mounted) {
+          await WGDialog.showAction(
+            context,
+            title: SharedStrings.ERROR_TITLE,
+            message: result!.message!,
+            actionColor: ThemeColors.error,
+          );
+        }
       case WGProcessStatus.canceled:
       case null:
         break;

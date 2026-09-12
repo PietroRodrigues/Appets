@@ -11,5 +11,17 @@ class SharedStrings {
   static String featureInDevelopment(String feature) =>
       '$feature em desenvolvimento';
 
+  static const YES = 'Sim';
+
   static const NO = 'Não';
+
+  static const OK = 'OK';
+
+  static const SUCCESS_TITLE = 'Sucesso';
+
+  static const ERROR_TITLE = 'Erro';
+
+  static const DEVELOPMENT_TITLE = 'Em desenvolvimento';
+
+  static const NOTICE_TITLE = 'Aviso';
 }

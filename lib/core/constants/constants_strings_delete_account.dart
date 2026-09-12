@@ -13,15 +13,11 @@ class DeleteAccountStrings {
   static const DELETE_ACCOUNT_CONFIRM_MESSAGE =
       'Certeza que quer deletar a sua conta de usuário?';
 
-  static const DELETE_ACCOUNT_CONTINUE = 'Continuar';
-
   static const DELETE_ACCOUNT_FINAL_TITLE = 'Aviso importante';
 
   static const DELETE_ACCOUNT_FINAL_MESSAGE =
       'Todos os dados referentes à conta serão deletados permanentemente: '
       'anúncios, imagens e dados pessoais. Esta ação não pode ser desfeita.';
-
-  static const DELETE_ACCOUNT_CONFIRM = 'Sim, Deletar';
 
   static const DELETE_PERMANENTLY_HIGHLIGHT = 'deletados permanentemente';
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/models/enums/enums_app.dart';
+import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/publish/widget_publish_pet_form.dart';
 
 void main() {
@@ -133,6 +135,69 @@ void main() {
       await tester.pump();
 
       expect(publishButtonColor(tester), ThemeColors.disabled);
+    });
+  });
+
+  group('WGPublishPetForm em modo edição', () {
+    Pet createEditPet() {
+      return Pet(
+        id: 'pet_001',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        ownerPhone: '(11) 98765-4321',
+        ownerAddress: 'São Paulo',
+        description: 'Muito dócil.',
+        publicationType: AppPetPublicationType.lost,
+        species: AppPetSpecies.dog,
+        race: 'Poodle',
+        images: ['a.png'],
+      );
+    }
+
+    Widget createEditWidget() {
+      return MaterialApp(
+        home: Scaffold(body: WGPublishPetForm(pet: createEditPet())),
+      );
+    }
+
+    testWidgets('exibe botão "Salvar Alterações" em vez de "Publicar Pet"', (
+      tester,
+    ) async {
+      await tester.pumpWidget(createEditWidget());
+
+      expect(find.text('Salvar Alterações'), findsOneWidget);
+      expect(find.text('Publicar Pet'), findsNothing);
+    });
+
+    testWidgets('pré-preenche os campos com os dados do pet', (tester) async {
+      await tester.pumpWidget(createEditWidget());
+
+      expect(find.text('Rex'), findsWidgets);
+      expect(find.text('Poodle'), findsWidgets);
+      expect(find.text('Muito dócil.'), findsWidgets);
+      expect(find.text('Perdido'), findsWidgets);
+      expect(find.text('Cachorro'), findsWidgets);
+      // Telefone com a máscara aplicada.
+      expect(find.text('(11) 98765-4321'), findsWidgets);
+    });
+
+    testWidgets('botão "Salvar Alterações" começa verde (formulário válido)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(createEditWidget());
+
+      final button = tester.widget<ElevatedButton>(
+        find.ancestor(
+          of: find.text('Salvar Alterações'),
+          matching: find.byType(ElevatedButton),
+        ),
+      );
+      final color = button.style?.backgroundColor?.resolve(<WidgetState>{});
+      expect(color, ThemeColors.success);
     });
   });
 }

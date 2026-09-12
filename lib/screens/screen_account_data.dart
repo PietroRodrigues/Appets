@@ -1,6 +1,7 @@
 import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_delete_account.dart';
 import 'package:appets/core/constants/constants_strings_profile.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
@@ -9,7 +10,6 @@ import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
-import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/buttons/widget_buttons.dart';
@@ -17,9 +17,7 @@ import 'package:appets/widgets/display/widget_option_tile.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_page_states.dart';
 import 'package:appets/widgets/feedback/widget_process.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/fields/widget_editable_tile.dart';
-import 'package:appets/widgets/fields/widget_text_field.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:appets/widgets/layout/widget_layout.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -92,7 +90,11 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
   /// Exibe aviso de recurso em desenvolvimento.
   void _showDevelopmentMessage(String feature) {
-    WGSnackBar.development(context, feature);
+    WGDialog.showAction(
+      context,
+      title: SharedStrings.DEVELOPMENT_TITLE,
+      message: SharedStrings.featureInDevelopment(feature),
+    );
   }
 
   // Superfície para edição inline do tile indicado.
@@ -135,7 +137,12 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
     final uid = authUser?.uid ?? _user?.id;
     if (uid == null) {
       setState(() => _isSaving = false);
-      WGSnackBar.show(context, ProfileStrings.CONTACT_SAVE_ERROR);
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.ERROR_TITLE,
+        message: ProfileStrings.CONTACT_SAVE_ERROR,
+        actionColor: ThemeColors.error,
+      );
       return;
     }
 
@@ -146,11 +153,20 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
         _isSaving = false;
         _editingField = 'phone';
       });
-      WGSnackBar.show(context, phoneError);
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.ERROR_TITLE,
+        message: phoneError,
+        actionColor: ThemeColors.error,
+      );
       return;
     }
 
     try {
+      // Captura antes da atualização local: a base para detectar se o
+      // telefone mudou é o valor antigo do Firestore.
+      final phoneChanged = _draftPhone.trim() != _user!.phone;
+
       await FirestoreService.instance.updateUser(uid, {
         'name': _draftName.trim(),
         'email': _draftEmail.trim(),
@@ -173,12 +189,54 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
       });
 
       if (mounted) {
-        WGSnackBar.show(context, ProfileStrings.CONTACT_SAVED);
+        WGDialog.showAction(
+          context,
+          title: SharedStrings.SUCCESS_TITLE,
+          message: ProfileStrings.CONTACT_SAVED,
+        );
+      }
+
+      // Telefone alterado -> pergunta se propaga para todas as publicações.
+      if (phoneChanged && mounted) {
+        final newPhone = _draftPhone.trim();
+        final shouldUpdate = await WGDialog.showConfirm(
+          context,
+          title: ProfileStrings.UPDATE_CONTACT_TITLE,
+          message: ProfileStrings.updatePublicationsMessage(newPhone),
+          messageHighlight: newPhone,
+        );
+
+        if (shouldUpdate && mounted) {
+          try {
+            await PetService.instance.updateOwnerPhone(uid, newPhone);
+            if (mounted) {
+              WGDialog.showAction(
+                context,
+                title: SharedStrings.SUCCESS_TITLE,
+                message: ProfileStrings.UPDATE_CONTACT_UPDATED,
+              );
+            }
+          } catch (_) {
+            if (mounted) {
+              WGDialog.showAction(
+                context,
+                title: SharedStrings.ERROR_TITLE,
+                message: ProfileStrings.CONTACT_SAVE_ERROR,
+                actionColor: ThemeColors.error,
+              );
+            }
+          }
+        }
       }
     } catch (_) {
       if (mounted) {
         setState(() => _isSaving = false);
-        WGSnackBar.show(context, ProfileStrings.CONTACT_SAVE_ERROR);
+        WGDialog.showAction(
+          context,
+          title: SharedStrings.ERROR_TITLE,
+          message: ProfileStrings.CONTACT_SAVE_ERROR,
+          actionColor: ThemeColors.error,
+        );
       }
     }
   }
@@ -192,12 +250,10 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
       return;
     }
 
-    final shouldDiscard = await WGConfirmDialog.show(
+    final shouldDiscard = await WGDialog.showConfirm(
       context,
       title: ProfileStrings.DISCARD_CHANGES_TITLE,
       message: ProfileStrings.DISCARD_CHANGES_MESSAGE,
-      confirmLabel: ProfileStrings.DISCARD_DRAFT_CONFIRM,
-      cancelLabel: ProfileStrings.CANCEL,
     );
 
     if (shouldDiscard && mounted) {
@@ -209,22 +265,18 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
   /// Fluxo de confirmação em duas etapas e exclusão com tela de carregamento.
   void _onDeleteAccountPressed() async {
-    final firstConfirmed = await WGConfirmDialog.show(
+    final firstConfirmed = await WGDialog.showConfirm(
       context,
       title: DeleteAccountStrings.DELETE_ACCOUNT_TITLE,
       message: DeleteAccountStrings.DELETE_ACCOUNT_CONFIRM_MESSAGE,
-      confirmLabel: DeleteAccountStrings.DELETE_ACCOUNT_CONTINUE,
-      cancelLabel: ProfileStrings.CANCEL,
     );
 
     if (!firstConfirmed || !mounted) return;
 
-    final finalConfirmed = await WGConfirmDialog.show(
+    final finalConfirmed = await WGDialog.showConfirm(
       context,
       title: DeleteAccountStrings.DELETE_ACCOUNT_FINAL_TITLE,
       message: DeleteAccountStrings.DELETE_ACCOUNT_FINAL_MESSAGE,
-      confirmLabel: DeleteAccountStrings.DELETE_ACCOUNT_CONFIRM,
-      cancelLabel: ProfileStrings.CANCEL,
       messageHighlight: DeleteAccountStrings.DELETE_PERMANENTLY_HIGHLIGHT,
     );
 
@@ -248,17 +300,30 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
     switch (result?.status) {
       case WGProcessStatus.success:
-        WGSnackBar.show(context, DeleteAccountStrings.ACCOUNT_DELETED);
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.login,
-          (route) => false,
-        );
+        if (mounted) {
+          await WGDialog.showAction(
+            context,
+            title: SharedStrings.SUCCESS_TITLE,
+            message: DeleteAccountStrings.ACCOUNT_DELETED,
+          );
+        }
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.login,
+            (route) => false,
+          );
+        }
       case WGProcessStatus.failure:
-        WGSnackBar.show(
-          context,
-          result?.message ?? DeleteAccountStrings.DELETE_ACCOUNT_ERROR,
-        );
+        if (mounted) {
+          await WGDialog.showAction(
+            context,
+            title: SharedStrings.ERROR_TITLE,
+            message:
+                result?.message ?? DeleteAccountStrings.DELETE_ACCOUNT_ERROR,
+            actionColor: ThemeColors.error,
+          );
+        }
       case WGProcessStatus.canceled:
       case null:
         break;
@@ -470,136 +535,21 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
   /// se o usuário cancelar). Com [errorMessage], exibe o erro
   /// inline sob o campo (ex.: senha incorreta).
   Future<String?> _showPasswordDialog({String? errorMessage}) async {
-    final passwordController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    final password = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: ThemeColors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            DeleteAccountStrings.DELETE_ACCOUNT_PASSWORD_TITLE,
-            style: ThemeTextStyles.subtitle,
-          ),
-          content: Form(
-            key: formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DeleteAccountStrings.DELETE_ACCOUNT_PASSWORD_MESSAGE,
-                  style: ThemeTextStyles.body,
-                ),
-                const SizedBox(height: 16),
-                WGTextField(
-                  controller: passwordController,
-                  hintText: DeleteAccountStrings.DELETE_ACCOUNT_PASSWORD_HINT,
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: true,
-                  autofocus: true,
-                  validator: (value) {
-                    if ((value?.trim().isEmpty ?? true)) {
-                      return DeleteAccountStrings
-                          .DELETE_ACCOUNT_PASSWORD_VALIDATION;
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _submitPassword(
-                    dialogContext,
-                    formKey,
-                    passwordController,
-                  ),
-                ),
-                if (errorMessage != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    errorMessage,
-                    style: ThemeTextStyles.caption.copyWith(
-                      color: ThemeColors.error,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: ThemeColors.textSecondary,
-                        width: 1.5,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      ProfileStrings.CANCEL,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: ThemeTextStyles.button.copyWith(
-                        color: ThemeColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => _submitPassword(
-                      dialogContext,
-                      formKey,
-                      passwordController,
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: ThemeColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      DeleteAccountStrings.DELETE_ACCOUNT_CONTINUE,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: ThemeTextStyles.button.copyWith(
-                        color: ThemeColors.secondary,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
+    return WGDialog.showInput(
+      context,
+      title: DeleteAccountStrings.DELETE_ACCOUNT_PASSWORD_TITLE,
+      message: DeleteAccountStrings.DELETE_ACCOUNT_PASSWORD_MESSAGE,
+      hintText: DeleteAccountStrings.DELETE_ACCOUNT_PASSWORD_HINT,
+      prefixIcon: Icons.lock_outline,
+      obscureText: true,
+      validator: (value) {
+        if ((value?.trim().isEmpty ?? true)) {
+          return DeleteAccountStrings.DELETE_ACCOUNT_PASSWORD_VALIDATION;
+        }
+        return null;
       },
+      errorMessage: errorMessage,
     );
-
-    passwordController.dispose();
-    return password;
-  }
-
-  /// Valida a senha do diálogo e o fecha devolvendo o valor digitado.
-  void _submitPassword(
-    BuildContext dialogContext,
-    GlobalKey<FormState> formKey,
-    TextEditingController passwordController,
-  ) {
-    if (!formKey.currentState!.validate()) return;
-    Navigator.pop(dialogContext, passwordController.text);
   }
 
   // UI

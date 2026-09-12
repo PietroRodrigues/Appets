@@ -1,10 +1,12 @@
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/display/widget_info_row.dart';
+import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -35,10 +37,10 @@ class WGPetDetailsInfo extends StatelessWidget {
         onPressed: () async {
           if (pet.ownerPhone.isEmpty) {
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(PetDetailsStrings.OWNER_PHONE_UNAVAILABLE),
-                ),
+              WGDialog.showAction(
+                context,
+                title: SharedStrings.NOTICE_TITLE,
+                message: PetDetailsStrings.OWNER_PHONE_UNAVAILABLE,
               );
             }
             return;
@@ -54,8 +56,11 @@ class WGPetDetailsInfo extends StatelessWidget {
             await launchUrl(url, mode: LaunchMode.externalApplication);
           } else {
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text(PetDetailsStrings.WHATSAPP_ERROR)),
+              WGDialog.showAction(
+                context,
+                title: SharedStrings.ERROR_TITLE,
+                message: PetDetailsStrings.WHATSAPP_ERROR,
+                actionColor: ThemeColors.error,
               );
             }
           }

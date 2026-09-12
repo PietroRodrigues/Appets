@@ -106,11 +106,10 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
 
   /// Exibe confirmação antes de remover a foto do [index].
   Future<void> _confirmImageRemoval(int index) async {
-    final shouldRemove = await WGConfirmDialog.show(
+    final shouldRemove = await WGDialog.showConfirm(
       context,
       title: PublishStrings.PHOTO_REMOVE_TITLE,
       message: PublishStrings.PHOTO_REMOVE_MESSAGE,
-      confirmLabel: PublishStrings.PHOTO_REMOVE_CONFIRM,
     );
 
     if (shouldRemove && mounted) {

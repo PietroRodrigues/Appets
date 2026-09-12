@@ -240,6 +240,57 @@ void main() {
     });
   });
 
+  group('Pet.toUpdateMap', () {
+    const pet = Pet(
+      id: 'pet_001',
+      ownerId: 'user_001',
+      name: 'Rex',
+      age: 2,
+      ageUnit: AppPetAgeUnit.years,
+      gender: AppPetGender.male,
+      address: 'São Paulo',
+      description: 'Muito dócil.',
+      publicationType: AppPetPublicationType.adoption,
+      species: AppPetSpecies.dog,
+      race: 'Poodle',
+      images: ['a.png', 'b.png'],
+    );
+
+    late Map<String, dynamic> map;
+
+    setUp(() {
+      map = pet.toUpdateMap();
+    });
+
+    test('inclui os dados editáveis', () {
+      expect(map['name'], 'Rex');
+      expect(map['age'], 2);
+      expect(map['ageUnit'], 'anos');
+      expect(map['gender'], 'macho');
+      expect(map['address'], 'São Paulo');
+      expect(map['description'], 'Muito dócil.');
+      expect(map['publicationType'], 'adocao');
+      expect(map['species'], 'cachorro');
+      expect(map['race'], 'Poodle');
+      expect(map['ownerPhone'], isEmpty);
+      expect(map['ownerAddress'], isEmpty);
+    });
+
+    test('persiste specifications e searchTokens atualizados', () {
+      expect(map['specifications'], ['cachorro', 'macho', 'adocao', 'jovem']);
+      final tokens = map['searchTokens'] as List;
+      expect(tokens, contains('rex'));
+      expect(tokens, contains('docil'));
+    });
+
+    test('exclui id, ownerId, createdAt e images (não alteráveis na edição)', () {
+      expect(map.containsKey('id'), isFalse);
+      expect(map.containsKey('ownerId'), isFalse);
+      expect(map.containsKey('createdAt'), isFalse);
+      expect(map.containsKey('images'), isFalse);
+    });
+  });
+
   group('ageLabel extension', () {
     test('retorna "1 ano" para age=1 e years', () {
       final pet = Pet(

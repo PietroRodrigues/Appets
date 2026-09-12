@@ -1,15 +1,17 @@
 import 'package:appets/core/constants/constants_strings_auth.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/auth/widget_auth_button.dart';
 import 'package:appets/widgets/auth/widget_auth_header.dart';
 import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
+import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_process.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
 import 'package:appets/widgets/fields/widget_email_field.dart';
 import 'package:appets/widgets/fields/widget_password_field.dart';
 import 'package:appets/widgets/fields/widget_text_field.dart';
@@ -60,7 +62,12 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
 
     if (_passwordController.text != _confirmPasswordController.text) {
       if (!mounted) return;
-      WGSnackBar.show(context, AuthStrings.PASSWORD_MISMATCH);
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.ERROR_TITLE,
+        message: AuthStrings.PASSWORD_MISMATCH,
+        actionColor: ThemeColors.error,
+      );
       return;
     }
 
@@ -97,10 +104,25 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
 
     switch (result?.status) {
       case WGProcessStatus.success:
-        WGSnackBar.show(context, AuthStrings.ACCOUNT_CREATED);
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        if (mounted) {
+          await WGDialog.showAction(
+            context,
+            title: SharedStrings.SUCCESS_TITLE,
+            message: AuthStrings.ACCOUNT_CREATED,
+          );
+        }
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
       case WGProcessStatus.failure:
-        WGSnackBar.show(context, result!.message!);
+        if (mounted) {
+          await WGDialog.showAction(
+            context,
+            title: SharedStrings.ERROR_TITLE,
+            message: result!.message!,
+            actionColor: ThemeColors.error,
+          );
+        }
       case WGProcessStatus.canceled:
       case null:
         break;

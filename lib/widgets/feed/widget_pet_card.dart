@@ -1,3 +1,4 @@
+import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
@@ -13,17 +14,19 @@ import 'package:flutter/services.dart';
 /// Card reutilizável para exibir um pet em listas da interface.
 ///
 /// Suporta favoritar com long press (segurar). Ao segurar o card,
-/// uma estrela aparece no canto superior direito indicando que
+/// uma estrela aparece no canto superior esquerdo indicando que
 /// o pet foi adicionado aos favoritos.
 ///
 /// Quando [isMyPublication] é `true`, exibe um botão de edição
-/// flutuante no canto inferior direito do card.
+/// flutuante no canto inferior direito e um botão de excluir no
+/// canto superior direito do card.
 class WGPetCard extends StatefulWidget {
   const WGPetCard({
     super.key,
     required this.pet,
     this.onTap,
     this.onEdit,
+    this.onDelete,
     this.isMyPublication = false,
     this.heroTag,
   });
@@ -31,9 +34,10 @@ class WGPetCard extends StatefulWidget {
   final Pet pet;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   /// Indica se este card é uma publicação do usuário atual.
-  /// Quando `true`, exibe o botão de edição flutuante.
+  /// Quando `true`, exibe os botões de edição e excluir flutuantes.
   final bool isMyPublication;
 
   /// Tag opcional para a animação Hero da imagem.
@@ -120,20 +124,6 @@ class _WGPetCardState extends State<WGPetCard>
     if (!ok) return;
 
     HapticFeedback.mediumImpact();
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            wasFavorited
-                ? PetDetailsStrings.petRemovedFromFavorites(widget.pet.name)
-                : PetDetailsStrings.petAddedToFavorites(widget.pet.name),
-          ),
-          duration: const Duration(milliseconds: 1200),
-        ),
-      );
   }
 
   // Constrói o layout do card com imagem, informações e botão de edição.
@@ -184,8 +174,11 @@ class _WGPetCardState extends State<WGPetCard>
           ),
         ),
 
-        // BOTÃO DE EDIÇÃO FLUTUANTE
-        if (widget.isMyPublication) _PetCardEditButton(onTap: widget.onEdit),
+        // BOTÕES FLUTUANTES (edição e exclusão)
+        if (widget.isMyPublication) ...[
+          _PetCardEditButton(onTap: widget.onEdit),
+          _PetCardDeleteButton(onTap: widget.onDelete),
+        ],
       ],
     );
   }
@@ -222,10 +215,10 @@ class _PetCardImage extends StatelessWidget {
           ),
         ),
 
-        // Estrela de favorito (canto superior direito).
+        // Estrela de favorito (canto superior esquerdo).
         Positioned(
           top: 2,
-          right: 2,
+          left: 2,
           child: ScaleTransition(
             scale: scale,
             child: IconButton(
@@ -365,6 +358,49 @@ class _PetCardEditButton extends StatelessWidget {
             Icons.edit_outlined,
             color: ThemeColors.white,
             size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Botão flutuante de exclusão, exibido no canto superior direito do card
+/// quando ele é uma publicação do usuário. Tem metade do tamanho do botão
+/// de edição e fica posicionado para dentro do card, como o de edição.
+class _PetCardDeleteButton extends StatelessWidget {
+  const _PetCardDeleteButton({this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 10,
+      right: 10,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: ThemeColors.primary,
+            shape: BoxShape.circle,
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 6,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Tooltip(
+            message: HomeStrings.DELETE_PET,
+            child: const Icon(
+              Icons.close,
+              color: ThemeColors.white,
+              size: 16,
+            ),
           ),
         ),
       ),

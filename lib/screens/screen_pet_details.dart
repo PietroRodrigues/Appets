@@ -5,7 +5,7 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/model_pet.dart';
-import 'package:appets/widgets/feedback/widget_snack_bar.dart';
+import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/pet/widget_pet_details_info.dart';
 import 'package:appets/widgets/pet/widget_pet_gallery.dart';
 import 'package:flutter/material.dart';
@@ -56,13 +56,22 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         : await service.add(authUser.uid, widget.pet.id);
 
     if (!ok && mounted) {
-      WGSnackBar.show(context, ProfileStrings.CONTACT_SAVE_ERROR);
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.ERROR_TITLE,
+        message: ProfileStrings.CONTACT_SAVE_ERROR,
+        actionColor: ThemeColors.error,
+      );
     }
   }
 
   // Exibe aviso de que o compartilhamento está em desenvolvimento.
   void _sharePet() {
-    WGSnackBar.show(context, SharedStrings.SHARE_IN_DEVELOPMENT);
+    WGDialog.showAction(
+      context,
+      title: SharedStrings.DEVELOPMENT_TITLE,
+      message: SharedStrings.SHARE_IN_DEVELOPMENT,
+    );
   }
 
   // Constrói a tela de detalhes com galeria, informações e ações.

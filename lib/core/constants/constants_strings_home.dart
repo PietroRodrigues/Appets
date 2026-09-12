@@ -94,5 +94,17 @@ class HomeStrings {
 
   static const PUBLISH_PET = 'Publicar pet';
 
-  static String editingPet(String petName) => 'Editando: $petName';
+  static const EDIT_PET = 'Editar Pet';
+
+  static const DELETE_PET = 'Excluir';
+
+  static const DELETE_PET_CONFIRM_TITLE = 'Excluir publicação?';
+
+  static String deletePetConfirmMessage(String name) =>
+      'Excluir o pet "$name"? Esta ação não pode ser desfeita.';
+
+  static const DELETE_PET_SUCCESS = 'Publicação excluída.';
+
+  static const DELETE_PET_ERROR =
+      'Não foi possível excluir a publicação. Tente novamente.';
 }
