@@ -1,6 +1,7 @@
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
@@ -9,6 +10,7 @@ import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/pet/widget_pet_details_info.dart';
 import 'package:appets/widgets/pet/widget_pet_gallery.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// Tela de detalhes com imagens e informações do pet selecionado.
 ///
@@ -65,13 +67,22 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
   }
 
-  // Exibe aviso de que o compartilhamento está em desenvolvimento.
-  void _sharePet() {
-    WGDialog.showAction(
-      context,
-      title: SharedStrings.DEVELOPMENT_TITLE,
-      message: SharedStrings.SHARE_IN_DEVELOPMENT,
-    );
+  // Abre o share sheet com o texto do pet. Em falha (ex.: sem apps de
+  // compartilhamento), mostra um diálogo de erro.
+  Future<void> _sharePet() async {
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: widget.pet.shareText),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.ERROR_TITLE,
+        message: PetDetailsStrings.SHARE_ERROR,
+        actionColor: ThemeColors.error,
+      );
+    }
   }
 
   // Constrói a tela de detalhes com galeria, informações e ações.

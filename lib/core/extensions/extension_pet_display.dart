@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -53,5 +54,43 @@ extension AppPetDisplayX on Pet {
     final trimmedRace = race.trim();
     if (trimmedRace.isEmpty) return species.label;
     return '${species.label} · $trimmedRace';
+  }
+
+  /// Mensagem de compartilhamento do pet, com variação conforme o tipo de
+  /// publicação: adoção (procura um novo lar) ou perdido (dono procurando).
+  /// Pronta para ser enviada ao share sheet.
+  String get shareText {
+    final isAdoption = publicationType == AppPetPublicationType.adoption;
+    final identity = '$speciesRaceLabel · $ageLabel · $genderLabel';
+    final description = (this.description ?? '').trim();
+    final location = address.trim();
+    final phone = ownerPhone.trim();
+
+    return [
+      isAdoption
+          ? PetDetailsStrings.shareAdoptionTitle(name)
+          : PetDetailsStrings.shareLostTitle(name),
+      '',
+      isAdoption
+          ? PetDetailsStrings.SHARE_ADOPTION_HEADING
+          : PetDetailsStrings.SHARE_LOST_HEADING,
+      identity,
+      if (description.isNotEmpty) ...[
+        '',
+        description,
+      ],
+      if (location.isNotEmpty) ...[
+        '',
+        isAdoption
+            ? PetDetailsStrings.shareLocationLine(location)
+            : PetDetailsStrings.shareLostRegionLine(location),
+      ],
+      if (phone.isNotEmpty)
+        isAdoption
+            ? PetDetailsStrings.sharePhoneLine(phone)
+            : PetDetailsStrings.shareLostPhoneLine(phone),
+      '',
+      PetDetailsStrings.SHARE_FOOTER,
+    ].join('\n');
   }
 }

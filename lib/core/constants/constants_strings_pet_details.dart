@@ -23,4 +23,29 @@ class PetDetailsStrings {
   static const ABOUT_SECTION = 'Sobre';
 
   static const DESCRIPTION_NOT_INFORMED = 'Descrição não informada.';
+
+  // ── Compartilhamento ──────────────────────────────────
+
+  static const SHARE_ERROR = 'Não foi possível compartilhar. Tente novamente.';
+
+  static const SHARE_FOOTER = '📲 Entre em contato direto no APPets';
+
+  static const SHARE_ADOPTION_HEADING = '💰 Adoção';
+
+  static const SHARE_LOST_HEADING = '⚠️ Perdido';
+
+  static String shareAdoptionTitle(String petName) =>
+      '🐾 $petName está procurando um novo lar!';
+
+  static String shareLostTitle(String petName) => '🐾 AJUDA! Encontre o $petName!';
+
+  static String shareLocationLine(String location) => '📍 $location';
+
+  static String shareLostRegionLine(String location) =>
+      '📍 Foi visto na região de: $location';
+
+  static String sharePhoneLine(String phone) => '📞 $phone';
+
+  static String shareLostPhoneLine(String phone) =>
+      '📞 Se encontrar, entre em contato: $phone';
 }

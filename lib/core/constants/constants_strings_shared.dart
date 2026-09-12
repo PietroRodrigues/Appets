@@ -6,8 +6,6 @@ class SharedStrings {
 
   static const SLOGAN = 'Encontre um novo melhor amigo.';
 
-  static const SHARE_IN_DEVELOPMENT = 'Compartilhar em desenvolvimento';
-
   static String featureInDevelopment(String feature) =>
       '$feature em desenvolvimento';
 

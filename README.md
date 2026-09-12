@@ -41,7 +41,9 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | 🎛️ **Filtros** | Espécie, gênero, faixa de idade e tipo (adoção/perdido) em bottom sheet; pré-filtro no servidor + filtro exato no cliente (`petMatchesFilters`); chips ativos com limpeza |
 | 🐕 **Detalhes** | Galeria de fotos, espécie · raça, idade, gênero, endereço, descrição e contato via WhatsApp |
 | ➕ **Publicar** | Formulário com validação, tipo de publicação (adoção/perdido), espécie (9 opções) e gestão de fotos |
+| ✏️ **Editar / Excluir publicação** | Edição no mesmo formulário (dados, sem fotos) e exclusão com confirmação em Minhas Publicações |
 | ⭐ **Favoritos** | Estado global reativo com atualização otimista, rollback e limpeza de órfãos |
+| 📤 **Compartilhar** | Botão em Detalhes abre o share sheet com um anúncio do pet; o texto varia conforme o tipo (adoção → novo lar; perdido → dono procurando) |
 | 📄 **Minhas publicações** | Aba dedicada com FAB de publicar, busca local e sincronização reativa (backfill automático) |
 | 👤 **Perfil / Conta** | Edição inline de nome, telefone e endereço; exclusão de conta com confirmação em duas etapas e sem deixar pets órfãos |
 
@@ -59,8 +61,9 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | image_picker | ^1.1.2 | Seleção de fotos no formulário |
 | url_launcher | ^6.3.1 | Contato via WhatsApp |
 | google_fonts | ^8.1.0 | Fonte Poppins |
+| share_plus | ^13.3.0 | Compartilhamento de pets (share sheet) |
 | flutter_lints | ^6.0.0 | Qualidade de código |
-| flutter_test | SDK | 150 testes automatizados |
+| flutter_test | SDK | 174 testes automatizados |
 
 Versão atual do app: **1.0.0+1** · Orientação fixa **retrato**.
 
@@ -128,7 +131,7 @@ flutter run
 ### Testes
 
 ```bash
-flutter test        # 150 testes
+flutter test        # 174 testes
 flutter analyze     # sem issues
 ```
 
@@ -136,12 +139,13 @@ flutter analyze     # sem issues
 
 ## Status do projeto
 
-Em desenvolvimento ativo. O backbone (auth, backend, feed paginado, busca e
-filtros) está funcional; a busca e o filtro da Home exigem os índices
-compostos no console do Firestore (`searchTokens` já criado; `specifications`
-a criar). Faltam: edição de pet, edição de e-mail/senha, troca de avatar,
-GPS, permissões/fotos com Storage ativo e polish (compartilhar). Suíte com
-150 testes. O plano detalhado está em [`BACKLOG.txt`](./BACKLOG.txt).
+Em desenvolvimento ativo. O backbone (auth, backend, feed paginado, busca,
+filtros, edição/exclusão de pets e compartilhamento) está funcional; a busca
+e o filtro da Home exigem os índices compostos no console do Firestore
+(`searchTokens` já criado; `specifications` a criar). Faltam: edição de
+e-mail/senha, troca de avatar, GPS, permissões/fotos com Storage ativo e
+paginação da busca. Suíte com 174 testes. O plano detalhado está em
+[`BACKLOG.txt`](./BACKLOG.txt).
 
 ---
 

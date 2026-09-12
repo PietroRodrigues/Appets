@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/models/enums/enums_app.dart';
@@ -459,6 +460,114 @@ void main() {
       );
 
       expect(pet.speciesRaceLabel, 'Cachorro · Poodle');
+    });
+  });
+
+  group('shareText extension', () {
+    test('adoção: anúncio completo procurando um novo lar', () {
+      const pet = Pet(
+        id: 'pet_001',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: 'Rua das Flores, 123',
+        description: 'Muito dócil.',
+        publicationType: AppPetPublicationType.adoption,
+        species: AppPetSpecies.dog,
+        race: 'Poodle',
+        ownerPhone: '(11) 99999-0000',
+        images: [],
+      );
+
+      final expected = [
+        '🐾 Rex está procurando um novo lar!',
+        '',
+        '💰 Adoção',
+        'Cachorro · Poodle · 2 anos · Macho',
+        '',
+        'Muito dócil.',
+        '',
+        '📍 Rua das Flores, 123',
+        '📞 (11) 99999-0000',
+        '',
+        '📲 Entre em contato direto no APPets',
+      ].join('\n');
+
+      expect(pet.shareText, expected);
+    });
+
+    test('perdido: apelo mostrando que o dono procura o pet', () {
+      const pet = Pet(
+        id: 'pet_002',
+        ownerId: 'user_001',
+        name: 'Luna',
+        age: 6,
+        ageUnit: AppPetAgeUnit.months,
+        gender: AppPetGender.female,
+        address: 'Campinas',
+        description: 'Luna é muito carinhosa.',
+        publicationType: AppPetPublicationType.lost,
+        species: AppPetSpecies.cat,
+        race: 'Persa',
+        ownerPhone: '(19) 98888-7777',
+        images: [],
+      );
+
+      final expected = [
+        '🐾 AJUDA! Encontre o Luna!',
+        '',
+        '⚠️ Perdido',
+        'Gato · Persa · 6 meses · Fêmea',
+        '',
+        'Luna é muito carinhosa.',
+        '',
+        '📍 Foi visto na região de: Campinas',
+        '📞 Se encontrar, entre em contato: (19) 98888-7777',
+        '',
+        '📲 Entre em contato direto no APPets',
+      ].join('\n');
+
+      expect(pet.shareText, expected);
+    });
+
+    test('sem raça mantém apenas a espécie na identidade', () {
+      const pet = Pet(
+        id: 'pet_003',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        publicationType: AppPetPublicationType.adoption,
+        species: AppPetSpecies.dog,
+        images: [],
+      );
+
+      expect(pet.shareText, contains('Cachorro · 2 anos · Macho'));
+      expect(pet.shareText, isNot(contains('· ·')));
+    });
+
+    test('sem descrição, sem endereço e sem telefone omite as linhas', () {
+      const pet = Pet(
+        id: 'pet_004',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: '   ',
+        publicationType: AppPetPublicationType.lost,
+        species: AppPetSpecies.dog,
+        images: [],
+      );
+
+      expect(pet.shareText, isNot(contains('Muito dócil')));
+      expect(pet.shareText, isNot(contains('📍')));
+      expect(pet.shareText, isNot(contains('📞')));
+      expect(pet.shareText, endsWith(PetDetailsStrings.SHARE_FOOTER));
     });
   });
 
