@@ -116,8 +116,8 @@ class Pet {
   // Converte o pet em um mapa para atualização no Firestore.
   //
   // Diferente do [toMap]: não grava `id`, `ownerId` nem `createdAt`
-  // (evita reordernar o feed) e não toca em `images`, que são gerenciadas
-  // à parte pelo fluxo de fotos.
+  // (evita reordenar o feed) e não inclui `images` (quem as altera é o
+  // fluxo de fotos, que atualiza o campo em um update separado).
   Map<String, dynamic> toUpdateMap() {
     return {
       'name': name,

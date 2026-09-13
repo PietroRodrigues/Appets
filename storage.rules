@@ -1,0 +1,30 @@
+rules_version = '2';
+service firebase.storage {
+  // Funções auxiliares (mesmo padrão das regras do Firestore).
+  function isSignedIn() {
+    return request.auth != null;
+  }
+  function isOwner(ownerId) {
+    return isSignedIn() && request.auth.uid == ownerId;
+  }
+
+  match /b/{bucket}/o {
+    // Todas as fotos ficam em: pets/{ownerId}/{petId}/photo_X.jpg.
+    // O ownerId no caminho permite exigir que cada um só mexa nos seus.
+    match /pets/{ownerId}/{petId}/{fileName} {
+      // LEITURA: qualquer usuário logado pode ver/obter URL
+      // (mesmo comportamento do Firestore: read se logado).
+      allow read: if isSignedIn();
+
+      // ESCRITA (upload): só o DONO, e só imagens de até 5 MB.
+      // ATENÇÃO: request.resource só existe em create/update; em delete
+      // é null — por isso o delete tem regra própria abaixo.
+      allow write: if isOwner(ownerId)
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      // DELETE: só o dono (sem validar request.resource, que é null).
+      allow delete: if isOwner(ownerId);
+    }
+  }
+}

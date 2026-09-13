@@ -421,7 +421,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
       final myPets = await petService.getPetsByOwner(uid);
       for (final pet in myPets) {
         if (pet.images.isNotEmpty) {
-          await storageService.deletePetImages(pet.id, pet.images.length);
+          await storageService.deletePetImagesByUrls(pet.images);
         }
         await petService.deletePet(pet.id);
       }

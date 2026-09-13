@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -90,8 +91,9 @@ void main() {
       expect(publishButtonColor(tester), ThemeColors.disabled);
     });
 
-    testWidgets('botão fica verde quando o formulário está completo e o '
-        '"Sobre o pet" vazio não bloqueia', (tester) async {
+    testWidgets('botão fica cinza sem foto mesmo com formulário preenchido', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
 
       // Nome válido.
@@ -111,7 +113,33 @@ void main() {
       );
       await tester.pump();
 
-      expect(publishButtonColor(tester), ThemeColors.success);
+      // Sem fotos, o botão permanece cinza (barreira de fotos).
+      expect(publishButtonColor(tester), ThemeColors.disabled);
+    });
+
+    testWidgets('exibe dica de foto obrigatória quando falta apenas a foto', (
+      tester,
+    ) async {
+      await tester.pumpWidget(createTestWidget());
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Digite o nome do pet'),
+        'Rex',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex.: (11) 98765-4321'),
+        '11987654321',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Digite o endereço'),
+        'São Paulo',
+      );
+      await tester.pump();
+
+      expect(
+        find.text(PublishStrings.PHOTO_REQUIRED_HINT),
+        findsOneWidget,
+      );
     });
 
     testWidgets('botão continua cinza com celular inválido (fixo/10 dígitos)', (
@@ -199,5 +227,69 @@ void main() {
       final color = button.style?.backgroundColor?.resolve(<WidgetState>{});
       expect(color, ThemeColors.success);
     });
+
+    testWidgets('carrega as fotos existentes do pet nos slots', (tester) async {
+      final pet = Pet(
+        id: 'pet_001',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        ownerPhone: '(11) 98765-4321',
+        ownerAddress: 'São Paulo',
+        description: 'Muito dócil.',
+        publicationType: AppPetPublicationType.lost,
+        species: AppPetSpecies.dog,
+        race: 'Poodle',
+        images: _networkImages(5),
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: WGPublishPetForm(pet: pet)),
+      ));
+
+      // Uma foto existente por slot -> um botão de remover (X) para cada.
+      expect(find.byIcon(Icons.close), findsNWidgets(5));
+    });
+
+    testWidgets('excluir foto existente pede confirmação antes de remover', (
+      tester,
+    ) async {
+      final pet = Pet(
+        id: 'pet_001',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        ownerPhone: '(11) 98765-4321',
+        ownerAddress: 'São Paulo',
+        description: 'Muito dócil.',
+        publicationType: AppPetPublicationType.lost,
+        species: AppPetSpecies.dog,
+        race: 'Poodle',
+        images: _networkImages(3),
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: WGPublishPetForm(pet: pet)),
+      ));
+
+      await tester.tap(find.byIcon(Icons.close).first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(PublishStrings.PHOTO_REMOVE_TITLE),
+        findsOneWidget,
+      );
+    });
   });
+}
+
+/// URLs remotas fictícias usadas como fotos já publicadas em testes.
+List<String> _networkImages(int count) {
+  return [
+    for (int i = 0; i < count; i++) 'https://exemplo.com/foto_$i.jpg',
+  ];
 }

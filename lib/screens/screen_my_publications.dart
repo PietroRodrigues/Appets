@@ -4,6 +4,7 @@ import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/utils/pet_filters_controller.dart';
 import 'package:appets/core/utils/search_query_controller.dart';
@@ -72,6 +73,9 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
 
   // Confirma e exclui uma publicação, refletindo na grade automaticamente
   // (o `remove` dispara o notifier `myPetIds`, que recarrega a grade).
+  //
+  // As fotos do pet também são removidas do Storage (melhor esforço),
+  // mesmo padrão da exclusão de conta.
   Future<void> _deletePet(Pet pet) async {
     final confirmed = await WGDialog.showConfirm(
       context,
@@ -83,6 +87,9 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
 
     try {
       final uid = AuthService.instance.currentUser?.uid;
+      if (pet.images.isNotEmpty) {
+        await StorageService.instance.deletePetImagesByUrls(pet.images);
+      }
       await PetService.instance.deletePet(pet.id);
       if (uid != null) {
         // Best-effort: se a persistência falhar, o ID órfão é limpo

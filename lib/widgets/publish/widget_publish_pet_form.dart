@@ -9,6 +9,7 @@ import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -31,8 +32,8 @@ import 'package:flutter/material.dart';
 /// confirmação de descarte ao voltar.
 ///
 /// Sem [pet], opera em modo publicação (cria um pet novo). Com [pet],
-/// opera em modo edição: pré-preenche os dados e atualiza [pet] ao salvar
-/// (as fotos permanecem intocadas, já que o Storage ainda está bloqueado).
+/// opera em modo edição: pré-preenche os dados e as fotos existentes,
+/// permitindo remover, substituir ou adicionar imagens ao salvar.
 class WGPublishPetForm extends StatefulWidget {
   const WGPublishPetForm({super.key, this.pet});
 
@@ -113,6 +114,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     _selectedAgeValue = pet.age;
     _selectedAgeUnit = pet.ageUnit;
     _selectedPublicationType = pet.publicationType;
+    _imagePaths = List<String>.of(pet.images);
   }
 
   // Carrega o contato da conta do dono para pré-preencher os campos.
@@ -235,8 +237,65 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     );
   }
 
-  /// Salva o pet: publica um novo (sem [pet]) ou atualiza os dados do
-  /// existente (com [pet]). As fotos não são alteradas na edição.
+  /// Indica se o valor é uma URL remota (foto já existente) ou um
+  /// caminho local (foto recém selecionada).
+  bool _isNetworkUrl(String value) {
+    return value.startsWith('http://') || value.startsWith('https://');
+  }
+
+  /// Aplica as alterações de fotos de um pet em edição diretamente no
+  /// Storage, devolvendo a lista final de URLs na ordem da grade.
+  ///
+  /// Fotos mantidas permanecem como estão; remoções apagam os arquivos do
+  /// Storage; novas são enviadas com índice após as atuais (evita colisão
+  /// de nomes mesmo depois de remoções intermediárias).
+  Future<List<String>> _applyPhotoChanges(
+    String ownerId,
+    String petId,
+  ) async {
+    final originalUrls = widget.pet!.images;
+    final keptUrls = <String>[];
+    final newPaths = <String>[];
+
+    for (final entry in _imagePaths) {
+      if (_isNetworkUrl(entry)) {
+        keptUrls.add(entry);
+      } else {
+        newPaths.add(entry);
+      }
+    }
+
+    // Remove do Storage as imagens que saíram da grade (se houver).
+    final removedUrls =
+        originalUrls.where((url) => !keptUrls.contains(url)).toList();
+    if (removedUrls.isNotEmpty) {
+      await StorageService.instance.deletePetImagesByUrls(removedUrls);
+    }
+
+    // Novas fotos sobem após os índices atuais (nunca colidem com os
+    // arquivos existentes, mesmo que a ordem tenha mudado).
+    final finalImages = <String>[];
+    int nextIndex = originalUrls.length;
+    for (final entry in _imagePaths) {
+      if (_isNetworkUrl(entry)) {
+        finalImages.add(entry);
+      } else {
+        final url = await StorageService.instance.uploadPetImage(
+          ownerId,
+          petId,
+          nextIndex,
+          File(entry),
+        );
+        nextIndex++;
+        finalImages.add(url);
+      }
+    }
+
+    return finalImages;
+  }
+
+  /// Salva o pet: publica um novo (sem [pet]) ou atualiza os dados e as
+  /// fotos do existente (com [pet]).
   void _savePet() async {
     if (_isSaving) return;
 
@@ -247,6 +306,11 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     // cadastro antes de validar os demais campos (evita erros confusos).
     if (!_hasContactFilled) {
       _redirectToCompleteProfile();
+      return;
+    }
+
+    // Barreira de fotos: exige ao menos 1 foto para publicar/editar.
+    if (_imagePaths.isEmpty) {
       return;
     }
 
@@ -272,9 +336,16 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
             try {
               final String petId;
               if (_isEditing) {
-                // Atualiza apenas os dados; as fotos ficam intocadas.
-                await PetService.instance.updatePet(pet.id, pet.toUpdateMap());
+                // Atualiza dados e fotos (mantidas/removidas/novas).
                 petId = pet.id;
+                final finalImages = await _applyPhotoChanges(
+                  user.uid,
+                  petId,
+                );
+                await PetService.instance.updatePet(petId, {
+                  ...pet.toUpdateMap(),
+                  'images': finalImages,
+                });
               } else {
                 // 1. Criar pet no Firestore
                 petId = await PetService.instance.createPet(pet);
@@ -284,10 +355,11 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                 //    (ex.: ainda não configurado no Firebase), desfaz a
                 //    publicação criada para não deixar um pet órfão sem fotos.
                 if (_imagePaths.isNotEmpty) {
+                  final imageUrls = <String>[];
                   try {
-                    final imageUrls = <String>[];
                     for (int i = 0; i < _imagePaths.length; i++) {
                       final url = await StorageService.instance.uploadPetImage(
+                        user.uid,
                         petId,
                         i,
                         File(_imagePaths[i]),
@@ -299,6 +371,12 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                     });
                   } catch (_) {
                     try {
+                      // Desfaz também os uploads que já aconteceram antes
+                      // da falha, para não deixar fotos órfãs no Storage.
+                      if (imageUrls.isNotEmpty) {
+                        await StorageService.instance
+                            .deletePetImagesByUrls(imageUrls);
+                      }
                       await PetService.instance.deletePet(petId);
                       await MyPublicationsService.instance.remove(
                         user.uid,
@@ -373,9 +451,8 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
       _phoneController.text.trim().isNotEmpty &&
       _addressController.text.trim().isNotEmpty;
 
-  // Indica se o formulário está completo para publicar. Usado apenas
-  // para a cor do botão; os erros de campo só aparecem ao publicar.
-  bool get _isFormComplete {
+  // Indica se os campos obrigatórios (à exceção das fotos) estão ok.
+  bool get _requiredFieldsFilled {
     if ((_nameController.text.trim().length) < 2) return false;
     if (AppValidators.validateCellPhone(_phoneController.text) != null) {
       return false;
@@ -383,6 +460,12 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     if (_addressController.text.trim().isEmpty) return false;
     return true;
   }
+
+  // Indica se o formulário está completo para publicar/editar — isso
+  // inclui a exigência de pelo menos 1 foto. Usado apenas para a cor do
+  // botão; os erros de campo só aparecem ao salvar.
+  bool get _isFormComplete =>
+      _imagePaths.isNotEmpty && _requiredFieldsFilled;
 
   // Recalcula o estado para atualizar a cor do botão ao digitar.
   void _onFieldChanged(String _) {
@@ -468,6 +551,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                 description: PublishStrings.photosGridDescription(
                   _maximumImageCount,
                 ),
+                initialImageUrls: widget.pet?.images ?? const [],
                 maxImages: _maximumImageCount,
                 onChanged: _onImageSlotsChanged,
               ),
@@ -638,6 +722,18 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                     ? ThemeColors.success
                     : ThemeColors.disabled,
               ),
+
+              // Dica da barreira de fotos: só aparece quando a foto é o
+              // único requisito faltando.
+              if (_requiredFieldsFilled && _imagePaths.isEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  PublishStrings.PHOTO_REQUIRED_HINT,
+                  style: ThemeTextStyles.caption.copyWith(
+                    color: ThemeColors.textSecondary,
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 20),
             ],

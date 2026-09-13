@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:appets/core/constants/constants_strings_publish.dart';
-import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
@@ -19,12 +18,17 @@ import 'package:image_picker/image_picker.dart';
 /// - Quando todos os [maxImages] slots estão preenchidos,
 ///   nenhum vazio extra aparece.
 ///
+/// Os slots podem conter tanto URLs remotas (fotos já existentes,
+/// exibidas em modo edição) quanto caminhos locais (fotos recém
+/// selecionadas da galeria).
+///
 /// Notifica o pai a cada alteração através de [onChanged].
 class WGImageSlotsGrid extends StatefulWidget {
   const WGImageSlotsGrid({
     super.key,
     this.title,
     this.description,
+    this.initialImageUrls = const [],
     this.maxImages = 5,
     this.onChanged,
   });
@@ -37,11 +41,15 @@ class WGImageSlotsGrid extends StatefulWidget {
   /// Descrição opcional exibida abaixo do título.
   final String? description;
 
+  /// URLs das fotos já existentes (modo edição), carregadas nos slots
+  /// no momento da criação da grade.
+  final List<String> initialImageUrls;
+
   /// Quantidade máxima de fotos permitida.
   final int maxImages;
 
   /// Notifica as alterações nos slots
-  /// (caminhos das imagens selecionadas).
+  /// (URLs das imagens existentes ou caminhos das recém selecionadas).
   final ValueChanged<List<String>>? onChanged;
 
   @override
@@ -49,16 +57,23 @@ class WGImageSlotsGrid extends StatefulWidget {
 }
 
 class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
-  // Controle temporário: enquanto o Storage não está ativo, a seleção de
-  // fotos fica bloqueada por uma barreira visual. Ao ativar o Storage,
-  // mude para `true` para reativar a seleção sem tocar no restante do código.
-  static const bool _photosEnabled = false;
-
-  // Lista de caminhos das imagens selecionadas.
-  final List<String> _imagePaths = [];
+  // Lista de caminhos/URLs das imagens exibidas nos slots.
+  late final List<String> _imagePaths;
 
   // Controlador do image_picker.
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _imagePaths = List<String>.of(widget.initialImageUrls);
+  }
+
+  // Indica se o slot contém uma URL remota (foto já existente) em vez de
+  // um caminho local de arquivo (foto recém selecionada).
+  bool _isNetworkUrl(String value) {
+    return value.startsWith('http://') || value.startsWith('https://');
+  }
 
   // ACTIONS
 
@@ -156,14 +171,43 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
     );
   }
 
-  /// Miniatura da imagem selecionada.
+  /// Miniatura da imagem do slot (URL remota ou arquivo local).
   Widget _buildImagePreview(int index, bool isMainImage) {
+    final value = _imagePaths[index];
+
+    final Widget image = _isNetworkUrl(value)
+        ? Image.network(
+            value,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) =>
+                _buildMissingImage(ThemeColors.border),
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: ThemeColors.primary,
+                  ),
+                ),
+              );
+            },
+          )
+        : Image.file(
+            File(value),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) =>
+                _buildMissingImage(ThemeColors.border),
+          );
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(11),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.file(File(_imagePaths[index]), fit: BoxFit.cover),
+          image,
           if (isMainImage)
             Positioned(
               top: 4,
@@ -208,6 +252,14 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
     );
   }
 
+  /// Placeholder exibido quando uma imagem não consegue carregar.
+  Widget _buildMissingImage(Color color) {
+    return ColoredBox(
+      color: ThemeColors.surface,
+      child: Icon(Icons.pets, size: 32, color: color),
+    );
+  }
+
   /// Placeholder vazio com ícone e texto.
   Widget _buildPlaceholder(bool isMainImage, int index) {
     return Column(
@@ -229,69 +281,6 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
                 ? ThemeColors.primary
                 : ThemeColors.textSecondary,
             fontWeight: isMainImage ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Grade de slots envolvida por uma barreira de bloqueio enquanto as
-  /// fotos não estão habilitadas (Storage inativo).
-  ///
-  /// A barreira mantém a grade visível, mas absorve todos os toques
-  /// (impedindo adicionar/remover foto) e exibe a mensagem "em
-  /// desenvolvimento". A lógica de seleção permanece intacta; basta
-  /// ligar [_photosEnabled] para reativar a interação.
-  Widget _buildGridWithBarrier() {
-    if (_photosEnabled) return _buildGrid();
-
-    return Stack(
-      children: [
-        _buildGrid(),
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {},
-            child: Container(
-              decoration: BoxDecoration(
-                color: ThemeColors.surface.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: ThemeColors.primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.lock_outline,
-                      color: ThemeColors.white,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        SharedStrings.featureInDevelopment(
-                          PublishStrings.PHOTOS_TITLE,
-                        ),
-                        style: const TextStyle(
-                          color: ThemeColors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ),
         ),
       ],
@@ -323,7 +312,7 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
   @override
   Widget build(BuildContext context) {
     if (widget.title == null && widget.description == null) {
-      return _buildGridWithBarrier();
+      return _buildGrid();
     }
 
     return Column(
@@ -341,7 +330,7 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
 
         const SizedBox(height: 12),
 
-        _buildGridWithBarrier(),
+        _buildGrid(),
       ],
     );
   }

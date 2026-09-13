@@ -9,7 +9,7 @@ class PublishStrings {
       'Informe os dados para publicar o pet.';
 
   static const EDIT_PET_DESCRIPTION =
-      'Ajuste os dados publicados do pet. As fotos não mudam por enquanto.';
+      'Ajuste os dados e as fotos publicados do pet.';
 
   static const DISCARD_TITLE = 'Descartar alterações?';
 
@@ -93,6 +93,9 @@ class PublishStrings {
       'Atualizar todas as publicações com o telefone novo?';
 
   // ── Fotos ──────────────────────────────────────────────
+
+  static const PHOTO_REQUIRED_HINT =
+      'Adicione pelo menos uma foto para continuar.';
 
   static const PHOTO_REMOVE_TITLE = 'Remover foto?';
 

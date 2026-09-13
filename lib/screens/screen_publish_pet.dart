@@ -9,8 +9,8 @@ import 'package:flutter/material.dart';
 /// Tela para publicar um novo pet ou editar um pet já publicado.
 ///
 /// Com [pet] nulo, publica um novo pet; com [pet] informado, edita os
-/// dados do pet existente (as fotos não mudam). Apenas o shell (cabeçalho
-/// e rolagem); todos os campos e a lógica ficam em [WGPublishPetForm].
+/// dados e as fotos do pet existente. Apenas o shell (cabeçalho e
+/// rolagem); todos os campos e a lógica ficam em [WGPublishPetForm].
 class PublishPetScreen extends StatelessWidget {
   const PublishPetScreen({super.key, this.pet});
 
