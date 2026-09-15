@@ -14,6 +14,10 @@ import 'package:appets/core/theme/theme_text_styles.dart';
 ///
 /// Com [isDestructive], ícone e título usam a cor de erro
 /// (estilo da opção "Desconectar").
+///
+/// Com [enabled] `false`, o tile fica visível porém bloqueado:
+/// ícone, título, subtítulo e seta ficam acinzentados
+/// ([ThemeColors.disabled]) e o toque não dispara [onTap].
 class WGOptionTile extends StatelessWidget {
   const WGOptionTile({
     super.key,
@@ -23,6 +27,7 @@ class WGOptionTile extends StatelessWidget {
     this.subtitle,
     this.isDestructive = false,
     this.filled = true,
+    this.enabled = true,
   });
 
   // PROPERTIES
@@ -35,9 +40,19 @@ class WGOptionTile extends StatelessWidget {
   final bool isDestructive;
   final bool filled;
 
+  /// Quando `false`, o tile aparece visível porém bloqueado.
+  final bool enabled;
+
   // UI
   Color get _accentColor {
     return isDestructive ? ThemeColors.error : ThemeColors.primary;
+  }
+
+  Color get _iconColor => enabled ? _accentColor : ThemeColors.disabled;
+
+  Color get _titleColor {
+    if (!enabled) return ThemeColors.disabled;
+    return isDestructive ? ThemeColors.error : ThemeColors.textPrimary;
   }
 
   Widget _buildIcon() {
@@ -45,10 +60,10 @@ class WGOptionTile extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: _accentColor.withValues(alpha: 0.12),
+        color: _iconColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(icon, color: _accentColor),
+      child: Icon(icon, color: _iconColor),
     );
   }
 
@@ -57,7 +72,7 @@ class WGOptionTile extends StatelessWidget {
     if (!filled) {
       return Center(
         child: InkWell(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -73,9 +88,7 @@ class WGOptionTile extends StatelessWidget {
                 Text(
                   title,
                   style: ThemeTextStyles.subtitle.copyWith(
-                    color: isDestructive
-                        ? ThemeColors.error
-                        : ThemeColors.textPrimary,
+                    color: _titleColor,
                   ),
                 ),
               ],
@@ -91,7 +104,7 @@ class WGOptionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -110,14 +123,17 @@ class WGOptionTile extends StatelessWidget {
                     Text(
                       title,
                       style: ThemeTextStyles.subtitle.copyWith(
-                        color: isDestructive
-                            ? ThemeColors.error
-                            : ThemeColors.textPrimary,
+                        color: _titleColor,
                       ),
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 2),
-                      Text(subtitle!, style: ThemeTextStyles.caption),
+                      Text(
+                        subtitle!,
+                        style: ThemeTextStyles.caption.copyWith(
+                          color: enabled ? null : ThemeColors.disabled,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -126,7 +142,10 @@ class WGOptionTile extends StatelessWidget {
               const SizedBox(width: 8),
 
               // SETA
-              const Icon(Icons.chevron_right_outlined, color: ThemeColors.hint),
+              Icon(
+                Icons.chevron_right_outlined,
+                color: enabled ? ThemeColors.hint : ThemeColors.disabled,
+              ),
             ],
           ),
         ),

@@ -60,5 +60,30 @@ class ProfileStrings {
 
   static const CHANGE_PASSWORD_FEATURE = 'Alteração de senha';
 
+  // ── Alterar senha ──────────────────────────────────────
+
+  static const CHANGE_PASSWORD_GOOGLE_HINT =
+      'Disponível apenas para contas com senha';
+
+  static const CHANGE_PASSWORD_CURRENT_MESSAGE =
+      'Digite sua senha atual para continuar';
+
+  static const CHANGE_PASSWORD_CURRENT_HINT = 'Senha atual';
+
+  static const CHANGE_PASSWORD_NEW_MESSAGE =
+      'Escolha a nova senha (mínimo 6 caracteres)';
+
+  static const CHANGE_PASSWORD_NEW_HINT = 'Nova senha';
+
+  static const CHANGE_PASSWORD_CONFIRM_MESSAGE =
+      'Digite novamente a nova senha para confirmar';
+
+  static const CHANGE_PASSWORD_CONFIRM_HINT = 'Confirme a nova senha';
+
+  static const CHANGE_PASSWORD_SUCCESS = 'Senha alterada com sucesso!';
+
+  static const CHANGE_PASSWORD_ERROR =
+      'Não foi possível alterar a senha. Tente novamente.';
+
   static const DANGER_ZONE = 'Gerenciar conta';
 }

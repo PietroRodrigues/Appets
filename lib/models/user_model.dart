@@ -57,10 +57,10 @@ class UserModel {
   }
 
   // Cria um usuário a partir da conta autenticada do Firebase Auth.
-  factory UserModel.fromFirebaseUser(fb.User user) {
+  factory UserModel.fromFirebaseUser(fb.User user, {String? name}) {
     return UserModel(
       id: user.uid,
-      name: user.displayName ?? '',
+      name: name ?? user.displayName ?? '',
       email: user.email ?? '',
       photoUrl: user.photoURL ?? '',
     );

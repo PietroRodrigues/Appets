@@ -90,6 +90,10 @@ void main() {
       expect(service.currentUser!.displayName, 'Ana Silva');
     });
 
+    test('updatePassword conclui com o usuário logado', () async {
+      await service.updatePassword('654321');
+    });
+
     test('deleteAccount exclui a conta logada', () async {
       await service.deleteAccount();
     });

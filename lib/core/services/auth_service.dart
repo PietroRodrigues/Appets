@@ -76,6 +76,11 @@ class AuthService {
     await _auth.currentUser?.updateDisplayName(name);
   }
 
+  // Atualiza a senha do usuário logado.
+  Future<void> updatePassword(String newPassword) async {
+    await _auth.currentUser?.updatePassword(newPassword);
+  }
+
   /// Garante a existência do documento do usuário no Firestore.
   ///
   /// Se o documento ainda não existir (ex.: primeiro acesso via Google),

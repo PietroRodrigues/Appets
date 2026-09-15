@@ -63,6 +63,8 @@ class AuthStrings {
 
   static const REGISTER_NAME_HINT = 'Digite seu nome completo';
 
+  static const NAME_REQUIRED = 'Informe seu nome';
+
   static const CONFIRM_PASSWORD = 'Confirmar Senha';
 
   static const CONFIRM_PASSWORD_HINT = 'Digite novamente sua senha';
@@ -79,6 +81,12 @@ class AuthStrings {
 
   static const WEAK_PASSWORD =
       'Senha muito fraca. Use pelo menos 6 caracteres.';
+
+  static const REGISTER_EMAIL_DISABLED =
+      'Cadastro por e-mail está desativado no momento.';
+
+  static const REGISTER_SAVE_ERROR =
+      'Não foi possível salvar seus dados. Tente novamente.';
 
   // ── Recuperação de senha ───────────────────────────────
 

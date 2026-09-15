@@ -86,15 +86,6 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
   // ACTIONS
 
-  /// Exibe aviso de recurso em desenvolvimento.
-  void _showDevelopmentMessage(String feature) {
-    WGDialog.showAction(
-      context,
-      title: SharedStrings.DEVELOPMENT_TITLE,
-      message: SharedStrings.featureInDevelopment(feature),
-    );
-  }
-
   // Superfície para edição inline do tile indicado.
   void _startEditing(String field) {
     setState(() {
@@ -426,7 +417,92 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
     );
   }
 
+  /// Fluxo de alteração de senha: reautentica, valida a nova senha
+  /// em duas etapas e atualiza a senha no Firebase Auth.
+  Future<void> _onChangePasswordPressed() async {
+    // Passo 1 — reautentica com a senha atual.
+    final currentPassword = await WGDialog.showInput(
+      context,
+      title: ProfileStrings.CHANGE_PASSWORD,
+      message: ProfileStrings.CHANGE_PASSWORD_CURRENT_MESSAGE,
+      hintText: ProfileStrings.CHANGE_PASSWORD_CURRENT_HINT,
+      prefixIcon: Icons.lock_outline,
+      obscureText: true,
+      validator: (value) => (value?.trim().isEmpty ?? true)
+          ? AuthStrings.PASSWORD_REQUIRED
+          : null,
+    );
+    if (currentPassword == null || !mounted) return;
+
+    try {
+      await AuthService.instance.reauthenticateWithPassword(currentPassword);
+    } on FirebaseAuthException {
+      if (!mounted) return;
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.ERROR_TITLE,
+        message: AuthStrings.WRONG_PASSWORD_MESSAGE,
+        actionColor: ThemeColors.error,
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    // Passo 2 — define a nova senha (mínimo 6 caracteres).
+    final newPassword = await WGDialog.showInput(
+      context,
+      title: ProfileStrings.CHANGE_PASSWORD,
+      message: ProfileStrings.CHANGE_PASSWORD_NEW_MESSAGE,
+      hintText: ProfileStrings.CHANGE_PASSWORD_NEW_HINT,
+      prefixIcon: Icons.lock_outline,
+      obscureText: true,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return AuthStrings.PASSWORD_REQUIRED;
+        }
+        if (value.length < 6) return AuthStrings.PASSWORD_MIN_LENGTH;
+        return null;
+      },
+    );
+    if (newPassword == null || !mounted) return;
+
+    // Passo 3 — confirmação: a repetição deve coincidir com a nova senha.
+    final confirmation = await WGDialog.showInput(
+      context,
+      title: ProfileStrings.CHANGE_PASSWORD,
+      message: ProfileStrings.CHANGE_PASSWORD_CONFIRM_MESSAGE,
+      hintText: ProfileStrings.CHANGE_PASSWORD_CONFIRM_HINT,
+      prefixIcon: Icons.lock_outline,
+      obscureText: true,
+      validator: (value) =>
+          value != newPassword ? AuthStrings.PASSWORD_MISMATCH : null,
+    );
+    if (confirmation == null || !mounted) return;
+
+    try {
+      await AuthService.instance.updatePassword(newPassword);
+      if (!mounted) return;
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.SUCCESS_TITLE,
+        message: ProfileStrings.CHANGE_PASSWORD_SUCCESS,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.ERROR_TITLE,
+        message: ProfileStrings.CHANGE_PASSWORD_ERROR,
+        actionColor: ThemeColors.error,
+      );
+    }
+  }
+
   // UI
+
+  /// Apenas contas criadas com e-mail/senha podem trocar a senha.
+  bool get _canChangePassword => AuthService.instance.usesPasswordProvider;
 
   // Constrói a tela de dados da conta (loading ou conteúdo).
   @override
@@ -530,9 +606,11 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                     WGOptionTile(
                       icon: Icons.lock_outline,
                       title: ProfileStrings.CHANGE_PASSWORD,
-                      onTap: () => _showDevelopmentMessage(
-                        ProfileStrings.CHANGE_PASSWORD_FEATURE,
-                      ),
+                      subtitle: _canChangePassword
+                          ? null
+                          : ProfileStrings.CHANGE_PASSWORD_GOOGLE_HINT,
+                      enabled: _canChangePassword,
+                      onTap: _onChangePasswordPressed,
                     ),
 
                     const SizedBox(height: 32),
