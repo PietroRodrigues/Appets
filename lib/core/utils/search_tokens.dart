@@ -67,3 +67,25 @@ bool containsTokens(String text, String term) {
   if (normalizedTerm.isEmpty) return true;
   return normalizedText.contains(normalizedTerm);
 }
+
+/// Divide o termo em palavras pesquisáveis (normalizadas, com 2+
+/// caracteres). Palavras isoladas de 1 caractere são ignoradas, assim
+/// como em [buildSearchTokens].
+List<String> searchWords(String term) {
+  return normalizeText(term)
+      .split(RegExp(r'[^a-z0-9]+'))
+      .where((word) => word.length >= 2)
+      .toList();
+}
+
+/// Verifica se TODAS as palavras de [term] aparecem em [text]
+/// (client-side), permitindo digitação parcial por palavra ("poo"
+/// encontra "poodle"). Insensível a maiúsculas e acentos.
+///
+/// Com [term] vazio (ou contendo só palavras de 1 caractere),
+/// retorna true.
+bool containsAllSearchWords(String text, String term) {
+  final words = searchWords(term);
+  final normalizedText = normalizeText(text);
+  return words.every(normalizedText.contains);
+}

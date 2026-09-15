@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:appets/models/user_model.dart';
 
 /// Opera sobre o documento `users` no Firestore.
@@ -7,7 +8,13 @@ class FirestoreService {
 
   static final FirestoreService instance = FirestoreService._();
 
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore? _debugDb;
+
+  FirebaseFirestore get _db => _debugDb ?? FirebaseFirestore.instance;
+
+  /// Permite injetar um Firestore de teste (ex.: fake_cloud_firestore).
+  @visibleForTesting
+  set debugDb(FirebaseFirestore? db) => _debugDb = db;
 
   // Cria o documento do usuário na coleção `users`.
   Future<void> createUser(UserModel user) async {

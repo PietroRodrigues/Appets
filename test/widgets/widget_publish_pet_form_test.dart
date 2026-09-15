@@ -1,11 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_publish.dart';
+import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/publish/widget_publish_pet_form.dart';
+
+/// Cache que falha na hora: faz o CachedNetworkImage cair no placeholder
+/// imediatamente, sem rede e sem animação infinita nos testes.
+class _FailingCacheManager implements BaseCacheManager {
+  @override
+  Stream<FileResponse> getFileStream(
+    String url, {
+    String? key,
+    Map<String, String>? headers,
+    bool withProgress = false,
+  }) {
+    return Stream<FileResponse>.error(StateError('rede indisponível em testes'));
+  }
+
+  // Métodos não usados pelo CachedNetworkImage nestes testes.
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
 
 void main() {
   group('WGPublishPetForm', () {
@@ -167,6 +187,14 @@ void main() {
   });
 
   group('WGPublishPetForm em modo edição', () {
+    setUp(() {
+      AppImageCache.instance.debugManager = _FailingCacheManager();
+    });
+
+    tearDown(() {
+      AppImageCache.instance.debugManager = null;
+    });
+
     Pet createEditPet() {
       return Pet(
         id: 'pet_001',
@@ -249,8 +277,8 @@ void main() {
         home: Scaffold(body: WGPublishPetForm(pet: pet)),
       ));
 
-      // Uma foto existente por slot -> um botão de remover (X) para cada.
-      expect(find.byIcon(Icons.close), findsNWidgets(5));
+      // A edição trunca para o máximo de 3 slots visíveis (X por slot).
+      expect(find.byIcon(Icons.close), findsNWidgets(3));
     });
 
     testWidgets('excluir foto existente pede confirmação antes de remover', (

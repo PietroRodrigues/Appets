@@ -9,7 +9,6 @@ import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/utils/pet_filters.dart';
-import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/filters/widget_pet_filters_sheet.dart';
@@ -291,29 +290,14 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     }
   }
 
-  /// Filtra uma lista de pets já carregada pelo termo digitado,
-  /// buscando por palavras do nome ou da descrição (insensível a
-  /// maiúsculas e acentos). Equivale ao filtro dos favoritos.
-  List<Pet> _filterBySearch(List<Pet> pets, String searchQuery) {
-    final term = searchQuery.trim();
-    return pets.where((p) {
-      return containsTokens(p.name, term) ||
-          containsTokens(p.description ?? '', term);
-    }).toList();
-  }
-
   /// Autoridade final do resultado: aplica a busca (quando há termo)
   /// e o AND exato por categoria dos filtros às páginas recebidas.
   List<Pet> _applyLocalFilters(List<Pet> pets) {
-    var result = pets;
-    if (_isSearching) {
-      result = _filterBySearch(result, widget.searchQuery);
-    }
-    final options = _activeFilterOptions;
-    if (options.isNotEmpty) {
-      result = result.where((p) => petMatchesFilters(p, options)).toList();
-    }
-    return result;
+    return applyLocalFilters(
+      pets: pets,
+      searchQuery: _isSearching ? widget.searchQuery : '',
+      filterOptions: _activeFilterOptions,
+    );
   }
 
   // ── Recepção de resultados ────────────────────────────────────────
@@ -390,7 +374,8 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
       if (!mounted || id != _loadId) return;
       setState(() {
-        _items = _mergeDeduplicated(_items, page.pets);
+        final filtered = _applyLocalFilters(page.pets);
+        _items = _mergeDeduplicated(_items, filtered);
         _lastDoc = page.lastDoc;
         _hasMore = page.hasMore;
         _isLoadingMore = false;

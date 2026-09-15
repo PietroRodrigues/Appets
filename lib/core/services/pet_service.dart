@@ -1,6 +1,7 @@
 import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
 /// Resultado de uma página paginada de pets.
 class PetsPage {
@@ -25,7 +26,13 @@ class PetService {
   /// Quantidade de pets por página no feed paginado.
   static const int pageSize = 20;
 
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  FirebaseFirestore? _debugDb;
+
+  FirebaseFirestore get _db => _debugDb ?? FirebaseFirestore.instance;
+
+  /// Permite injetar um Firestore de teste (ex.: fake_cloud_firestore).
+  @visibleForTesting
+  set debugDb(FirebaseFirestore? db) => _debugDb = db;
 
   // Retorna os pets publicados por um determinado dono (UID).
   Future<List<Pet>> getPetsByOwner(String ownerId) async {

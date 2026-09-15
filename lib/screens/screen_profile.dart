@@ -98,17 +98,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// Exibe aviso de recurso em desenvolvimento (edição de nome).
-  void _showEditNameInDevelopment() {
-    WGDialog.showAction(
-      context,
-      title: SharedStrings.DEVELOPMENT_TITLE,
-      message: SharedStrings.featureInDevelopment(
-        ProfileStrings.EDIT_NAME_FEATURE,
-      ),
-    );
-  }
-
   // UI
   @override
   Widget build(BuildContext context) {
@@ -150,22 +139,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 24),
 
-                // NOME COM BOTÃO DE EDIÇÃO
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        _user?.name ??
-                            AuthService.instance.currentUser?.displayName ??
-                            HomeStrings.DEFAULT_USER_NAME,
-                        style: ThemeTextStyles.heading,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    _ProfileEditBadge(onTap: _showEditNameInDevelopment),
-                  ],
+                // NOME
+                Text(
+                  _user?.name ??
+                      AuthService.instance.currentUser?.displayName ??
+                      HomeStrings.DEFAULT_USER_NAME,
+                  style: ThemeTextStyles.heading,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 40),
 

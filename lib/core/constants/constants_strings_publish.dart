@@ -106,4 +106,16 @@ class PublishStrings {
   static const MAIN_PHOTO_SLOT = 'Foto principal *';
 
   static String photoSlotLabel(int index) => 'Adicionar foto $index';
+
+  // ── Imagem muito grande ───────────────────────────────
+
+  /// Tamanho máximo (MB) aceito para o arquivo original da foto,
+  /// alinhado com o limite de upload do Storage (5 MB).
+  static const int IMAGE_TOO_LARGE_MAX_MB = 5;
+
+  static const PHOTO_TOO_LARGE_TITLE = 'Imagem muito grande';
+
+  static String photoTooLargeMessage() =>
+      'A imagem selecionada excede $IMAGE_TOO_LARGE_MAX_MB MB. '
+      'Escolha uma imagem menor para continuar.';
 }

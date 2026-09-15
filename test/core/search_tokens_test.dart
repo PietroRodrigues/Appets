@@ -91,4 +91,45 @@ void main() {
       expect(containsTokens('Rex', 'gato'), isFalse);
     });
   });
+
+  group('searchWords', () {
+    test('divide o termo em palavras normalizadas', () {
+      expect(searchWords('  Poodle Preto  '), ['poodle', 'preto']);
+    });
+
+    test('ignora palavras com menos de 2 caracteres', () {
+      expect(searchWords('a e o'), isEmpty);
+      expect(searchWords('Rex a'), ['rex']);
+    });
+  });
+
+  group('containsAllSearchWords', () {
+    test('exige todas as palavras do termo', () {
+      expect(containsAllSearchWords('Poodle preto', 'poodle preto'), isTrue);
+      expect(containsAllSearchWords('Poodle', 'poodle preto'), isFalse);
+      expect(containsAllSearchWords('preto', 'poodle preto'), isFalse);
+    });
+
+    test('palavras em qualquer ordem', () {
+      expect(containsAllSearchWords('preto poodle', 'poodle preto'), isTrue);
+    });
+
+    test('permite digitação parcial por palavra', () {
+      expect(containsAllSearchWords('Poodle dócil', 'poo doci'), isTrue);
+    });
+
+    test('é insensível a maiúsculas e acentos', () {
+      expect(containsAllSearchWords('Dócil', 'docil'), isTrue);
+      expect(containsAllSearchWords('Poodle', 'POODLE'), isTrue);
+    });
+
+    test('retorna true para termo vazio ou sem palavras', () {
+      expect(containsAllSearchWords('Rex', ''), isTrue);
+      expect(containsAllSearchWords('Rex', 'a e'), isTrue);
+    });
+
+    test('retorna false quando falta qualquer palavra', () {
+      expect(containsAllSearchWords('Rex', 'rex gato'), isFalse);
+    });
+  });
 }

@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:appets/core/services/firestore_service.dart';
@@ -10,8 +11,18 @@ class AuthService {
 
   static final AuthService instance = AuthService._();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _google = GoogleSignIn();
+  FirebaseAuth? _debugAuth;
+  GoogleSignIn _google = GoogleSignIn();
+
+  FirebaseAuth get _auth => _debugAuth ?? FirebaseAuth.instance;
+
+  /// Permite injetar um Auth de teste (ex.: firebase_auth_mocks).
+  @visibleForTesting
+  set debugAuth(FirebaseAuth? auth) => _debugAuth = auth;
+
+  /// Permite injetar um Google de teste.
+  @visibleForTesting
+  set debugGoogle(GoogleSignIn google) => _google = google;
 
   /// Usuário autenticado no momento (ou `null`).
   User? get currentUser => _auth.currentUser;

@@ -52,6 +52,7 @@ class _WGPetGalleryState extends State<WGPetGallery> {
                       // do Hero para evitar tags duplicadas.
                       return WGPetImage(
                         url: widget.images[index],
+                        memCacheWidth: 1080,
                         heroTag: widget.heroTag != null && index == 0
                             ? widget.heroTag
                             : null,

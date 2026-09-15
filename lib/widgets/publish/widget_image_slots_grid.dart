@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:appets/core/constants/constants_strings_publish.dart';
+import 'package:appets/core/services/app_image_cache.dart';
+import 'package:appets/core/services/image_compressor.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -29,7 +32,7 @@ class WGImageSlotsGrid extends StatefulWidget {
     this.title,
     this.description,
     this.initialImageUrls = const [],
-    this.maxImages = 5,
+    this.maxImages = 3,
     this.onChanged,
   });
 
@@ -92,14 +95,36 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 80,
+      maxWidth: ImageCompressor.maxDimension.toDouble(),
+      maxHeight: ImageCompressor.maxDimension.toDouble(),
     );
 
-    if (image != null && mounted) {
+    if (image == null || !mounted) return;
+
+    // Bloqueia imagens muito grandes (limite do Storage) antes de comprimir.
+    final maxBytes = PublishStrings.IMAGE_TOO_LARGE_MAX_MB * 1024 * 1024;
+    if (await image.length() > maxBytes) {
+      if (!mounted) return;
+      await WGDialog.showAction(
+        context,
+        title: PublishStrings.PHOTO_TOO_LARGE_TITLE,
+        message: PublishStrings.photoTooLargeMessage(),
+      );
+      return;
+    }
+
+    // Comprime (webp) antes de adicionar ao slot; mantém o original
+    // se a compressão não compensar ou falhar.
+    final File? compressed =
+        await ImageCompressor.compressForUpload(image.path);
+    final String imagePath = (compressed ?? File(image.path)).path;
+
+    if (mounted) {
       setState(() {
         if (index < _imagePaths.length) {
-          _imagePaths[index] = image.path;
+          _imagePaths[index] = imagePath;
         } else {
-          _imagePaths.add(image.path);
+          _imagePaths.add(imagePath);
         }
       });
 
@@ -176,24 +201,23 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
     final value = _imagePaths[index];
 
     final Widget image = _isNetworkUrl(value)
-        ? Image.network(
-            value,
+        ? CachedNetworkImage(
+            imageUrl: value,
+            cacheManager: AppImageCache.instance.manager,
+            memCacheWidth: 480,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) =>
+            errorWidget: (_, _, _) =>
                 _buildMissingImage(ThemeColors.border),
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return const Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: ThemeColors.primary,
-                  ),
+            placeholder: (_, _) => const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: ThemeColors.primary,
                 ),
-              );
-            },
+              ),
+            ),
           )
         : Image.file(
             File(value),

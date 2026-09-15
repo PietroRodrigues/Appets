@@ -40,7 +40,8 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | 🔎 **Busca por tokens** | Home busca no servidor (`arrayContainsAny` sobre `searchTokens`, sem dependência de texto exato); Favoritos e Minhas Publicações filtram client-side |
 | 🎛️ **Filtros** | Espécie, gênero, faixa de idade e tipo (adoção/perdido) em bottom sheet; pré-filtro no servidor + filtro exato no cliente (`petMatchesFilters`); chips ativos com limpeza |
 | 🐕 **Detalhes** | Galeria de fotos, espécie · raça, idade, gênero, endereço, descrição e contato via WhatsApp |
-| ➕ **Publicar** | Formulário com validação, tipo de publicação (adoção/perdido), espécie (9 opções) e gestão de fotos (mínimo 1) |
+| ➕ **Publicar** | Formulário com validação, tipo de publicação (adoção/perdido), espécie (9 opções) e gestão de fotos (mínimo 1, com compressão no upload) |
+| 🖼️ **Imagens otimizadas** | Fotos comprimidas no fluxo (1280px · webp ~150–350KB) com guarda de 5MB alinhada ao `storage.rules`; cache em disco (300 objetos/30d) e miniaturas via `memCacheWidth` (cards 480 · galeria 1080) em feed, favoritos, galeria e detalhe |
 | ✏️ **Editar / Excluir publicação** | Edição no mesmo formulário (dados e fotos) e exclusão com confirmação em Minhas Publicações |
 | ⭐ **Favoritos** | Estado global reativo com atualização otimista, rollback e limpeza de órfãos |
 | 📤 **Compartilhar** | Botão em Detalhes abre o share sheet com um anúncio do pet; o texto varia conforme o tipo (adoção → novo lar; perdido → dono procurando) |
@@ -59,11 +60,14 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | firebase_storage | ^12.4.1 | Upload de imagens dos pets |
 | google_sign_in | ^6.2.2 | Login com conta Google |
 | image_picker | ^1.1.2 | Seleção de fotos no formulário |
+| flutter_image_compress | ^2.3.0 | Compressão das fotos antes do upload (webp) |
+| cached_network_image | ^3.4.1 | Exibição das fotos com cache em memória |
+| flutter_cache_manager | ^3.4.1 | Cache em disco das fotos (AppImageCache) |
 | url_launcher | ^6.3.1 | Contato via WhatsApp |
-| google_fonts | ^8.1.0 | Fonte Poppins |
+| google_fonts | ^8.1.0 | Fonte Poppins (empacotada, sem fetch em runtime) |
 | share_plus | ^13.3.0 | Compartilhamento de pets (share sheet) |
 | flutter_lints | ^6.0.0 | Qualidade de código |
-| flutter_test | SDK | 177 testes automatizados |
+| flutter_test | SDK | 254 testes automatizados |
 
 Versão atual do app: **1.0.0+1** · Orientação fixa **retrato**.
 
@@ -111,6 +115,14 @@ lib/
   publicationType e specifications são persistidos em PT normalizado (sem
   acento); a leitura tolera valores legados em inglês e um backfill isolado
   (`lib/core/backfill/pet_tokens_*`) migra os pets do dono a cada login.
+- **Imagens leves no storage** — as fotos passam pelo picker em 1280px e são
+  comprimidas para webp (melhor qualidade que caiba no teto de ~350KB);
+  arquivos acima de 5MB são bloqueados com aviso, alinhado ao
+  `storage.rules`.
+- **Cache de leitura em duas camadas** — `AppImageCache` (via
+  flutter_cache_manager, 300 objetos com validade de 30 dias) no disco +
+  `CachedNetworkImage` com `memCacheWidth` por superfície (cards 480 ·
+  galeria 1080), evitando re-download e reduzindo a RAM das miniaturas.
 - **UI responsiva** — grid que alterna 1/2/3 colunas conforme a largura,
   tipografia Poppins e widgets reutilizáveis por tema.
 
@@ -131,7 +143,7 @@ flutter run
 ### Testes
 
 ```bash
-flutter test        # 177 testes
+flutter test        # 254 testes
 flutter analyze     # sem issues
 ```
 
@@ -141,11 +153,15 @@ flutter analyze     # sem issues
 
 Em desenvolvimento ativo. O backbone (auth, backend, feed paginado, busca,
 filtros, edição/exclusão de pets e compartilhamento), o **Storage de fotos**
-(caminho por dono, foto obrigatória, edição de imagens) e as **regras de
+(caminho por dono, foto obrigatória, edição de imagens), as **imagens
+otimizadas** (upload 1280px/webp + cache de leitura) e as **regras de
 segurança e índices versionados** (deploy via Firebase CLI) já estão
-funcionais. Faltam: edição de e-mail/senha, troca de avatar, GPS,
-permissão de câmera e paginação da busca. Suíte com 177 testes. O plano
-detalhado está em [`BACKLOG.txt`](./BACKLOG.txt).
+funcionais — inclusive rodando em debug direto no aparelho (o bug de layout
+da aba Perfil que travava a interface em debug foi corrigido, eliminando o
+ANR). Faltam: edição de e-mail/senha, troca de avatar, GPS, permissão de
+câmera e paginação da busca. Suíte com 254 testes (serviços de backend
+cobertos com fakes em memória via `@visibleForTesting`). O plano detalhado
+está em [`BACKLOG.txt`](./BACKLOG.txt).
 
 ---
 

@@ -46,7 +46,7 @@ class WGPublishPetForm extends StatefulWidget {
 
 class _WGPublishPetFormState extends State<WGPublishPetForm> {
   // Quantidade máxima de fotos permitidas.
-  static const int _maximumImageCount = 5;
+  static const int _maximumImageCount = 3;
 
   // Controla a validação do formulário de publicação.
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -114,7 +114,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     _selectedAgeValue = pet.age;
     _selectedAgeUnit = pet.ageUnit;
     _selectedPublicationType = pet.publicationType;
-    _imagePaths = List<String>.of(pet.images);
+    _imagePaths = List<String>.of(pet.images.take(_maximumImageCount));
   }
 
   // Carrega o contato da conta do dono para pré-preencher os campos.
@@ -551,7 +551,9 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                 description: PublishStrings.photosGridDescription(
                   _maximumImageCount,
                 ),
-                initialImageUrls: widget.pet?.images ?? const [],
+                initialImageUrls: (widget.pet?.images ?? const [])
+                  .take(_maximumImageCount)
+                  .toList(),
                 maxImages: _maximumImageCount,
                 onChanged: _onImageSlotsChanged,
               ),

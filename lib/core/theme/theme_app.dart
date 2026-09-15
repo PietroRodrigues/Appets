@@ -8,21 +8,30 @@ class AppTheme {
   AppTheme._();
 
   /// Tema claro do app, com fonte Poppins e cor base primária.
-  static final ThemeData lightTheme = ThemeData(
-    useMaterial3: true,
-    scaffoldBackgroundColor: ThemeColors.background,
+  static final ThemeData lightTheme = _createLightTheme();
 
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: ThemeColors.primary,
-      primary: ThemeColors.primary,
-    ),
+  static ThemeData _createLightTheme() {
+    // Poppins é empacotada como asset (section `fonts` do pubspec): com o
+    // runtime fetching desligado, sem rede no primeiro frame e sem
+    // dependência do Google Fonts API em runtime.
+    GoogleFonts.config.allowRuntimeFetching = false;
 
-    textTheme: GoogleFonts.poppinsTextTheme(),
+    return ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: ThemeColors.background,
 
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-    ),
-  );
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: ThemeColors.primary,
+        primary: ThemeColors.primary,
+      ),
+
+      textTheme: GoogleFonts.poppinsTextTheme(),
+
+      appBarTheme: const AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
+    );
+  }
 }

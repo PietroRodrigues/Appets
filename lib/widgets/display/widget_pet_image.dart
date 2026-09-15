@@ -1,18 +1,25 @@
-import 'package:flutter/material.dart';
-
+import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/theme/theme_colors.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 
 /// Imagem de um pet que aceita tanto URLs remotas (Firebase Storage)
 /// quanto caminhos de assets locais.
 ///
 /// Permite que os dados reais (URLs de armazenamento) sejam exibidos
 /// da mesma forma que os assets usados durante o desenvolvimento.
+///
+/// URLs remotas passam pelo cache em disco ([AppImageCache]): após o
+/// primeiro download a imagem fica local no aparelho. O [memCacheWidth]
+/// controla o tamanho da decodificação em memória conforme a superfície
+/// (cards menores que a galeria).
 class WGPetImage extends StatelessWidget {
   const WGPetImage({
     super.key,
     required this.url,
     this.fit = BoxFit.contain,
     this.heroTag,
+    this.memCacheWidth,
   });
 
   // PROPERTIES
@@ -21,6 +28,10 @@ class WGPetImage extends StatelessWidget {
 
   /// Tag opcional para a animação [Hero].
   final String? heroTag;
+
+  /// Largura usada para decodificar a rede em memória.
+  /// Cards usam ~480; galeria/detalhe usam ~1080.
+  final int? memCacheWidth;
 
   // UI
   bool get _isNetwork {
@@ -43,14 +54,14 @@ class WGPetImage extends StatelessWidget {
     }
 
     if (_isNetwork) {
-      return Image.network(
-        url,
+      return CachedNetworkImage(
+        imageUrl: url,
+        cacheManager: AppImageCache.instance.manager,
+        memCacheWidth: memCacheWidth,
         fit: fit,
-        errorBuilder: (_, _, _) => const _WGPetImagePlaceholder(),
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return const _WGPetImagePlaceholder(showIndicator: true);
-        },
+        errorWidget: (_, _, _) => const _WGPetImagePlaceholder(),
+        placeholder: (_, _) =>
+            const _WGPetImagePlaceholder(showIndicator: true),
       );
     }
 

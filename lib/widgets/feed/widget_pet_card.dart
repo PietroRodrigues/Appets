@@ -210,7 +210,11 @@ class _PetCardImage extends StatelessWidget {
             color: ThemeColors.surface,
             child: Padding(
               padding: const EdgeInsets.all(6),
-              child: WGPetImage(url: url, heroTag: heroTag),
+              child: WGPetImage(
+                url: url,
+                heroTag: heroTag,
+                memCacheWidth: 480,
+              ),
             ),
           ),
         ),

@@ -22,8 +22,6 @@ class ProfileStrings {
 
   static const NAME_LABEL = 'Nome';
 
-  static const EDIT_NAME_FEATURE = 'Edição de nome';
-
   static const EDIT_EMAIL_FEATURE = 'Edição de e-mail';
 
   static const PHONE_LABEL = 'Telefone';

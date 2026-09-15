@@ -1,3 +1,4 @@
+import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/core/utils/storage_tokens.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -61,4 +62,31 @@ bool petMatchesFilters(Pet pet, List<PetFilterOption> options) {
     if (!matches) return false;
   }
   return true;
+}
+
+/// Verifica se o pet atende à busca client-side por palavras.
+///
+/// As palavras do [term] podem estar divididas entre o nome e a
+/// descrição ("poodle preto" casa com nome "Poodle" + descrição
+/// "...preto"), em qualquer ordem.
+bool petMatchesSearch(Pet pet, String term) {
+  final text = '${pet.name} ${pet.description ?? ''}';
+  return containsAllSearchWords(text, term);
+}
+
+/// Autoridade final do resultado exibido: aplica a busca (quando há
+/// termo) e o AND exato por categoria dos filtros às páginas recebidas.
+List<Pet> applyLocalFilters({
+  required List<Pet> pets,
+  String searchQuery = '',
+  List<PetFilterOption> filterOptions = const [],
+}) {
+  var result = pets;
+  if (searchQuery.trim().isNotEmpty) {
+    result = result.where((p) => petMatchesSearch(p, searchQuery)).toList();
+  }
+  if (filterOptions.isNotEmpty) {
+    result = result.where((p) => petMatchesFilters(p, filterOptions)).toList();
+  }
+  return result;
 }

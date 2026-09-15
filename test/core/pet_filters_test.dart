@@ -7,6 +7,8 @@ import 'package:appets/widgets/filters/widget_pet_filters_sheet.dart';
 
 void main() {
   Pet makePet({
+    String name = 'Rex',
+    String? description,
     int age = 3,
     AppPetAgeUnit ageUnit = AppPetAgeUnit.years,
     AppPetGender gender = AppPetGender.male,
@@ -16,7 +18,8 @@ void main() {
     return Pet(
       id: 'p1',
       ownerId: 'u1',
-      name: 'Rex',
+      name: name,
+      description: description,
       age: age,
       ageUnit: ageUnit,
       gender: gender,
@@ -174,6 +177,71 @@ void main() {
         ),
         isTrue,
       );
+    });
+  });
+
+  group('petMatchesSearch', () {
+    test('busca multi-palavra divide entre nome e descrição', () {
+      final pet = makePet(name: 'Poodle', description: 'é preto e dócil');
+      expect(petMatchesSearch(pet, 'poodle preto'), isTrue);
+      expect(petMatchesSearch(pet, 'preto poodle'), isTrue);
+    });
+
+    test('exige todas as palavras do termo', () {
+      final pet = makePet(name: 'Poodle', description: 'é preto e dócil');
+      expect(petMatchesSearch(pet, 'poodle gato'), isFalse);
+      expect(petMatchesSearch(pet, 'gato'), isFalse);
+    });
+
+    test('permite digitação parcial e ignora acentos/caixa', () {
+      final pet = makePet(name: 'Dócil', description: 'Poodle');
+      expect(petMatchesSearch(pet, 'poo doci'), isTrue);
+      expect(petMatchesSearch(pet, 'POODLE'), isTrue);
+    });
+
+    test('sem descrição busca apenas pelo nome', () {
+      final pet = makePet(name: 'Rex');
+      expect(petMatchesSearch(pet, 'rex'), isTrue);
+      expect(petMatchesSearch(pet, 'rex gato'), isFalse);
+    });
+  });
+
+  group('applyLocalFilters', () {
+    final pets = [
+      makePet(name: 'Poodle', species: AppPetSpecies.dog, gender: AppPetGender.female),
+      makePet(name: 'Gato', species: AppPetSpecies.cat, gender: AppPetGender.male),
+      makePet(name: 'Poodle Preto', species: AppPetSpecies.dog, gender: AppPetGender.male),
+    ];
+
+    test('sem busca nem filtros mantém a lista', () {
+      expect(applyLocalFilters(pets: pets), hasLength(3));
+    });
+
+    test('busca multi-palavra aplicada client-side', () {
+      final result = applyLocalFilters(pets: pets, searchQuery: 'poodle preto');
+      expect(result.map((p) => p.name), ['Poodle Preto']);
+    });
+
+    test('busca + filtro AND são aplicados juntos', () {
+      final femea = opt(PetFilterCategory.gender, 'femea');
+      final result = applyLocalFilters(
+        pets: pets,
+        searchQuery: 'poodle',
+        filterOptions: [femea],
+      );
+      expect(result.map((p) => p.name), ['Poodle']);
+    });
+
+    test('filtro AND aplicado mesmo com busca desligada', () {
+      final femea = opt(PetFilterCategory.gender, 'femea');
+      final result = applyLocalFilters(pets: pets, filterOptions: [femea]);
+      expect(result.map((p) => p.name), ['Poodle']);
+    });
+
+    test('categorias descartam pets fora do AND', () {
+      final lost = opt(PetFilterCategory.publicationType, 'perdido');
+      final result = applyLocalFilters(pets: pets, filterOptions: [lost]);
+      expect(result, isEmpty);
     });
   });
 }

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:appets/core/backfill/pet_tokens_backfill_initializer.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
@@ -22,17 +25,25 @@ class _SplashScreenState extends State<SplashScreen> {
     _initializeApp();
   }
 
-  // Aguarda um momento e encaminha para o fluxo (Home ou Login).
+  // Prepara o app e encaminha para o fluxo (Home ou Login).
   Future<void> _initializeApp() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
 
     final authService = AuthService.instance;
     // Aguarda o primeiro evento do stream para capturar a sessão
     // restaurada no cold start, evitando mandar usuário logado
-    // para o login (forçando reautenticação).
-    final user = await authService.authStateChanges.first;
+    // para o login (forçando reautenticação). Com timeout: se o Auth
+    // demorar (ex.: GMS instável), usa a sessão nativa restaurada.
+    final user = await authService.authStateChanges.first.timeout(
+      const Duration(seconds: 4),
+      onTimeout: () => authService.currentUser,
+    );
 
     if (!mounted) return;
+
+    // Inicia a migração de tokens em background (assíncrona e idempotente),
+    // longe do primeiro frame da splash.
+    PetTokensBackfillInitializer.instance.attach();
 
     if (user != null) {
       Navigator.pushReplacementNamed(context, '/home');
