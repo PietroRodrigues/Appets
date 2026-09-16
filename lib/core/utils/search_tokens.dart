@@ -39,22 +39,45 @@ String normalizeText(String input) {
   return text;
 }
 
+/// Quantidade máxima de tokens de busca persistidos por pet.
+const int kMaxSearchTokens = 150;
+
+/// Limite superior do comprimento de prefixo persistido por palavra.
+const int kMaxSearchPrefixLength = 12;
+
+/// Menor comprimento de prefixo persistido por palavra ("poo" já cobre,
+/// por exemplo, "poodle", "poodlepreto"...).
+const int kMinSearchPrefixLength = 3;
+
 /// Gera a lista de palavras pesquisáveis a partir do nome e da
 /// descrição ("Sobre o pet") do pet.
 ///
 /// Normaliza, divide em palavras, ignora palavras com menos de 2
 /// caracteres, remove duplicados e limita a quantidade de tokens.
+///
+/// Além da palavra inteira, grava os prefixos a partir de
+/// [kMinSearchPrefixLength] até o menor entre o comprimento da palavra e
+/// [kMaxSearchPrefixLength]. Isso permite à busca do servidor encontrar
+/// digitação parcial: "poo" casa com o token "poo" de "poodle".
 List<String> buildSearchTokens({required String name, String? description}) {
   final buffer = <String>[name, ?description];
   final tokens = <String>{};
   for (final part in buffer) {
+    if (tokens.length >= kMaxSearchTokens) break;
     final words = normalizeText(part).split(RegExp(r'[^a-z0-9]+'));
     for (final word in words) {
       if (word.length < 2) continue;
       tokens.add(word);
+      final last = word.length < kMaxSearchPrefixLength
+          ? word.length
+          : kMaxSearchPrefixLength;
+      for (var i = kMinSearchPrefixLength; i <= last; i++) {
+        tokens.add(word.substring(0, i));
+      }
+      if (tokens.length >= kMaxSearchTokens) break;
     }
   }
-  return tokens.take(30).toList();
+  return tokens.take(kMaxSearchTokens).toList();
 }
 
 /// Verifica se [text] contém o termo de busca [term] (client-side).

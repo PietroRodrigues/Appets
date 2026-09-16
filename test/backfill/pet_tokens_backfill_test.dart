@@ -36,7 +36,7 @@ class _FakeWriter implements PetTokensBackfillWriter {
 
 void main() {
   group('petTokenFields', () {
-    test('gera os 5 campos de token em PT normalizado', () {
+    test('gera os 6 campos de token em PT normalizado', () {
       final fields = petTokenFields(_pet('p1'));
 
       expect(fields, {
@@ -45,6 +45,7 @@ void main() {
         'ageUnit': 'anos',
         'publicationType': 'adocao',
         'specifications': ['cachorro', 'macho', 'adocao', 'jovem'],
+        'searchTokens': ['rex'],
       });
     });
   });
@@ -71,6 +72,7 @@ void main() {
           'ageUnit': 'anos',
           'publicationType': 'adocao',
           'specifications': ['cachorro', 'macho', 'adocao', 'jovem'],
+          'searchTokens': ['rex'],
         },
       });
     });
@@ -93,13 +95,16 @@ void main() {
           'ageUnit': 'anos',
           'publicationType': 'adocao',
           'specifications': ['dog', 'male', 'adoption', 'young'],
+          'searchTokens': ['rex'],
         },
       };
 
       final pending = petTokensNeedingBackfill([pet], stored);
 
       expect(pending, {
-        'p1': {'specifications': ['cachorro', 'macho', 'adocao', 'jovem']},
+        'p1': {
+          'specifications': ['cachorro', 'macho', 'adocao', 'jovem'],
+        },
       });
     });
 
@@ -110,8 +115,9 @@ void main() {
 
       expect(semCampos['p1'], containsPair('species', 'cachorro'));
       expect(semCampos['p1'], containsPair('specifications', pet.specifications));
-      // Campos de token pendentes são exatamente os 5.
-      expect(semCampos['p1']!.length, 5);
+      expect(semCampos['p1'], containsPair('searchTokens', ['rex']));
+      // Campos de token pendentes são exatamente os 6.
+      expect(semCampos['p1']!.length, 6);
     });
 
     test('mistura pendentes e já migrados corretamente', () {

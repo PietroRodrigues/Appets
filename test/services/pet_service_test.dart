@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 
 import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 
@@ -199,11 +200,15 @@ void main() {
       expect(page.hasMore, isFalse);
     });
 
-    test('busca por prefixo de token independente de acento/caixa', () async {
-      await insertPet(petDoc('p1', ownerId: 'dono_a', searchTokens: ['poodle']));
-      await insertPet(petDoc('p2', ownerId: 'dono_a', searchTokens: ['vira']));
+    test('busca parcial por prefixo, insensível a caixa', () async {
+      await insertPet(
+        petDoc('p1', ownerId: 'dono_a', searchTokens: buildSearchTokens(name: 'Poodle')),
+      );
+      await insertPet(
+        petDoc('p2', ownerId: 'dono_a', searchTokens: buildSearchTokens(name: 'Vira-lata')),
+      );
 
-      final page = await service.searchPetsByTokens('Poodle');
+      final page = await service.searchPetsByTokens('POO');
 
       expect(page.pets.map((p) => p.id), ['p1']);
       expect(page.hasMore, isFalse);

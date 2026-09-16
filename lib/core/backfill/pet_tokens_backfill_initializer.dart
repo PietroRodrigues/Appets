@@ -8,8 +8,8 @@ import 'package:appets/models/model_pet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 /// Executa, de forma isolada e silenciosa, a migração dos tokens PT
-/// (species, gender, ageUnit, publicationType e specifications) dos pets
-/// do dono logado no momento.
+/// (species, gender, ageUnit, publicationType e specifications) e dos
+/// searchTokens (busca com prefixos) dos pets do dono logado no momento.
 ///
 /// Auto-alimentado: escuta a autenticação, busca os próprios documentos e
 /// grava apenas o que divergir (códigos legados em inglês, ausentes ou

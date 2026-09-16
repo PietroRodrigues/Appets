@@ -22,17 +22,33 @@ void main() {
   });
 
   group('buildSearchTokens', () {
-    test('inclui nome e palavras da descrição', () {
+    test('inclui nome, descrição e prefixos a partir de 3 letras', () {
       final tokens = buildSearchTokens(
         name: 'Rex',
         description: 'Cachorro dócil e carinhoso',
       );
 
-      expect(tokens.length, 4);
+      expect(tokens.length, 17);
       expect(tokens, contains('rex'));
       expect(tokens, contains('cachorro'));
       expect(tokens, contains('docil'));
       expect(tokens, contains('carinhoso'));
+      expect(tokens, contains('doc'));
+      expect(tokens, contains('car'));
+    });
+
+    test('gera token de prefixo para buscar digitação parcial', () {
+      final tokens = buildSearchTokens(name: 'Poodle');
+
+      expect(tokens, contains('poo'));
+      expect(tokens, contains('pood'));
+      expect(tokens, contains('poodle'));
+    });
+
+    test('não gera prefixo para palavras com menos de 3 letras', () {
+      final tokens = buildSearchTokens(name: 'Bo');
+
+      expect(tokens, ['bo']);
     });
 
     test('ignora palavras com menos de 2 caracteres', () {
@@ -65,10 +81,11 @@ void main() {
     });
 
     test('limita a quantidade de tokens', () {
-      final description = List.generate(50, (i) => 'palavra$i').join(' ');
+      final description = List.generate(200, (i) => 'palavra${i.toRadixString(36)}')
+          .join(' ');
       final tokens = buildSearchTokens(name: 'Rex', description: description);
 
-      expect(tokens.length, lessThanOrEqualTo(30));
+      expect(tokens.length, kMaxSearchTokens);
     });
   });
 

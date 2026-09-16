@@ -1,16 +1,23 @@
+import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/core/utils/storage_tokens.dart';
 import 'package:appets/models/model_pet.dart';
 
 /// Campos de token persistidos no documento `pets`.
 ///
-/// São os únicos campos de identificação derivados de enums; todos devem
-/// estar em PT normalizado. A migração usa exatamente esta lista.
+/// Os cinco primeiros são derivados de enums e, junto com as
+/// [specifications], devem estar em PT normalizado. O `searchTokens`
+/// guarda os termos pesquisáveis (palavra inteira e prefixos) usados pela
+/// busca da Home. A migração usa exatamente esta lista.
 Map<String, dynamic> petTokenFields(Pet pet) => {
       'species': speciesStorageToken(pet.species),
       'gender': genderStorageToken(pet.gender),
       'ageUnit': ageUnitStorageToken(pet.ageUnit),
       'publicationType': publicationTypeStorageToken(pet.publicationType),
       'specifications': pet.specifications,
+      'searchTokens': buildSearchTokens(
+        name: pet.name,
+        description: pet.description,
+      ),
     };
 
 /// Lógica pura da migração de tokens dos pets.
