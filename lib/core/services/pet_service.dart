@@ -190,15 +190,34 @@ class PetService {
 
     if (searchable.isEmpty) return const PetsPage(pets: [], hasMore: false);
 
-    final q = _db
-        .collection('pets')
-        .where('searchTokens', arrayContainsAny: searchable);
-
-    final snapshot = await q
-        .orderBy('createdAt', descending: true)
+    final snapshot = await _searchTokensQuery(searchable)
         .limit(pageSize + 1)
         .get();
     return _toPage(snapshot);
+  }
+
+  // ── Próxima página da busca por tokens ────────────────────────────
+  Future<PetsPage> searchPetsNextPage(
+    String term,
+    QueryDocumentSnapshot lastDoc,
+  ) async {
+    final searchable = searchQueryWords(term);
+
+    if (searchable.isEmpty) return const PetsPage(pets: [], hasMore: false);
+
+    final snapshot = await _searchTokensQuery(searchable)
+        .startAfterDocument(lastDoc)
+        .limit(pageSize + 1)
+        .get();
+    return _toPage(snapshot);
+  }
+
+  // Consulta base da busca por tokens (paginável com startAfterDocument).
+  Query _searchTokensQuery(List<String> searchable) {
+    return _db
+        .collection('pets')
+        .where('searchTokens', arrayContainsAny: searchable)
+        .orderBy('createdAt', descending: true);
   }
 
   // Converte um snapshot em uma página, descartando o item extra

@@ -246,6 +246,55 @@ void main() {
       expect(page.lastDoc, isNotNull);
     });
 
+    test('searchPetsNextPage continua do cursor sem repetir pets', () async {
+      for (var i = 0; i < 45; i++) {
+        await insertPet(
+          petDoc(
+            'pet_$i',
+            ownerId: 'dono_a',
+            searchTokens: ['golden'],
+            createdAt: DateTime(2024, 1, 1).add(Duration(minutes: i)),
+          ),
+        );
+      }
+
+      final first = await service.searchPetsByTokens('Golden');
+      expect(first.pets, hasLength(PetService.pageSize));
+      expect(first.hasMore, isTrue);
+      expect(first.lastDoc, isNotNull);
+
+      final second = await service.searchPetsNextPage('Golden', first.lastDoc!);
+
+      expect(second.pets, hasLength(PetService.pageSize));
+      expect(second.hasMore, isTrue);
+      expect(second.lastDoc, isNotNull);
+      expect(
+        second.pets.any((p) => first.pets.any((f) => f.id == p.id)),
+        isFalse,
+      );
+
+      final last = await service.searchPetsNextPage('Golden', second.lastDoc!);
+
+      expect(last.pets, hasLength(5));
+      expect(last.hasMore, isFalse);
+      expect(last.lastDoc, isNull);
+    });
+
+    test('searchPetsNextPage com termo sem tokens devolve página vazia',
+        () async {
+      for (var i = 0; i < 22; i++) {
+        await insertPet(
+          petDoc('pet_$i', ownerId: 'dono_a', searchTokens: ['golden']),
+        );
+      }
+      final first = await service.searchPetsByTokens('Golden');
+
+      final page = await service.searchPetsNextPage('a', first.lastDoc!);
+
+      expect(page.pets, isEmpty);
+      expect(page.hasMore, isFalse);
+    });
+
     test(
       'limita a busca às 10 primeiras palavras (limite do Firestore)',
       () async {

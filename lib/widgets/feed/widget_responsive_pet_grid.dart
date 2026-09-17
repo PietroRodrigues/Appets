@@ -116,6 +116,18 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     return tags;
   }
 
+  /// Verdadeiro quando a página recebida ficou vazia após o AND do
+  /// cliente (filtros ativos) mas o servidor ainda tem mais páginas.
+  /// Nesse caso o grid segue buscando sozinho até achar correspondências
+  /// (ou esgotar) — evita a tela "nada aqui" para sempre (bug 1.7).
+  bool get _shouldAutoAdvanceWhenEmpty =>
+      widget.filter == AppPetFilter.all &&
+      _activeFilterOptions.isNotEmpty &&
+      _items.isEmpty &&
+      _hasMore &&
+      _lastDoc != null &&
+      !_isLoadingMore;
+
   @override
   void initState() {
     super.initState();
@@ -223,7 +235,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
         PetService.instance
             .searchPetsByTokens(term)
             .then(
-              (page) => _onSearchResult(id, page.pets),
+              (page) => _onSearchResult(id, page),
               onError: (Object e, StackTrace st) => _onLoadError(id, e, st),
             );
 
@@ -311,14 +323,18 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       _isLoading = false;
       _isLoadingMore = false;
     });
+    if (_shouldAutoAdvanceWhenEmpty) _loadMore();
   }
 
-  void _onSearchResult(int id, List<Pet> pets) {
+  void _onSearchResult(int id, PetsPage page) {
     if (!mounted || id != _loadId) return;
     setState(() {
-      _items = _applyLocalFilters(pets);
+      _items = _applyLocalFilters(page.pets);
+      _lastDoc = page.lastDoc;
+      _hasMore = page.hasMore;
       _isLoading = false;
     });
+    if (_shouldAutoAdvanceWhenEmpty) _loadMore();
   }
 
   void _finishEmpty(int id) {
@@ -344,7 +360,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   // ── Paginação (rolagem) ──────────────────────────────────────────
 
   void _onScroll() {
-    if (!_hasMore || _isLoadingMore || _isSearching || _lastDoc == null) {
+    if (!_hasMore || _isLoadingMore || _lastDoc == null) {
       return;
     }
     final position = _scrollController.position;
@@ -362,11 +378,16 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       final PetsPage page;
       switch (widget.filter) {
         case AppPetFilter.all:
-          final tags = _prefilterTags;
-          page = tags != null
-              ? await PetService.instance
-                  .getFilteredNextPage(tags, _lastDoc!)
-              : await PetService.instance.getNextPage(_lastDoc!);
+          if (_isSearching) {
+            page = await PetService.instance
+                .searchPetsNextPage(widget.searchQuery.trim(), _lastDoc!);
+          } else {
+            final tags = _prefilterTags;
+            page = tags != null
+                ? await PetService.instance
+                    .getFilteredNextPage(tags, _lastDoc!)
+                : await PetService.instance.getNextPage(_lastDoc!);
+          }
         case AppPetFilter.myPublications:
         case AppPetFilter.favorites:
           return;
@@ -380,6 +401,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
         _hasMore = page.hasMore;
         _isLoadingMore = false;
       });
+      if (_shouldAutoAdvanceWhenEmpty) await _loadMore();
     } catch (e, st) {
       if (mounted && id == _loadId) {
         debugPrint('[WGResponsivePetGrid] Erro ao carregar mais pets: $e\n$st');
@@ -410,7 +432,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_isLoading || (_items.isEmpty && _isLoadingMore)) {
       return const Center(child: CircularProgressIndicator());
     }
 
