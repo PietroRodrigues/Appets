@@ -30,12 +30,15 @@ class WGInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, color: iconColor),
 
         const SizedBox(width: 8),
 
-        Text(text, style: textStyle ?? ThemeTextStyles.body),
+        Expanded(
+          child: Text(text, style: textStyle ?? ThemeTextStyles.body),
+        ),
       ],
     );
   }
