@@ -181,9 +181,12 @@ class PetService {
   // Cada token é armazenado em `searchTokens` no documento e consultado
   // com `arrayContainsAny`. Requer um índice composto no Firestore
   // (searchTokens array-contains-any + orderBy createdAt desc).
+  //
+  // O Firestore aceita no máximo 10 valores em `arrayContainsAny`; por
+  // isso as palavras são truncadas por [searchQueryWords] (as 10 primeiras
+  // distintas), garantindo que a consulta nunca falhe em silêncio.
   Future<PetsPage> searchPetsByTokens(String term) async {
-    final tokens = normalizeText(term).split(RegExp(r'[^a-z0-9]+'));
-    final searchable = tokens.where((t) => t.length >= 2).toSet().toList();
+    final searchable = searchQueryWords(term);
 
     if (searchable.isEmpty) return const PetsPage(pets: [], hasMore: false);
 

@@ -49,6 +49,12 @@ const int kMaxSearchPrefixLength = 12;
 /// por exemplo, "poodle", "poodlepreto"...).
 const int kMinSearchPrefixLength = 3;
 
+/// Número máximo de palavras distintas consideradas por consulta de busca.
+///
+/// O Firestore aceita no máximo 10 valores em `arrayContainsAny`, então
+/// consultas com mais palavras são truncadas para não falharem em silêncio.
+const int kMaxSearchWordsPerQuery = 10;
+
 /// Gera a lista de palavras pesquisáveis a partir do nome e da
 /// descrição ("Sobre o pet") do pet.
 ///
@@ -95,20 +101,43 @@ bool containsTokens(String text, String term) {
 /// caracteres). Palavras isoladas de 1 caractere são ignoradas, assim
 /// como em [buildSearchTokens].
 List<String> searchWords(String term) {
-  return normalizeText(term)
-      .split(RegExp(r'[^a-z0-9]+'))
-      .where((word) => word.length >= 2)
-      .toList();
+  return normalizeText(
+    term,
+  ).split(RegExp(r'[^a-z0-9]+')).where((word) => word.length >= 2).toList();
 }
+
+/// Palavras efetivas de uma consulta de busca: normaliza, remove as
+/// duplicadas e mantém apenas as [kMaxSearchWordsPerQuery] primeiras, na
+/// ordem digitada.
+///
+/// É a fonte única do limite de 10 palavras (servidor e cliente), para que
+/// a consulta ao Firestore nunca estoure e o resultado exibido seja
+/// coerente com a mensagem de aviso ao usuário.
+List<String> searchQueryWords(String term) {
+  final words = <String>{};
+  for (final word in searchWords(term)) {
+    words.add(word);
+    if (words.length >= kMaxSearchWordsPerQuery) break;
+  }
+  return words.toList();
+}
+
+/// Indica se [term] tem mais palavras distintas do que o limite
+/// [kMaxSearchWordsPerQuery] (usado para avisar o usuário).
+bool searchWordsExceedLimit(String term) =>
+    searchWords(term).toSet().length > kMaxSearchWordsPerQuery;
 
 /// Verifica se TODAS as palavras de [term] aparecem em [text]
 /// (client-side), permitindo digitação parcial por palavra ("poo"
 /// encontra "poodle"). Insensível a maiúsculas e acentos.
 ///
+/// Considera apenas as [kMaxSearchWordsPerQuery] primeiras palavras
+/// distintas (ver [searchQueryWords]), alinhado à consulta do servidor.
+///
 /// Com [term] vazio (ou contendo só palavras de 1 caractere),
 /// retorna true.
 bool containsAllSearchWords(String text, String term) {
-  final words = searchWords(term);
+  final words = searchQueryWords(term);
   final normalizedText = normalizeText(text);
   return words.every(normalizedText.contains);
 }

@@ -1,5 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
+import 'package:appets/core/utils/search_tokens.dart';
+
 /// Strings da interface da navegação, cabeçalho/busca, home, favoritos e
 /// minhas publicações, centralizadas.
 class HomeStrings {
@@ -25,6 +27,10 @@ class HomeStrings {
   static const CLEAR_SEARCH = 'Limpar busca';
 
   static const SUBMIT_SEARCH = 'Buscar';
+
+  static const SEARCH_WORDS_LIMIT =
+      'A busca considera no máximo $kMaxSearchWordsPerQuery palavras; '
+      'as demais foram ignoradas.';
 
   static const FILTERS = 'Filtros';
 

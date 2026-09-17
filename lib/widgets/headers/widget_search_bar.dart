@@ -1,5 +1,6 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/utils/search_tokens.dart';
 import 'package:flutter/material.dart';
 
 /// Barra de busca reutilizável para as telas principais do app.
@@ -116,6 +117,17 @@ class _WGSearchBarState extends State<WGSearchBar> {
   /// Envia o termo digitado (botão 🔍 ou Enter).
   void _submit() {
     final term = _controller.text.trim();
+
+    // O Firestore limita a consulta a 10 palavras distintas; avisa quando
+    // as demais são ignoradas.
+    if (searchWordsExceedLimit(term)) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          const SnackBar(content: Text(HomeStrings.SEARCH_WORDS_LIMIT)),
+        );
+    }
+
     if (widget.searchQuery != null) {
       widget.searchQuery!.value = term;
     } else {

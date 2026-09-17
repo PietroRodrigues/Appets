@@ -74,11 +74,16 @@ void main() {
       expect(pets.map((p) => p.id).toSet(), {'p1', 'p2'});
     });
 
-    test('getPetsByOwner ordena do mais recente para o mais antigo',
-        () async {
-      await insertPet(petDoc('p1', ownerId: 'dono_a', createdAt: DateTime(2024, 1, 1)));
-      await insertPet(petDoc('p2', ownerId: 'dono_a', createdAt: DateTime(2024, 3, 3)));
-      await insertPet(petDoc('p3', ownerId: 'dono_a', createdAt: DateTime(2024, 2, 2)));
+    test('getPetsByOwner ordena do mais recente para o mais antigo', () async {
+      await insertPet(
+        petDoc('p1', ownerId: 'dono_a', createdAt: DateTime(2024, 1, 1)),
+      );
+      await insertPet(
+        petDoc('p2', ownerId: 'dono_a', createdAt: DateTime(2024, 3, 3)),
+      );
+      await insertPet(
+        petDoc('p3', ownerId: 'dono_a', createdAt: DateTime(2024, 2, 2)),
+      );
 
       final pets = await service.getPetsByOwner('dono_a');
 
@@ -96,14 +101,15 @@ void main() {
   });
 
   group('PetService · batch e propagação de telefone', () {
-    test('updatePetsBatch com mapa vazio retorna 0 sem atualizar nada',
-        () async {
-      final count = await service.updatePetsBatch({});
-      expect(count, 0);
-    });
+    test(
+      'updatePetsBatch com mapa vazio retorna 0 sem atualizar nada',
+      () async {
+        final count = await service.updatePetsBatch({});
+        expect(count, 0);
+      },
+    );
 
-    test('updatePetsBatch atualiza vários pets e retorna a contagem',
-        () async {
+    test('updatePetsBatch atualiza vários pets e retorna a contagem', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
       await insertPet(petDoc('p2', ownerId: 'dono_a'));
 
@@ -119,18 +125,20 @@ void main() {
       expect(doc2.get('ownerPhone'), '888');
     });
 
-    test('updateOwnerPhone propaga o telefone em batch para todos os pets',
-        () async {
-      await insertPet(petDoc('p1', ownerId: 'dono_a'));
-      await insertPet(petDoc('p2', ownerId: 'dono_a'));
+    test(
+      'updateOwnerPhone propaga o telefone em batch para todos os pets',
+      () async {
+        await insertPet(petDoc('p1', ownerId: 'dono_a'));
+        await insertPet(petDoc('p2', ownerId: 'dono_a'));
 
-      await service.updateOwnerPhone('dono_a', '(11) 99999-0000');
+        await service.updateOwnerPhone('dono_a', '(11) 99999-0000');
 
-      final doc1 = await db.collection('pets').doc('p1').get();
-      final doc2 = await db.collection('pets').doc('p2').get();
-      expect(doc1.get('ownerPhone'), '(11) 99999-0000');
-      expect(doc2.get('ownerPhone'), '(11) 99999-0000');
-    });
+        final doc1 = await db.collection('pets').doc('p1').get();
+        final doc2 = await db.collection('pets').doc('p2').get();
+        expect(doc1.get('ownerPhone'), '(11) 99999-0000');
+        expect(doc2.get('ownerPhone'), '(11) 99999-0000');
+      },
+    );
 
     test('updateOwnerPhone não falha quando o dono não tem pets', () async {
       await service.updateOwnerPhone('dono_sozinho', '(11) 99999-0000');
@@ -139,7 +147,9 @@ void main() {
 
   group('PetService · CRUD', () {
     test('createPet persiste o pet e retorna o ID gerado', () async {
-      final id = await service.createPet(makePet('', ownerId: 'dono_a', name: 'Rex', age: 2));
+      final id = await service.createPet(
+        makePet('', ownerId: 'dono_a', name: 'Rex', age: 2),
+      );
 
       expect(id, isNotEmpty);
       final doc = await db.collection('pets').doc(id).get();
@@ -185,9 +195,9 @@ void main() {
         await insertPet(petDoc('pet_$i', ownerId: 'dono_a'));
       }
 
-      final pets = await service.getPetsByIds(
-        [for (var i = 0; i < 15; i++) 'pet_$i'],
-      );
+      final pets = await service.getPetsByIds([
+        for (var i = 0; i < 15; i++) 'pet_$i',
+      ]);
 
       expect(pets, hasLength(15));
     });
@@ -202,10 +212,18 @@ void main() {
 
     test('busca parcial por prefixo, insensível a caixa', () async {
       await insertPet(
-        petDoc('p1', ownerId: 'dono_a', searchTokens: buildSearchTokens(name: 'Poodle')),
+        petDoc(
+          'p1',
+          ownerId: 'dono_a',
+          searchTokens: buildSearchTokens(name: 'Poodle'),
+        ),
       );
       await insertPet(
-        petDoc('p2', ownerId: 'dono_a', searchTokens: buildSearchTokens(name: 'Vira-lata')),
+        petDoc(
+          'p2',
+          ownerId: 'dono_a',
+          searchTokens: buildSearchTokens(name: 'Vira-lata'),
+        ),
       );
 
       final page = await service.searchPetsByTokens('POO');
@@ -216,7 +234,9 @@ void main() {
 
     test('considera múltiplos tokens e aplica o limite de página', () async {
       for (var i = 0; i < 22; i++) {
-        await insertPet(petDoc('pet_$i', ownerId: 'dono_a', searchTokens: ['golden']));
+        await insertPet(
+          petDoc('pet_$i', ownerId: 'dono_a', searchTokens: ['golden']),
+        );
       }
 
       final page = await service.searchPetsByTokens('Golden');
@@ -225,13 +245,45 @@ void main() {
       expect(page.hasMore, isTrue);
       expect(page.lastDoc, isNotNull);
     });
+
+    test(
+      'limita a busca às 10 primeiras palavras (limite do Firestore)',
+      () async {
+        const first10 = [
+          'palavra0',
+          'palavra1',
+          'palavra2',
+          'palavra3',
+          'palavra4',
+          'palavra5',
+          'palavra6',
+          'palavra7',
+          'palavra8',
+          'palavra9',
+        ];
+        await insertPet(petDoc('p1', ownerId: 'dono_a', searchTokens: first10));
+        await insertPet(
+          petDoc('p2', ownerId: 'dono_a', searchTokens: ['palavra10']),
+        );
+
+        final page = await service.searchPetsByTokens(
+          '${first10.join(' ')} palavra10',
+        );
+
+        expect(page.pets.map((p) => p.id), ['p1']);
+      },
+    );
   });
 
   group('PetService · paginação (getNextPage)', () {
     test('detecta hasMore quando a página seguinte excede o limite', () async {
       for (var i = 0; i < 45; i++) {
         await insertPet(
-          petDoc('pet_$i', ownerId: 'dono_a', createdAt: DateTime(2024, 1, 1).add(Duration(minutes: i))),
+          petDoc(
+            'pet_$i',
+            ownerId: 'dono_a',
+            createdAt: DateTime(2024, 1, 1).add(Duration(minutes: i)),
+          ),
         );
       }
 
@@ -252,7 +304,11 @@ void main() {
     test('hasMore é false na última página', () async {
       for (var i = 0; i < 25; i++) {
         await insertPet(
-          petDoc('pet_$i', ownerId: 'dono_a', createdAt: DateTime(2024, 1, 1).add(Duration(minutes: i))),
+          petDoc(
+            'pet_$i',
+            ownerId: 'dono_a',
+            createdAt: DateTime(2024, 1, 1).add(Duration(minutes: i)),
+          ),
         );
       }
 

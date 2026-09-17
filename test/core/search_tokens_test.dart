@@ -81,8 +81,10 @@ void main() {
     });
 
     test('limita a quantidade de tokens', () {
-      final description = List.generate(200, (i) => 'palavra${i.toRadixString(36)}')
-          .join(' ');
+      final description = List.generate(
+        200,
+        (i) => 'palavra${i.toRadixString(36)}',
+      ).join(' ');
       final tokens = buildSearchTokens(name: 'Rex', description: description);
 
       expect(tokens.length, kMaxSearchTokens);
@@ -120,6 +122,45 @@ void main() {
     });
   });
 
+  group('searchQueryWords', () {
+    test('normaliza, remove duplicadas e preserva a ordem digitada', () {
+      expect(searchQueryWords('  Poodle poodle PRETO  '), ['poodle', 'preto']);
+    });
+
+    test('ignora palavras com menos de 2 caracteres', () {
+      expect(searchQueryWords('a e o'), isEmpty);
+      expect(searchQueryWords('Rex a'), ['rex']);
+    });
+
+    test('limita às 10 primeiras palavras distintas', () {
+      final term = List.generate(12, (i) => 'palavra$i').join(' ');
+
+      final words = searchQueryWords(term);
+
+      expect(words, hasLength(kMaxSearchWordsPerQuery));
+      expect(words.first, 'palavra0');
+      expect(words.last, 'palavra9');
+      expect(words, isNot(contains('palavra10')));
+    });
+  });
+
+  group('searchWordsExceedLimit', () {
+    test('é false com até 10 palavras distintas', () {
+      final term = List.generate(10, (i) => 'palavra$i').join(' ');
+      expect(searchWordsExceedLimit(term), isFalse);
+    });
+
+    test('é true com mais de 10 palavras distintas', () {
+      final term = List.generate(11, (i) => 'palavra$i').join(' ');
+      expect(searchWordsExceedLimit(term), isTrue);
+    });
+
+    test('não conta palavras duplicadas', () {
+      final term = List.filled(15, 'rex').join(' ');
+      expect(searchWordsExceedLimit(term), isFalse);
+    });
+  });
+
   group('containsAllSearchWords', () {
     test('exige todas as palavras do termo', () {
       expect(containsAllSearchWords('Poodle preto', 'poodle preto'), isTrue);
@@ -147,6 +188,18 @@ void main() {
 
     test('retorna false quando falta qualquer palavra', () {
       expect(containsAllSearchWords('Rex', 'rex gato'), isFalse);
+    });
+
+    test('considera apenas as 10 primeiras palavras', () {
+      final term = [
+        ...List.generate(10, (i) => 'palavra$i'),
+        'inexistente',
+      ].join(' ');
+      const text =
+          'palavra0 palavra1 palavra2 palavra3 palavra4 '
+          'palavra5 palavra6 palavra7 palavra8 palavra9';
+
+      expect(containsAllSearchWords(text, term), isTrue);
     });
   });
 }
