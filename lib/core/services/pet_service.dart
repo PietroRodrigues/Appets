@@ -34,6 +34,10 @@ class PetService {
   @visibleForTesting
   set debugDb(FirebaseFirestore? db) => _debugDb = db;
 
+  /// Erro injetado em testes na primeira página do feed (stream.error).
+  @visibleForTesting
+  Object? debugFirstPageError;
+
   // Retorna os pets publicados por um determinado dono (UID).
   Future<List<Pet>> getPetsByOwner(String ownerId) async {
     final snapshot = await _db
@@ -104,10 +108,14 @@ class PetService {
   //
   // O Firestore limita `whereIn` a no máximo 10 valores por consulta, então
   // os IDs são divididos em lotes de 10 e as consultas rodam em paralelo.
-  Future<List<Pet>> getPetsByIds(List<String> petIds) async {
+  Future<List<Pet>> getPetsByIds(
+    List<String> petIds, {
+    bool fromCache = false,
+  }) async {
     if (petIds.isEmpty) return [];
 
     const batchSize = 10;
+    final options = fromCache ? const GetOptions(source: Source.cache) : null;
     final results = <Pet>[];
     for (var i = 0; i < petIds.length; i += batchSize) {
       final end = (i + batchSize > petIds.length)
@@ -117,7 +125,7 @@ class PetService {
       final snapshot = await _db
           .collection('pets')
           .where(FieldPath.documentId, whereIn: batch)
-          .get();
+          .get(options);
       results.addAll(snapshot.docs.map((doc) => Pet.fromFirestore(doc)));
     }
     return results;
@@ -127,6 +135,8 @@ class PetService {
   //
   // O pedido de +1 item indica se há mais páginas (`hasMore`).
   Stream<PetsPage> watchFirstPage() {
+    final err = debugFirstPageError;
+    if (err != null) return Stream<PetsPage>.error(err);
     return _db
         .collection('pets')
         .orderBy('createdAt', descending: true)
@@ -135,12 +145,27 @@ class PetService {
         .map((snapshot) => _toPage(snapshot));
   }
 
+  // ── Primeira página do feed lida do cache local ──────────────────
+  //
+  // Usada pelo recurso cache-first: exibe os dados locais imediatamente
+  // (mesmo offline) e a stream do servidor atualiza em seguida.
+  Future<PetsPage> getFirstPageFromCache() async {
+    final snapshot = await _db
+        .collection('pets')
+        .orderBy('createdAt', descending: true)
+        .limit(pageSize + 1)
+        .get(const GetOptions(source: Source.cache));
+    return _toPage(snapshot);
+  }
+
   // ── Feed de todos os pets com pré-filtro por tokens de filtro ──
   //
   // Combina os valores das categorias num `arrayContainsAny` (OR/superset);
   // o AND exato é aplicado no cliente. A paginação continua sobre a mesma
   // consulta. Requer índice composto (specifications + createdAt desc).
   Stream<PetsPage> watchFilteredFirstPage(List<String> specifications) {
+    final err = debugFirstPageError;
+    if (err != null) return Stream<PetsPage>.error(err);
     return _db
         .collection('pets')
         .where('specifications', arrayContainsAny: specifications)
@@ -148,6 +173,19 @@ class PetService {
         .limit(pageSize + 1)
         .snapshots()
         .map((snapshot) => _toPage(snapshot));
+  }
+
+  // ── Primeira página do feed filtrado lida do cache local ────────
+  Future<PetsPage> getFilteredFirstPageFromCache(
+    List<String> specifications,
+  ) async {
+    final snapshot = await _db
+        .collection('pets')
+        .where('specifications', arrayContainsAny: specifications)
+        .orderBy('createdAt', descending: true)
+        .limit(pageSize + 1)
+        .get(const GetOptions(source: Source.cache));
+    return _toPage(snapshot);
   }
 
   // ── Próxima página do feed de todos os pets ──────────────────────

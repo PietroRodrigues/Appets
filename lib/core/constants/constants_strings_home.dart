@@ -56,6 +56,15 @@ class HomeStrings {
 
   static const FILTER_AGE_ADULT = 'Adulto';
 
+  // ── Erro de carregamento ──────────────────────────────
+
+  static const LOAD_PETS_ERROR = 'Não foi possível carregar os pets';
+
+  static const LOAD_PETS_ERROR_DESCRIPTION =
+      'Verifique sua conexão e tente novamente.';
+
+  static const RETRY_ACTION = 'Tentar de novo';
+
   // ── Home ───────────────────────────────────────────────
 
   static const EMPTY_PETS_TITLE = 'Nenhum pet por aqui';

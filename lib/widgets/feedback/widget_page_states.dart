@@ -52,6 +52,39 @@ class WGPageLoading extends StatelessWidget {
   }
 }
 
+/// Estado de erro reutilizável com ícone, título, descrição e ação de
+/// retry opcional.
+///
+/// Visual herdado de [WGEmptyState], com ícone de erro por padrão.
+class WGErrorState extends StatelessWidget {
+  const WGErrorState({
+    super.key,
+    this.icon = Icons.error_outline,
+    this.title = 'Não foi possível carregar os pets',
+    this.description = 'Verifique sua conexão e tente novamente.',
+    this.actionLabel = 'Tentar de novo',
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final String actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final actionLabel = onAction != null ? this.actionLabel : null;
+    return WGEmptyState(
+      icon: icon,
+      title: title,
+      description: description,
+      actionLabel: actionLabel,
+      onAction: onAction,
+    );
+  }
+}
+
 /// Estado vazio reutilizável com ícone, título, descrição e ação opcional.
 class WGEmptyState extends StatelessWidget {
   const WGEmptyState({

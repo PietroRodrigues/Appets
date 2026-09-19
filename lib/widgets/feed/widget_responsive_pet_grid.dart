@@ -4,13 +4,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/utils/pet_filters.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
+import 'package:appets/widgets/feedback/widget_page_states.dart';
 import 'package:appets/widgets/filters/widget_pet_filters_sheet.dart';
 
 /// Grid responsivo para listas de pets com lista global interna.
@@ -83,6 +86,8 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   List<Pet> _items = [];
 
   bool _isLoading = true;
+  bool _hasError = false;
+  bool _isOffline = false;
   bool _hasMore = false;
   bool _isLoadingMore = false;
 
@@ -132,6 +137,9 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    ConnectivityService.instance.isOnlineNotifier.addListener(
+      _onConnectivityChanged,
+    );
     FavoritesService.instance.favoriteIds.addListener(_onFavoritesChanged);
     MyPublicationsService.instance.myPetIds.addListener(_onMyPublicationsChanged);
     _filterListenable = widget.filterOptions;
@@ -157,12 +165,28 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   void dispose() {
     _filterListenable?.removeListener(_onFiltersChanged);
     _sub?.cancel();
+    ConnectivityService.instance.isOnlineNotifier.removeListener(
+      _onConnectivityChanged,
+    );
     FavoritesService.instance.favoriteIds.removeListener(_onFavoritesChanged);
     MyPublicationsService.instance.myPetIds
         .removeListener(_onMyPublicationsChanged);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Recarrega quando a conectividade muda: voltou online, busca os dados
+  // de novo; caiu offline e não há o que exibir, alterna para o modo
+  // "Sem conexão" (o cache-first cuida de repopular, se houver cache).
+  void _onConnectivityChanged() {
+    if (!mounted) return;
+    final online = ConnectivityService.instance.isOnline;
+    if (online) {
+      _setup();
+    } else if (_items.isEmpty) {
+      _setup();
+    }
   }
 
   // Recarrega quando o conjunto de filtros muda.
@@ -184,21 +208,88 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
   // ── Configuração da fonte de dados ───────────────────────────────
 
-  void _setup() {
+  // Cache-first: sempre tenta ler o cache local do Firestore primeiro
+  // (imediato, mesmo offline) e depois atualiza com os dados do servidor,
+  // quando online. Sem conexão e sem cache, mostra "Sem conexão".
+  Future<void> _setup() async {
     _sub?.cancel();
-    _loadId++;
+    final id = ++_loadId;
     _items = [];
     _isLoading = true;
+    _hasError = false;
+    _isOffline = false;
     _hasMore = false;
     _lastDoc = null;
     _prefilterTags = null;
     setState(() {});
 
+    final online = ConnectivityService.instance.isOnline;
+
     if (_isSearching) {
-      _startSearch(widget.searchQuery.trim());
-    } else {
-      _startFeed();
+      if (online) {
+        _startSearch(widget.searchQuery.trim());
+      } else {
+        _finishOffline(id);
+      }
+      return;
     }
+
+    await _prefillFromCache(id);
+    if (!mounted || id != _loadId) return;
+
+    if (online) {
+      _startFeed();
+    } else if (_items.isEmpty && !_hasError) {
+      _finishOffline(id);
+    }
+  }
+
+  // Lê a primeira página do cache local e a exibe imediatamente.
+  // Falha (sem dados em cache) é ignorada: a rede decide em seguida.
+  // Só encerra o loading quando o cache realmente entrega itens, para não
+  // piscar "vazio" antes da resposta do servidor.
+  Future<void> _prefillFromCache(int id) async {
+    try {
+      final pets = await _cachePetsForCurrentFilter();
+      if (!mounted || id != _loadId) return;
+      setState(() {
+        _items = _applyLocalFilters(pets);
+        if (_items.isNotEmpty) {
+          _isLoading = false;
+        }
+      });
+    } on Exception {
+      // Sem cache local: aguarda a rede ou o estado offline.
+    }
+  }
+
+  Future<List<Pet>> _cachePetsForCurrentFilter() async {
+    switch (widget.filter) {
+      case AppPetFilter.all:
+        final tags = _serverPrefilterTags;
+        final page = tags != null
+            ? await PetService.instance.getFilteredFirstPageFromCache(tags)
+            : await PetService.instance.getFirstPageFromCache();
+        return page.pets;
+      case AppPetFilter.favorites:
+        final ids = FavoritesService.instance.current.toList();
+        if (ids.isEmpty) return [];
+        return PetService.instance.getPetsByIds(ids, fromCache: true);
+      case AppPetFilter.myPublications:
+        final ids = MyPublicationsService.instance.current.toList();
+        if (ids.isEmpty) return [];
+        return PetService.instance.getPetsByIds(ids, fromCache: true);
+    }
+  }
+
+  // Sem conexão e sem dados em cache: estado "Sem conexão" com retry.
+  void _finishOffline(int id) {
+    if (!mounted || id != _loadId) return;
+    setState(() {
+      _isOffline = true;
+      _isLoading = false;
+      _hasMore = false;
+    });
   }
 
   void _startFeed() {
@@ -352,6 +443,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       '[WGResponsivePetGrid] Erro ao carregar pets: $error\n$stackTrace',
     );
     setState(() {
+      _hasError = true;
       _isLoading = false;
       _isLoadingMore = false;
     });
@@ -430,10 +522,44 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
   // ── UI ───────────────────────────────────────────────────────────
 
+  // Estado de erro da carga inicial: mantém o pull-to-refresh ativo e
+  // oferece "Tentar de novo" para recarregar (`_setup`). Quando offline,
+  // usa o visual específico de conexão.
+  Widget _buildErrorState({bool isOffline = false}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: isOffline
+                  ? WGErrorState(
+                      icon: Icons.wifi_off,
+                      title: SharedStrings.NO_CONNECTION,
+                      description: SharedStrings.NO_CONNECTION_DESCRIPTION,
+                      onAction: _setup,
+                    )
+                  : WGErrorState(onAction: _setup),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading || (_items.isEmpty && _isLoadingMore)) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_hasError && _items.isEmpty) {
+      return _buildErrorState();
+    }
+
+    if (_isOffline && _items.isEmpty) {
+      return _buildErrorState(isOffline: true);
     }
 
     if (_items.isEmpty) {

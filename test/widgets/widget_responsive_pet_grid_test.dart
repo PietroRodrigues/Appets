@@ -2,6 +2,9 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:appets/core/constants/constants_strings_home.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -10,16 +13,21 @@ import 'package:appets/widgets/filters/widget_pet_filters_sheet.dart';
 
 void main() {
   final service = PetService.instance;
+  final connectivity = ConnectivityService.instance;
   final now = DateTime(2024, 1, 1);
   late FakeFirebaseFirestore db;
 
   setUp(() {
     db = FakeFirebaseFirestore();
     service.debugDb = db;
+    service.debugFirstPageError = null;
+    connectivity.debugOnline = true;
   });
 
   tearDown(() {
     service.debugDb = null;
+    service.debugFirstPageError = null;
+    connectivity.reset();
   });
 
   Widget wrap({
@@ -176,6 +184,204 @@ void main() {
 
         expect(find.text('VAZIO'), findsOneWidget);
         expect(find.textContaining('cachorro_macho_'), findsNothing);
+      },
+    );
+  });
+
+  group('WGResponsivePetGrid · estado de erro com retry (item 1)', () {
+    testWidgets(
+      'erro na primeira página mostra erro em vez do vazio/loading',
+      (tester) async {
+        service.debugFirstPageError = StateError('falha simulada');
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(HomeStrings.LOAD_PETS_ERROR), findsOneWidget);
+        expect(find.text(HomeStrings.RETRY_ACTION), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.text('VAZIO'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '"Tentar de novo" recarrega e mostra os pets',
+      (tester) async {
+        service.debugFirstPageError = StateError('falha simulada');
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(HomeStrings.LOAD_PETS_ERROR), findsOneWidget);
+
+        await insertPet(
+          petDoc(
+            'fido',
+            species: 'cachorro',
+            gender: 'macho',
+            createdAt: now,
+          ),
+        );
+        await insertPet(
+          petDoc(
+            'mia',
+            species: 'gato',
+            gender: 'femea',
+            createdAt: now.add(const Duration(minutes: 1)),
+          ),
+        );
+        service.debugFirstPageError = null;
+        await tester.tap(find.text(HomeStrings.RETRY_ACTION));
+        await tester.pumpAndSettle();
+
+        expect(find.text('fido'), findsOneWidget);
+        expect(find.text('mia'), findsOneWidget);
+        expect(find.text(HomeStrings.LOAD_PETS_ERROR), findsNothing);
+      },
+    );
+  });
+
+  group('WGResponsivePetGrid · sem conexão e cache-first (item 2)', () {
+    testWidgets(
+      'offline com pets no cache mostra os pets (sem vazio/sem conexão)',
+      (tester) async {
+        await insertPet(
+          petDoc(
+            'fido',
+            species: 'cachorro',
+            gender: 'macho',
+            createdAt: now,
+          ),
+        );
+        connectivity.debugOnline = false;
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('fido'), findsOneWidget);
+        expect(find.text('VAZIO'), findsNothing);
+        expect(find.text(SharedStrings.NO_CONNECTION), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'offline sem cache mostra "Sem conexão" + retry em vez do vazio',
+      (tester) async {
+        connectivity.debugOnline = false;
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(SharedStrings.NO_CONNECTION), findsOneWidget);
+        expect(find.text(SharedStrings.NO_CONNECTION_DESCRIPTION),
+            findsOneWidget);
+        expect(find.text(HomeStrings.RETRY_ACTION), findsOneWidget);
+        expect(find.text('VAZIO'), findsNothing);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'voltar a ficar online recarrega sozinho e mostra os pets',
+      (tester) async {
+        connectivity.debugOnline = false;
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(SharedStrings.NO_CONNECTION), findsOneWidget);
+
+        await insertPet(
+          petDoc(
+            'rex',
+            species: 'cachorro',
+            gender: 'macho',
+            createdAt: now,
+          ),
+        );
+        connectivity.debugOnline = true;
+        await tester.pumpAndSettle();
+
+        expect(find.text('rex'), findsOneWidget);
+        expect(find.text(SharedStrings.NO_CONNECTION), findsNothing);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'cache-first: erro do servidor com pets no cache mantém o cache',
+      (tester) async {
+        await insertPet(
+          petDoc(
+            'fido',
+            species: 'cachorro',
+            gender: 'macho',
+            createdAt: now,
+          ),
+        );
+        service.debugFirstPageError = StateError('falha simulada');
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('fido'), findsOneWidget);
+        expect(find.text(HomeStrings.LOAD_PETS_ERROR), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '"Tentar de novo" offline sem cache mantém o estado de conexão',
+      (tester) async {
+        connectivity.debugOnline = false;
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(SharedStrings.NO_CONNECTION), findsOneWidget);
+
+        await tester.tap(find.text(HomeStrings.RETRY_ACTION));
+        await tester.pumpAndSettle();
+
+        expect(find.text(SharedStrings.NO_CONNECTION), findsOneWidget);
       },
     );
   });

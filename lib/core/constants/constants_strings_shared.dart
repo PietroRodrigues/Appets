@@ -22,4 +22,11 @@ class SharedStrings {
   static const DEVELOPMENT_TITLE = 'Em desenvolvimento';
 
   static const NOTICE_TITLE = 'Aviso';
+
+  static const NO_CONNECTION = 'Sem conexão';
+
+  static const NO_CONNECTION_DESCRIPTION =
+      'Você está offline. Verifique sua conexão e tente novamente.';
+
+  static const CONNECTION_RESTORED = 'Conexão estabelecida';
 }

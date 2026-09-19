@@ -79,4 +79,12 @@ class ThemeColors {
 
   static const Color white = Colors.white;
   static const Color black = Colors.black;
+
+  // =========================
+  // System bars
+  // =========================
+
+  /// Faixa desenhada atrás da barra de status (preta translúcida ~55%),
+  /// simulando a cor original do aparelho quando o edge-to-edge está ativo.
+  static const Color statusBar = Color(0x8C000000);
 }
