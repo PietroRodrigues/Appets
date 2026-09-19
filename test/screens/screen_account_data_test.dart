@@ -44,14 +44,14 @@ class _FailingReauthUser extends _TrackingUser {
 
 /// Provedor de e-mail/senha para simular contas com senha.
 UserInfo _passwordProvider(String uid, String email) => UserInfo.fromPigeon(
-      PigeonUserInfo(
-        uid: uid,
-        email: email,
-        isAnonymous: false,
-        isEmailVerified: true,
-        providerId: 'password',
-      ),
-    );
+  PigeonUserInfo(
+    uid: uid,
+    email: email,
+    isAnonymous: false,
+    isEmailVerified: true,
+    providerId: 'password',
+  ),
+);
 
 Widget _buildApp() => const MaterialApp(home: AccountDataScreen());
 
@@ -59,8 +59,10 @@ Widget _buildApp() => const MaterialApp(home: AccountDataScreen());
 Future<void> _pumpScreen(WidgetTester tester, MockUser user) async {
   final db = FakeFirebaseFirestore();
   FirestoreService.instance.debugDb = db;
-  AuthService.instance.debugAuth =
-      MockFirebaseAuth(signedIn: true, mockUser: user);
+  AuthService.instance.debugAuth = MockFirebaseAuth(
+    signedIn: true,
+    mockUser: user,
+  );
 
   await db.collection('users').doc(user.uid).set({
     'name': 'Ana',
@@ -85,12 +87,11 @@ Future<void> _enterTextAndConfirm(WidgetTester tester, String text) async {
 }
 
 void main() {
-  testWidgets('conta Google: tile de alterar senha fica bloqueado',
-      (tester) async {
-    await _pumpScreen(
-      tester,
-      MockUser(uid: 'uid_1', email: 'ana@gmail.com'),
-    );
+  tearDown(() => FirestoreService.instance.debugGetUserError = null);
+  testWidgets('conta Google: tile de alterar senha fica bloqueado', (
+    tester,
+  ) async {
+    await _pumpScreen(tester, MockUser(uid: 'uid_1', email: 'ana@gmail.com'));
 
     final tile = find.text(ProfileStrings.CHANGE_PASSWORD);
     expect(tile, findsOneWidget);
@@ -103,8 +104,7 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
   });
 
-  testWidgets('conta com senha: fluxo completo altera a senha',
-      (tester) async {
+  testWidgets('conta com senha: fluxo completo altera a senha', (tester) async {
     final tracking = _TrackingUser(
       uid: 'uid_1',
       email: 'a@test.com',
@@ -126,8 +126,9 @@ void main() {
     expect(tracking.updatePasswordCalls, 1);
   });
 
-  testWidgets('conta com senha: senha atual incorreta aborta o fluxo',
-      (tester) async {
+  testWidgets('conta com senha: senha atual incorreta aborta o fluxo', (
+    tester,
+  ) async {
     final failing = _FailingReauthUser(
       uid: 'uid_1',
       email: 'a@test.com',
@@ -143,4 +144,23 @@ void main() {
     expect(find.text(AuthStrings.WRONG_PASSWORD_MESSAGE), findsOneWidget);
     expect(failing.updatePasswordCalls, 0);
   });
+
+  testWidgets(
+    'falha na carga sai do loading e mostra estado de erro com retry',
+    (tester) async {
+      FirestoreService.instance.debugGetUserError = StateError('falha');
+
+      await _pumpScreen(tester, MockUser(uid: 'uid_1'));
+
+      expect(find.text(SharedStrings.LOAD_DATA_ERROR_TITLE), findsOneWidget);
+
+      // Recupera a conexão e tenta de novo: recarrega e mostra o conteúdo.
+      FirestoreService.instance.debugGetUserError = null;
+      await tester.tap(find.text('Tentar de novo'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(SharedStrings.LOAD_DATA_ERROR_TITLE), findsNothing);
+      expect(find.text('Ana'), findsWidgets);
+    },
+  );
 }

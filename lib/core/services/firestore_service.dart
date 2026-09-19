@@ -16,6 +16,11 @@ class FirestoreService {
   @visibleForTesting
   set debugDb(FirebaseFirestore? db) => _debugDb = db;
 
+  /// Lançado em [getUser] quando definido (simula falha de carregamento nos
+  /// testes).
+  @visibleForTesting
+  Object? debugGetUserError;
+
   // Cria o documento do usuário na coleção `users`.
   Future<void> createUser(UserModel user) async {
     await _db.collection('users').doc(user.id).set(user.toMap());
@@ -23,6 +28,8 @@ class FirestoreService {
 
   // Busca o documento do usuário pelo UID; retorna `null` se não existir.
   Future<UserModel?> getUser(String uid) async {
+    final err = debugGetUserError;
+    if (err != null) throw err;
     final doc = await _db.collection('users').doc(uid).get();
     if (!doc.exists) return null;
     return UserModel.fromFirestore(doc);

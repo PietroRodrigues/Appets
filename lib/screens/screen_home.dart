@@ -1,4 +1,5 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
@@ -33,6 +34,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   UserModel? _user;
   bool _isLoading = true;
+  bool _loadError = false;
   final ValueNotifier<String> _search = SearchQueryController();
   final PetFiltersController _filters = PetFiltersController();
   final GlobalKey<WGResponsivePetGridState> _gridKey = GlobalKey();
@@ -62,17 +64,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final authUser = AuthService.instance.currentUser;
-    if (authUser != null) {
-      _user = await FirestoreService.instance.getUser(authUser.uid);
-      await FavoritesService.instance.loadForUser(authUser.uid);
-      await MyPublicationsService.instance.loadForUser(authUser.uid);
+    try {
+      final authUser = AuthService.instance.currentUser;
+      if (authUser != null) {
+        _user = await FirestoreService.instance.getUser(authUser.uid);
+        await FavoritesService.instance.loadForUser(authUser.uid);
+        await MyPublicationsService.instance.loadForUser(authUser.uid);
+      }
+      if (mounted) {
+        setState(() => _loadError = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadError = true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  }
+
+  // Reexecuta a carga inicial após uma falha (botão "Tentar de novo").
+  void _retryLoad() {
+    setState(() {
+      _isLoading = true;
+      _loadError = false;
+    });
+    _loadData();
   }
 
   void _onNavigation(AppPage page) {
@@ -90,6 +109,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoading) {
       return WGPageLoading(
         userName: _user?.name ?? HomeStrings.DEFAULT_USER_NAME,
+      );
+    }
+
+    if (_loadError) {
+      return WGErrorState(
+        title: SharedStrings.LOAD_DATA_ERROR_TITLE,
+        description: SharedStrings.LOAD_DATA_ERROR_DESCRIPTION,
+        onAction: _retryLoad,
       );
     }
 

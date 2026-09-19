@@ -29,4 +29,9 @@ class SharedStrings {
       'Você está offline. Verifique sua conexão e tente novamente.';
 
   static const CONNECTION_RESTORED = 'Conexão estabelecida';
+
+  static const LOAD_DATA_ERROR_TITLE = 'Não foi possível carregar os dados';
+
+  static const LOAD_DATA_ERROR_DESCRIPTION =
+      'Verifique sua conexão e tente novamente.';
 }

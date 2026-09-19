@@ -36,6 +36,7 @@ class AccountDataScreen extends StatefulWidget {
 class _AccountDataScreenState extends State<AccountDataScreen> {
   UserModel? _user;
   bool _isLoading = true;
+  bool _loadError = false;
   bool _isDeleting = false;
   bool _isSaving = false;
 
@@ -56,16 +57,35 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
   // Carrega os dados do usuário logado do Firestore.
   Future<void> _loadUserData() async {
-    final authUser = AuthService.instance.currentUser;
-    if (authUser != null) {
-      _user = await FirestoreService.instance.getUser(authUser.uid);
-      if (_user != null) {
-        _syncDraftsFromUser();
+    try {
+      final authUser = AuthService.instance.currentUser;
+      if (authUser != null) {
+        _user = await FirestoreService.instance.getUser(authUser.uid);
+        if (_user != null) {
+          _syncDraftsFromUser();
+        }
+      }
+      if (mounted) {
+        setState(() => _loadError = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadError = true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
+  }
+
+  // Reexecuta a carga inicial após uma falha (botão "Tentar de novo").
+  void _retryLoad() {
+    setState(() {
+      _isLoading = true;
+      _loadError = false;
+    });
+    _loadUserData();
   }
 
   void _syncDraftsFromUser() {
@@ -511,6 +531,30 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
       return const WGPageLoading(
         title: ProfileStrings.ACCOUNT_DATA_TITLE,
         wrapInScaffold: true,
+      );
+    }
+
+    if (_loadError) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: _onPopInvokedWithResult,
+        child: WGScaffold(
+          child: Column(
+            children: [
+              WGPageHeader.title(
+                title: ProfileStrings.ACCOUNT_DATA_TITLE,
+                showSearchBar: false,
+              ),
+              Expanded(
+                child: WGErrorState(
+                  title: SharedStrings.LOAD_DATA_ERROR_TITLE,
+                  description: SharedStrings.LOAD_DATA_ERROR_DESCRIPTION,
+                  onAction: _retryLoad,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

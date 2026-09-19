@@ -15,6 +15,7 @@ import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/display/widget_avatar.dart';
 import 'package:appets/widgets/display/widget_option_tile.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
+import 'package:appets/widgets/feedback/widget_page_states.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:flutter/material.dart';
 
@@ -33,6 +34,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   UserModel? _user;
+  bool _loadError = false;
 
   @override
   void initState() {
@@ -42,13 +44,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Carrega os dados do usuário logado do Firestore.
   Future<void> _loadUserData() async {
-    final authUser = AuthService.instance.currentUser;
-    if (authUser != null) {
-      _user = await FirestoreService.instance.getUser(authUser.uid);
+    try {
+      final authUser = AuthService.instance.currentUser;
+      if (authUser != null) {
+        _user = await FirestoreService.instance.getUser(authUser.uid);
+      }
+      if (mounted) {
+        setState(() => _loadError = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadError = true);
+      }
     }
-    if (mounted) {
-      setState(() {});
-    }
+  }
+
+  // Reexecuta a carga após uma falha (botão "Tentar de novo").
+  void _retryLoad() {
+    setState(() => _loadError = false);
+    _loadUserData();
   }
 
   // ACTIONS
@@ -111,74 +125,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         // CONTEÚDO
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 28, 20, 40),
-            child: Column(
-              children: [
-                // AVATAR
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    WGAvatar(
-                      radius: 45,
-                      imageUrl: _user?.photoUrl,
-                      borderColor: ThemeColors.primary,
-                      borderWidth: 3,
-                      shadowColor: ThemeColors.black.withValues(alpha: 0.25),
-                      shadowBlurRadius: 8,
-                    ),
+          child: _loadError
+              ? WGErrorState(
+                  title: SharedStrings.LOAD_DATA_ERROR_TITLE,
+                  description: SharedStrings.LOAD_DATA_ERROR_DESCRIPTION,
+                  onAction: _retryLoad,
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 40),
+                  child: Column(
+                    children: [
+                      // AVATAR
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          WGAvatar(
+                            radius: 45,
+                            imageUrl: _user?.photoUrl,
+                            borderColor: ThemeColors.primary,
+                            borderWidth: 3,
+                            shadowColor: ThemeColors.black.withValues(
+                              alpha: 0.25,
+                            ),
+                            shadowBlurRadius: 8,
+                          ),
 
-                    // BOTÃO FLUTUANTE PARA ALTERAR O AVATAR
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: _ProfileEditBadge(onTap: _showAvatarInDevelopment),
-                    ),
-                  ],
+                          // BOTÃO FLUTUANTE PARA ALTERAR O AVATAR
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: _ProfileEditBadge(
+                              onTap: _showAvatarInDevelopment,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // NOME
+                      Text(
+                        _user?.name ??
+                            AuthService.instance.currentUser?.displayName ??
+                            HomeStrings.DEFAULT_USER_NAME,
+                        style: ThemeTextStyles.heading,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 40),
+
+                      // OPÇÕES
+                      WGOptionTile(
+                        icon: Icons.person_outline,
+                        title: ProfileStrings.ACCOUNT_DATA_TITLE,
+                        filled: false,
+                        onTap: _openAccountData,
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      WGOptionTile(
+                        icon: Icons.settings_outlined,
+                        title: SettingsStrings.SETTINGS_TITLE,
+                        filled: false,
+                        onTap: _openSettings,
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      WGOptionTile(
+                        icon: Icons.logout,
+                        title: ProfileStrings.LOGOUT_OPTION,
+                        isDestructive: true,
+                        filled: false,
+                        onTap: _logout,
+                      ),
+                    ],
+                  ),
                 ),
-
-                const SizedBox(height: 24),
-
-                // NOME
-                Text(
-                  _user?.name ??
-                      AuthService.instance.currentUser?.displayName ??
-                      HomeStrings.DEFAULT_USER_NAME,
-                  style: ThemeTextStyles.heading,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 40),
-
-                // OPÇÕES
-                WGOptionTile(
-                  icon: Icons.person_outline,
-                  title: ProfileStrings.ACCOUNT_DATA_TITLE,
-                  filled: false,
-                  onTap: _openAccountData,
-                ),
-
-                const SizedBox(height: 12),
-
-                WGOptionTile(
-                  icon: Icons.settings_outlined,
-                  title: SettingsStrings.SETTINGS_TITLE,
-                  filled: false,
-                  onTap: _openSettings,
-                ),
-
-                const SizedBox(height: 12),
-
-                WGOptionTile(
-                  icon: Icons.logout,
-                  title: ProfileStrings.LOGOUT_OPTION,
-                  isDestructive: true,
-                  filled: false,
-                  onTap: _logout,
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );
