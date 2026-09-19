@@ -247,7 +247,8 @@ void main() {
     });
 
     test('searchPetsNextPage continua do cursor sem repetir pets', () async {
-      for (var i = 0; i < 45; i++) {
+      final total = PetService.pageSize * 2 + 5;
+      for (var i = 0; i < total; i++) {
         await insertPet(
           petDoc(
             'pet_$i',
@@ -351,7 +352,7 @@ void main() {
     });
 
     test('hasMore é false na última página', () async {
-      for (var i = 0; i < 25; i++) {
+      for (var i = 0; i < PetService.pageSize + 5; i++) {
         await insertPet(
           petDoc(
             'pet_$i',
@@ -364,9 +365,9 @@ void main() {
       final firstSnapshot = await db
           .collection('pets')
           .orderBy('createdAt', descending: true)
-          .limit(21)
+          .limit(PetService.pageSize + 1)
           .get();
-      final cursor = firstSnapshot.docs[19];
+      final cursor = firstSnapshot.docs[PetService.pageSize - 1];
 
       final next = await service.getNextPage(cursor);
 

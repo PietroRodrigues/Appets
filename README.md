@@ -19,8 +19,8 @@ centraliza isso em um lugar só, com:
 - **Publicação simples** — nome, idade, gênero, espécie, raça, endereço,
   telefone do responsável e fotos (com validação de telefone BR);
 - **Busca inteligente** — digite qualquer termo do nome ou da descrição;
-  o app encontra o pet mesmo com acentos ou letras diferentes
-  ("poo" → "poodle");
+  o app encontra o pet mesmo com acentos ou letras diferentes. A busca
+  é parcial a partir de **3 letras** no servidor ("poo" → "poodle");
 - **Favoritos reativos** — salve pets e veja a lista atualizar em todas as
   telas na hora;
 - **Resposta rápida** — contato direto via WhatsApp usando o telefone
@@ -38,7 +38,7 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | 🔐 **Autenticação** | E-mail/senha, **Google**, recuperação de senha, reautenticação e exclusão de conta. Perfil é criado automaticamente no Firestore |
 | 🏠 **Feed** | Lista paginada de todos os pets (stream + *load more* ao rolar), pull-to-refresh e estados de vazio/busca |
 | 🔎 **Busca por tokens** | Home busca no servidor (`arrayContainsAny` sobre `searchTokens`, sem dependência de texto exato); Favoritos e Minhas Publicações filtram client-side |
-| 🎛️ **Filtros** | Espécie, gênero, faixa de idade e tipo (adoção/perdido) em bottom sheet; pré-filtro no servidor + filtro exato no cliente (`petMatchesFilters`); chips ativos com limpeza |
+| 🎛️ **Filtros** | Espécie, gênero, faixa de idade e tipo (adoção/perdido) em janela (diálogo); pré-filtro no servidor + filtro exato no cliente (`petMatchesFilters`); chips ativos com limpeza |
 | 🐕 **Detalhes** | Galeria de fotos, espécie · raça, idade, gênero, endereço, descrição e contato via WhatsApp |
 | ➕ **Publicar** | Formulário com validação, tipo de publicação (adoção/perdido), espécie (9 opções) e gestão de fotos (mínimo 1, com compressão no upload) |
 | 🖼️ **Imagens otimizadas** | Fotos comprimidas no fluxo (1280px · webp ~150–350KB) com guarda de 5MB alinhada ao `storage.rules`; cache em disco (300 objetos/30d) e miniaturas via `memCacheWidth` (cards 480 · galeria 1080) em feed, favoritos, galeria e detalhe |
@@ -95,9 +95,9 @@ lib/
 
 ### Decisões técnicas que merecem destaque
 
-- **Feed paginado com cursor** — a Home e a aba Minhas Publicações leem
-  o Firestore em páginas de 20 itens (`startAfterDocument`), detectando
-  `hasMore` com um pedido de +1 item. Nada de carregar a coleção inteira.
+- **Feed paginado com cursor** — a Home lê o feed do Firestore em páginas de
+  10 itens (`startAfterDocument`), detectando `hasMore` com um pedido de
+  +1 item. Nada de carregar a coleção inteira.
 - **Busca sem depender do texto exato** — tokens normalizados
   (minúsculas + sem acento) gravados no documento; a Home consulta com
   `arrayContainsAny` e as outras abas filtram localmente.

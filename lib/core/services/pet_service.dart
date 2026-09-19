@@ -24,7 +24,7 @@ class PetService {
   static final PetService instance = PetService._();
 
   /// Quantidade de pets por página no feed paginado.
-  static const int pageSize = 20;
+  static const int pageSize = 10;
 
   FirebaseFirestore? _debugDb;
 
