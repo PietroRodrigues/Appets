@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/constants/constants_assets.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
@@ -59,7 +60,20 @@ class _WGProcessLoadingScreenState extends State<WGProcessLoadingScreen> {
 
   // Aguarda a operação e devolve o resultado ao chamador pela rota.
   Future<void> _runTask() async {
-    final result = await widget.task();
+    final WGProcessResult result;
+    try {
+      result = await widget.task();
+    } catch (_) {
+      // Fallback genérico: se a task lançar algo fora de Exception/Error
+      // tratado, fecha o loading com falha genérica em vez de prender a
+      // tela para sempre com exceção assíncrona não tratada.
+      if (!mounted) return;
+      Navigator.pop(
+        context,
+        WGProcessResult.failure(SharedStrings.PROCESS_GENERIC_ERROR),
+      );
+      return;
+    }
     if (!mounted) return;
     Navigator.pop(context, result);
   }

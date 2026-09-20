@@ -39,4 +39,8 @@ class SharedStrings {
   static const APP_START_ERROR_TITLE = 'Não foi possível iniciar o app';
 
   static const RETRY_ACTION = 'Tentar de novo';
+
+  // Falha genérica de processos executados na tela de carregamento.
+  static const PROCESS_GENERIC_ERROR =
+      'Não foi possível concluir a operação. Tente novamente.';
 }
