@@ -30,6 +30,24 @@ class AuthService {
   /// Stream de mudanças no estado de autenticação.
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  /// Se definido, [waitFirstAuthState] lança o erro informado (testes).
+  @visibleForTesting
+  Object? debugAuthStateError;
+
+  /// Aguarda o primeiro evento do stream para capturar a sessão
+  /// restaurada no cold start, evitando mandar usuário logado para o
+  /// login (forçando reautenticação). Com timeout: se o Auth demorar
+  /// (ex.: GMS instável), usa a sessão nativa restaurada.
+  Future<User?> waitFirstAuthState({
+    Duration timeout = const Duration(seconds: 4),
+  }) {
+    final debugError = debugAuthStateError;
+    if (debugError != null) {
+      return Future.error(debugError);
+    }
+    return authStateChanges.first.timeout(timeout, onTimeout: () => currentUser);
+  }
+
   // Cria uma conta com e-mail e senha.
   Future<UserCredential> register({
     required String email,

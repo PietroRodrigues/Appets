@@ -23,6 +23,7 @@ void main() {
     db = FakeFirebaseFirestore();
     service.debugAuth = auth;
     service.debugGoogle = _FakeGoogleSignIn();
+    service.debugAuthStateError = null;
     FirestoreService.instance.debugDb = db;
   });
 
@@ -105,6 +106,28 @@ void main() {
     });
   });
 
+  group('AuthService · waitFirstAuthState', () {
+    test('devolve o usuário da sessão restaurada', () async {
+      // Sessão restaurada: o Firebase real re-emite o usuário atual no
+      // subscribe; simulamos com mock já logado.
+      service.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'uid_1', email: 'b@test.com'),
+      );
+
+      final user = await service.waitFirstAuthState();
+
+      expect(user, isNotNull);
+      expect(user!.email, 'b@test.com');
+    });
+
+    test('lança quando o hook debugAuthStateError está definido', () {
+      service.debugAuthStateError = StateError('auth quebrado');
+
+      expect(() => service.waitFirstAuthState(), throwsA(isA<StateError>()));
+    });
+  });
+
   group('AuthService · ensureUserDocument', () {
     const user = UserModel(id: 'uid_1', name: 'Ana', email: 'ana@test.com');
 
@@ -117,8 +140,7 @@ void main() {
       expect(doc.get('name'), 'Ana');
     });
 
-    test('devolve o usuário persistido quando o documento já existe',
-        () async {
+    test('devolve o usuário persistido quando o documento já existe', () async {
       await db.collection('users').doc('uid_1').set({
         'name': 'Versão Persistida',
         'email': 'persistido@test.com',

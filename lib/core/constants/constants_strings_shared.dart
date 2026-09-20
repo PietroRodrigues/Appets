@@ -34,4 +34,9 @@ class SharedStrings {
 
   static const LOAD_DATA_ERROR_DESCRIPTION =
       'Verifique sua conexão e tente novamente.';
+
+  // Falha na preparação do app (ex.: restauração da sessão na splash).
+  static const APP_START_ERROR_TITLE = 'Não foi possível iniciar o app';
+
+  static const RETRY_ACTION = 'Tentar de novo';
 }
