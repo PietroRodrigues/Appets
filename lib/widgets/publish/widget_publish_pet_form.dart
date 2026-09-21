@@ -10,6 +10,7 @@ import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -317,6 +318,13 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    // Sem rede não há como publicar: avisa e aborta antes de travar na
+    // tela de carregamento (que ficaria presa esperando a rede).
+    if (!await ensureOnline(context)) {
+      return;
+    }
+    if (!mounted) return;
 
     _isSaving = true;
     FocusManager.instance.primaryFocus?.unfocus();

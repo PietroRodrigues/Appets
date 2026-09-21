@@ -9,6 +9,7 @@ import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/screens/screen_account_data.dart';
 
@@ -88,6 +89,7 @@ Future<void> _enterTextAndConfirm(WidgetTester tester, String text) async {
 
 void main() {
   tearDown(() => FirestoreService.instance.debugGetUserError = null);
+  tearDown(() => ConnectivityService.instance.reset());
   testWidgets('conta Google: tile de alterar senha fica bloqueado', (
     tester,
   ) async {
@@ -163,4 +165,24 @@ void main() {
       expect(find.text('Ana'), findsWidgets);
     },
   );
+
+  testWidgets('salvar dados offline não tenta gravar e mostra aviso', (
+    tester,
+  ) async {
+    ConnectivityService.instance.debugOnline = false;
+
+    await _pumpScreen(tester, MockUser(uid: 'uid_1', email: 'ana@test.com'));
+
+    final saveButton = find.text(ProfileStrings.SAVE_CONTACT);
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text(SharedStrings.NO_CONNECTION), findsOneWidget);
+    expect(find.text(ProfileStrings.CONTACT_SAVED), findsNothing);
+
+    // Nenhuma escrita aconteceu: o telefone continua o valor original.
+    final saved = await FirestoreService.instance.getUser('uid_1');
+    expect(saved?.phone, '(11) 99999-9999');
+  });
 }

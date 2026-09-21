@@ -6,6 +6,7 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/display/widget_pet_image.dart';
 import 'package:flutter/material.dart';
@@ -110,6 +111,11 @@ class _WGPetCardState extends State<WGPetCard>
   Future<void> _toggleFavorite() async {
     final authUser = AuthService.instance.currentUser;
     if (authUser == null) return;
+
+    // Sem rede não há como salvar o favorito: avisa e aborta.
+    if (!await ensureOnline(context)) {
+      return;
+    }
 
     final service = FavoritesService.instance;
 

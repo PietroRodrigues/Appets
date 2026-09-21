@@ -1,6 +1,10 @@
+import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -32,6 +36,7 @@ Pet _createTestPet({
 
 void main() {
   group('WGPetCard', () {
+    tearDown(() => ConnectivityService.instance.reset());
     testWidgets('exibe o nome do pet', (tester) async {
       final pet = _createTestPet(name: 'Thor');
 
@@ -258,6 +263,35 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.star_rounded), findsOneWidget);
+    });
+
+    testWidgets('favoritar offline mostra aviso e não altera o favorito', (
+      tester,
+    ) async {
+      AuthService.instance.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'user_test_001'),
+      );
+      ConnectivityService.instance.debugOnline = false;
+
+      final pet = _createTestPet();
+      FavoritesService.instance.reset();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPetCard(pet: pet)),
+        ),
+      );
+
+      await tester.longPress(find.byType(WGPetCard));
+      await tester.pumpAndSettle();
+
+      expect(find.text(SharedStrings.NO_CONNECTION), findsOneWidget);
+      // A guarda abortou antes de tocar no serviço: nada favoritado.
+      expect(
+        FavoritesService.instance.favoriteIds.value,
+        isNot(contains(pet.id)),
+      );
     });
   });
 }

@@ -5,6 +5,7 @@ import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/pet/widget_pet_details_info.dart';
@@ -49,6 +50,11 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   Future<void> _toggleFavorite() async {
     final authUser = AuthService.instance.currentUser;
     if (authUser == null || widget.pet.id.isEmpty) return;
+
+    // Sem rede não há como salvar o favorito: avisa e aborta.
+    if (!await ensureOnline(context)) {
+      return;
+    }
 
     final service = FavoritesService.instance;
     final wasFavorited = _isFavorited;

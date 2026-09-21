@@ -6,6 +6,7 @@ import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/core/utils/pet_filters_controller.dart';
 import 'package:appets/core/utils/search_query_controller.dart';
 import 'package:appets/models/enums/enums_app.dart';
@@ -84,6 +85,11 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
       messageHighlight: pet.name,
     );
     if (!confirmed || !mounted) return;
+
+    // Excluir pet exige rede (apaga fotos e dados): avisa e aborta.
+    if (!await ensureOnline(context)) {
+      return;
+    }
 
     try {
       final uid = AuthService.instance.currentUser?.uid;

@@ -8,6 +8,7 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/user_model.dart';
 import 'package:appets/widgets/buttons/widget_buttons.dart';
@@ -137,6 +138,12 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
   /// Salva os rascunhos no Firestore e atualiza o estado.
   Future<void> _saveChanges() async {
     if (_isSaving) return;
+
+    // Sem rede não há como salvar: avisa e aborta antes de qualquer escrita.
+    if (!await ensureOnline(context)) {
+      return;
+    }
+    if (!mounted) return;
 
     setState(() => _isSaving = true);
     FocusManager.instance.primaryFocus?.unfocus();
@@ -290,6 +297,12 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
     );
 
     if (!finalConfirmed || !mounted) return;
+
+    // Excluir conta exige rede: sem conexão não há como apagar os dados.
+    if (!await ensureOnline(context)) {
+      return;
+    }
+    if (!mounted) return;
 
     setState(() => _isDeleting = true);
     FocusManager.instance.primaryFocus?.unfocus();
