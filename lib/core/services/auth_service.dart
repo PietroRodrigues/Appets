@@ -163,8 +163,14 @@ class AuthService {
   }
 
   // Desconecta o usuário do Google e do Firebase Auth.
+  //
+  // O signOut do Firebase é realizado num finally: mesmo que o signOut do
+  // Google falhe (ex.: sem rede), o usuário nunca fica logado no app.
   Future<void> logout() async {
-    await _google.signOut();
-    await _auth.signOut();
+    try {
+      await _google.signOut();
+    } finally {
+      await _auth.signOut();
+    }
   }
 }

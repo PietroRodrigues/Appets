@@ -13,6 +13,13 @@ class _FakeGoogleSignIn extends GoogleSignIn {
   Future<GoogleSignInAccount?> signOut() async => null;
 }
 
+/// GoogleSignIn que falha no signOut (simula logout sem rede).
+class _ThrowingGoogleSignIn extends GoogleSignIn {
+  @override
+  Future<GoogleSignInAccount?> signOut() async =>
+      throw StateError('google fora');
+}
+
 void main() {
   late MockFirebaseAuth auth;
   late FakeFirebaseFirestore db;
@@ -101,6 +108,15 @@ void main() {
 
     test('logout desconecta o Firebase Auth', () async {
       await service.logout();
+
+      expect(service.currentUser, isNull);
+    });
+
+    test('logout garante o signOut do Firebase mesmo se o Google falhar', () async {
+      service.debugGoogle = _ThrowingGoogleSignIn();
+
+      // O erro do Google se propaga após o finally, mas o Firebase já saiu.
+      await expectLater(service.logout(), throwsA(isA<StateError>()));
 
       expect(service.currentUser, isNull);
     });

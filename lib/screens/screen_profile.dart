@@ -89,7 +89,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (shouldLogout && mounted) {
-      await AuthService.instance.logout();
+      try {
+        await AuthService.instance.logout();
+      } catch (_) {
+        // O signOut do Google falhou (ex.: sem rede); o Firebase já saiu
+        // no finally do serviço — segue o fluxo de logout normalmente.
+      }
       // Limpa a fonte global de favoritos para não vazar dados
       // da conta anterior para a próxima sessão.
       FavoritesService.instance.reset();
