@@ -56,7 +56,8 @@ service cloud.firestore {
         && isNonEmptyString(request.resource.data.publicationType)
         && isNonEmptyString(request.resource.data.race)
         && isNonEmptyString(request.resource.data.species)
-        && isValidSearchTokens(request.resource.data.searchTokens);
+        && isValidSearchTokens(request.resource.data.searchTokens)
+        && request.resource.data.createdAt is timestamp;
     }
 
     // Update de pet: valida APENAS o que está presente no doc resultante.
