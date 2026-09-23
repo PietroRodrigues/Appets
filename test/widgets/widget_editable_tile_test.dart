@@ -68,6 +68,40 @@ void main() {
       expect(find.text('Rex'), findsOneWidget);
     });
 
+    testWidgets('blocked (enabled false) nao abre edicao e mostra cadeado', (
+      tester,
+    ) async {
+      var editing = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                return WGEditableTile(
+                  icon: Icons.email_outlined,
+                  title: 'E-mail',
+                  initialValue: 'a@test.com',
+                  committedValue: 'a@test.com',
+                  onCommit: (_) {},
+                  onStartEditing: () => setState(() => editing = true),
+                  isEditing: editing,
+                  enabled: false,
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('a@test.com'));
+      await tester.pumpAndSettle();
+
+      expect(editing, isFalse);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    });
+
     testWidgets('entra em edição e devolve o valor via onCommit', (
       tester,
     ) async {

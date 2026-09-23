@@ -2,6 +2,7 @@ import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_delete_account.dart';
 import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/account_purge_service.dart';
 import 'package:appets/core/services/auth_service.dart';
@@ -178,43 +179,114 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
       return;
     }
 
+    final newName = _draftName.trim();
+    final newEmail = _draftEmail.trim();
+    final newPhone = _draftPhone.trim();
+    final newAddress = _draftAddress.trim();
+    final nameChanged = newName != _user!.name;
+    final emailChanged = newEmail != _user!.email;
+
     try {
+      // E-mail alterado: contas com senha reautenticam antes de trocar o
+      // e-mail no Auth (exige login recente). Contas Google não trocam.
+      if (emailChanged) {
+        if (!_canChangeEmail) {
+          // Conta Google não troca e-mail — nunca deveria acontecer (o tile
+          // fica bloqueado); aborta sem gravar nada.
+          setState(() => _isSaving = false);
+          return;
+        }
+
+        final reauth = await _reauthenticateWithPassword();
+        if (!mounted) return;
+        if (reauth.status == WGProcessStatus.canceled) {
+          setState(() => _isSaving = false);
+          return;
+        }
+        if (reauth.status == WGProcessStatus.failure) {
+          setState(() => _isSaving = false);
+          WGDialog.showAction(
+            context,
+            title: SharedStrings.ERROR_TITLE,
+            message: reauth.message ?? ProfileStrings.EMAIL_CHANGE_ERROR,
+            actionColor: ThemeColors.error,
+          );
+          return;
+        }
+
+        try {
+          await AuthService.instance.changeEmail(newEmail);
+        } on Exception catch (e) {
+          if (!mounted) return;
+          setState(() => _isSaving = false);
+          WGDialog.showAction(
+            context,
+            title: SharedStrings.ERROR_TITLE,
+            message: e.authMessage(ProfileStrings.EMAIL_CHANGE_ERROR, {
+              'email-already-in-use': AuthStrings.EMAIL_ALREADY_IN_USE,
+              'invalid-email': AuthStrings.INVALID_EMAIL,
+            }),
+            actionColor: ThemeColors.error,
+          );
+          return;
+        }
+      }
+
       // Captura antes da atualização local: a base para detectar se o
       // telefone mudou é o valor antigo do Firestore.
-      final phoneChanged = _draftPhone.trim() != _user!.phone;
+      final phoneChanged = newPhone != _user!.phone;
 
       await FirestoreService.instance.updateUser(uid, {
-        'name': _draftName.trim(),
-        'email': _draftEmail.trim(),
-        'phone': _draftPhone.trim(),
-        'address': _draftAddress.trim(),
+        'name': newName,
+        'email': newEmail,
+        'phone': newPhone,
+        'address': newAddress,
       });
 
       // Atualiza o modelo local (evita nova busca) e redefine rascunhos.
       setState(() {
         _user = UserModel(
           id: _user!.id,
-          name: _draftName.trim(),
-          email: _draftEmail.trim(),
-          phone: _draftPhone.trim(),
-          address: _draftAddress.trim(),
+          name: newName,
+          email: newEmail,
+          phone: newPhone,
+          address: newAddress,
           photoUrl: _user!.photoUrl,
           favoritePetIds: _user!.favoritePetIds,
+          myPublishedPetIds: _user!.myPublishedPetIds,
         );
         _isSaving = false;
       });
 
+      // Sincroniza o nome no Firebase Auth (best-effort): o Firestore é a
+      // fonte de verdade das telas; se o Auth falhar, ainda assim avisa.
       if (mounted) {
-        WGDialog.showAction(
-          context,
-          title: SharedStrings.SUCCESS_TITLE,
-          message: ProfileStrings.CONTACT_SAVED,
-        );
+        if (nameChanged) {
+          var nameSyncFailed = false;
+          try {
+            await AuthService.instance.updateDisplayName(newName);
+          } on Exception {
+            nameSyncFailed = true;
+          }
+          if (!mounted) return;
+          WGDialog.showAction(
+            context,
+            title: SharedStrings.SUCCESS_TITLE,
+            message: nameSyncFailed
+                ? ProfileStrings.NAME_SYNC_WARNING
+                : ProfileStrings.CONTACT_SAVED,
+          );
+        } else {
+          WGDialog.showAction(
+            context,
+            title: SharedStrings.SUCCESS_TITLE,
+            message: ProfileStrings.CONTACT_SAVED,
+          );
+        }
       }
 
       // Telefone alterado -> pergunta se propaga para todas as publicações.
       if (phoneChanged && mounted) {
-        final newPhone = _draftPhone.trim();
         final shouldUpdate = await WGDialog.showConfirm(
           context,
           title: ProfileStrings.UPDATE_CONTACT_TITLE,
@@ -537,6 +609,10 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
   /// Apenas contas criadas com e-mail/senha podem trocar a senha.
   bool get _canChangePassword => AuthService.instance.usesPasswordProvider;
 
+  /// Apenas contas criadas com e-mail/senha podem trocar o e-mail
+  /// (contas Google ficam com o campo bloqueado).
+  bool get _canChangeEmail => AuthService.instance.usesPasswordProvider;
+
   // Constrói a tela de dados da conta (loading ou conteúdo).
   @override
   Widget build(BuildContext context) {
@@ -614,6 +690,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                       initialValue: _user?.email ?? '',
                       committedValue: _draftEmail,
                       isEditing: _editingField == 'email',
+                      enabled: _canChangeEmail,
                       onStartEditing: () => _startEditing('email'),
                       onCommit: (v) => _commitField('email', v),
                       keyboardType: TextInputType.emailAddress,

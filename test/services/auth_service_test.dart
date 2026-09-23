@@ -7,6 +7,9 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/models/user_model.dart';
 
+// Os mocks do firebase_auth_mocks já declaram campos não-finais.
+// ignore_for_file: must_be_immutable
+
 /// GoogleSignIn falso apenas para o logout suportar o fluxo em testes.
 class _FakeGoogleSignIn extends GoogleSignIn {
   @override
@@ -18,6 +21,18 @@ class _ThrowingGoogleSignIn extends GoogleSignIn {
   @override
   Future<GoogleSignInAccount?> signOut() async =>
       throw StateError('google fora');
+}
+
+/// MockUser que conta as chamadas de updateEmail.
+class _TrackingEmailUser extends MockUser {
+  _TrackingEmailUser({super.uid, super.email});
+
+  int updateEmailCalls = 0;
+
+  @override
+  Future<void> updateEmail(String newEmail) async {
+    updateEmailCalls++;
+  }
 }
 
 void main() {
@@ -100,6 +115,17 @@ void main() {
 
     test('updatePassword conclui com o usuário logado', () async {
       await service.updatePassword('654321');
+    });
+
+    test('changeEmail chama updateEmail do usuário', () async {
+      service.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: _TrackingEmailUser(uid: 'uid_1', email: 'a@test.com'),
+      );
+
+      await service.changeEmail('novo@test.com');
+
+      expect((service.currentUser! as _TrackingEmailUser).updateEmailCalls, 1);
     });
 
     test('deleteAccount exclui a conta logada', () async {

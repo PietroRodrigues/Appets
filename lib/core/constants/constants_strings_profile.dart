@@ -40,6 +40,12 @@ class ProfileStrings {
 
   static const CONTACT_SAVE_ERROR = 'Não foi possível salvar. Tente novamente.';
 
+  static const NAME_SYNC_WARNING =
+      'Dados salvos! Mas não foi possível atualizar o nome de exibição.';
+
+  static const EMAIL_CHANGE_ERROR =
+      'Não foi possível alterar o e-mail. Tente novamente.';
+
   static const UPDATE_CONTACT_TITLE = 'Atualizar publicações?';
 
   static const UPDATE_CONTACT_UPDATED = 'Telefone atualizado em todos os seus pets!';

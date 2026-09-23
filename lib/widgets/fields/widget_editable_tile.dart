@@ -23,6 +23,7 @@ class WGEditableTile extends StatefulWidget {
     required this.onCommit,
     required this.onStartEditing,
     required this.isEditing,
+    this.enabled = true,
     this.phone = false,
     this.keyboardType,
     this.textInputAction,
@@ -47,6 +48,10 @@ class WGEditableTile extends StatefulWidget {
 
   /// Indica se este tile está em modo de edição.
   final bool isEditing;
+
+  /// Quando `false`, o tile não abre edição (bloqueado). Útil para campos
+  /// que não podem ser alterados (ex.: e-mail em conta Google).
+  final bool enabled;
 
   /// Se `true`, usa o campo de telefone com máscara.
   final bool phone;
@@ -96,6 +101,7 @@ class _WGEditableTileState extends State<WGEditableTile> {
   }
 
   void _onTapTile() {
+    if (!widget.enabled) return;
     if (!widget.isEditing) {
       widget.onStartEditing();
     }
@@ -114,7 +120,7 @@ class _WGEditableTileState extends State<WGEditableTile> {
             : null,
       ),
       child: InkWell(
-        onTap: _onTapTile,
+        onTap: widget.enabled ? _onTapTile : null,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -137,6 +143,17 @@ class _WGEditableTileState extends State<WGEditableTile> {
               Expanded(
                 child: widget.isEditing ? _buildEditor() : _buildDisplay(),
               ),
+
+              // CADEADO: campo bloqueado (não editável).
+              if (!widget.enabled)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Icon(
+                    Icons.lock_outline,
+                    size: 18,
+                    color: ThemeColors.hint,
+                  ),
+                ),
             ],
           ),
         ),

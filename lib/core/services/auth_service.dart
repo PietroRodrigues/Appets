@@ -99,6 +99,15 @@ class AuthService {
     await _auth.currentUser?.updatePassword(newPassword);
   }
 
+  // Atualiza o e-mail do usuário logado (exige login recente — reauth).
+  Future<void> changeEmail(String email) async {
+    // O Firebase descontinuou updateEmail em favor de verifyBeforeUpdateEmail,
+    // mas o APPets exige a troca imediata após a reautenticação (sem link de
+    // confirmação), então o uso é intencional aqui.
+    // ignore: deprecated_member_use
+    await _auth.currentUser?.updateEmail(email);
+  }
+
   /// Garante a existência do documento do usuário no Firestore.
   ///
   /// Grava [user] com `merge` (upsert): cria o doc se ainda não existir

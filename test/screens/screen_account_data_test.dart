@@ -12,6 +12,7 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/screens/screen_account_data.dart';
+import 'package:appets/widgets/fields/widget_editable_tile.dart';
 
 // Os mocks do firebase_auth_mocks já declaram campos não-finais.
 // ignore_for_file: must_be_immutable
@@ -25,6 +26,44 @@ class _TrackingUser extends MockUser {
   @override
   Future<void> updatePassword(String newPassword) async {
     updatePasswordCalls++;
+  }
+}
+
+/// MockUser que conta as chamadas de updateEmail.
+class _TrackingEmailUser extends MockUser {
+  _TrackingEmailUser({super.uid, super.email, super.providerData});
+
+  int updateEmailCalls = 0;
+
+  @override
+  Future<void> updateEmail(String newEmail) async {
+    updateEmailCalls++;
+  }
+}
+
+/// MockUser que conta as chamadas de updateDisplayName.
+class _TrackingDisplayNameUser extends MockUser {
+  _TrackingDisplayNameUser({super.uid, super.email, super.providerData});
+
+  int updateDisplayNameCalls = 0;
+
+  @override
+  Future<void> updateDisplayName(String? name) async {
+    updateDisplayNameCalls++;
+  }
+}
+
+/// MockUser cuja sincronização do nome no Auth sempre falha.
+class _FailingDisplayNameUser extends _TrackingDisplayNameUser {
+  _FailingDisplayNameUser({super.uid, super.email, super.providerData});
+
+  @override
+  Future<void> updateDisplayName(String? name) async {
+    updateDisplayNameCalls++;
+    throw FirebaseAuthException(
+      code: 'network-request-failed',
+      message: 'Sem rede.',
+    );
   }
 }
 
@@ -145,6 +184,144 @@ void main() {
 
     expect(find.text(AuthStrings.WRONG_PASSWORD_MESSAGE), findsOneWidget);
     expect(failing.updatePasswordCalls, 0);
+  });
+
+  testWidgets('conta Google: e-mail fica bloqueado com cadeado (item 12)', (
+    tester,
+  ) async {
+    await _pumpScreen(tester, MockUser(uid: 'uid_1', email: 'ana@gmail.com'));
+
+    // O toque no e-mail não abre edição.
+    await tester.tap(find.text('ana@gmail.com'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextFormField), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(WGEditableTile),
+        matching: find.byIcon(Icons.lock_outline),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('salvar nome alterado sincroniza o nome no Auth (item 12)', (
+    tester,
+  ) async {
+    final tracking = _TrackingDisplayNameUser(
+      uid: 'uid_1',
+      email: 'a@test.com',
+      providerData: [_passwordProvider('uid_1', 'a@test.com')],
+    );
+    await _pumpScreen(tester, tracking);
+
+    await tester.tap(find.text('Ana'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'Ana Nova');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    final saveButton = find.text(ProfileStrings.SAVE_CONTACT);
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(tracking.updateDisplayNameCalls, 1);
+    expect(find.text(ProfileStrings.CONTACT_SAVED), findsOneWidget);
+
+    final saved = await FirestoreService.instance.getUser('uid_1');
+    expect(saved?.name, 'Ana Nova');
+  });
+
+  testWidgets('falha ao sincronizar nome mostra aviso best-effort (item 12)', (
+    tester,
+  ) async {
+    final failing = _FailingDisplayNameUser(
+      uid: 'uid_1',
+      email: 'a@test.com',
+      providerData: [_passwordProvider('uid_1', 'a@test.com')],
+    );
+    await _pumpScreen(tester, failing);
+
+    await tester.tap(find.text('Ana'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'Ana Nova');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    final saveButton = find.text(ProfileStrings.SAVE_CONTACT);
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(failing.updateDisplayNameCalls, 1);
+    expect(find.text(ProfileStrings.NAME_SYNC_WARNING), findsOneWidget);
+
+    final saved = await FirestoreService.instance.getUser('uid_1');
+    expect(saved?.name, 'Ana Nova');
+  });
+
+  testWidgets('conta com senha: trocar e-mail reautentica e grava (item 42)', (
+    tester,
+  ) async {
+    final tracking = _TrackingEmailUser(
+      uid: 'uid_1',
+      email: 'a@test.com',
+      providerData: [_passwordProvider('uid_1', 'a@test.com')],
+    );
+    await _pumpScreen(tester, tracking);
+
+    await tester.tap(find.text('a@test.com'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'novo@test.com');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    final saveButton = find.text(ProfileStrings.SAVE_CONTACT);
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    // Diálogo de reautenticação: senha atual confirma a troca.
+    await _enterTextAndConfirm(tester, '123456');
+
+    expect(tracking.updateEmailCalls, 1);
+    expect(find.text(ProfileStrings.CONTACT_SAVED), findsOneWidget);
+
+    final saved = await FirestoreService.instance.getUser('uid_1');
+    expect(saved?.email, 'novo@test.com');
+  });
+
+  testWidgets('conta com senha: cancelar reauth aborta sem gravar (item 42)', (
+    tester,
+  ) async {
+    final tracking = _TrackingEmailUser(
+      uid: 'uid_1',
+      email: 'a@test.com',
+      providerData: [_passwordProvider('uid_1', 'a@test.com')],
+    );
+    await _pumpScreen(tester, tracking);
+
+    await tester.tap(find.text('a@test.com'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'novo@test.com');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    final saveButton = find.text(ProfileStrings.SAVE_CONTACT);
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    // Cancela o diálogo de senha ("Não"); nada é gravado.
+    await tester.tap(find.text(SharedStrings.NO));
+    await tester.pumpAndSettle();
+
+    expect(tracking.updateEmailCalls, 0);
+    expect(find.text(ProfileStrings.CONTACT_SAVED), findsNothing);
+
+    final saved = await FirestoreService.instance.getUser('uid_1');
+    expect(saved?.email, 'a@test.com');
   });
 
   testWidgets(
