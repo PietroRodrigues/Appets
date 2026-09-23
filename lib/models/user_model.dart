@@ -41,6 +41,21 @@ class UserModel {
     };
   }
 
+  // Mapa para escrita com `merge`: apenas campos de identidade não vazios.
+  // Não inclui as listas de favoritos/publicações (evita apagá-las se um
+  // login/cadastro rodar sobre um doc existente) nem createdAt (não
+  // reescreve a data de criação original). Campos vazios ficam de fora
+  // para não sobrescrever dados já gravados (ex.: phone/foto do perfil).
+  Map<String, dynamic> toMergeMap() {
+    return {
+      if (name.isNotEmpty) 'name': name,
+      if (email.isNotEmpty) 'email': email,
+      if (phone.isNotEmpty) 'phone': phone,
+      if (address.isNotEmpty) 'address': address,
+      if (photoUrl.isNotEmpty) 'photoUrl': photoUrl,
+    };
+  }
+
   // Cria um usuário a partir de um documento do Firestore.
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;

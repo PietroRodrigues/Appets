@@ -78,10 +78,24 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
       message: AuthStrings.LOGIN_LOADING,
       task: () async {
         try {
-          await AuthService.instance.login(
+          final credential = await AuthService.instance.login(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
+
+          // Garante o doc do usuário: sem ele a conta vira "perfil
+          // fantasma" (logado sem dados). Escrita com merge (atômica).
+          final firebaseUser = credential.user;
+          if (firebaseUser != null) {
+            try {
+              await AuthService.instance.ensureUserDocument(
+                UserModel.fromFirebaseUser(firebaseUser),
+              );
+            } catch (e) {
+              debugPrint('LoginDocError: $e');
+              return WGProcessResult.failure(AuthStrings.LOGIN_ACCOUNT_ERROR);
+            }
+          }
           return const WGProcessResult.success();
         } on Exception catch (e) {
           return WGProcessResult.failure(

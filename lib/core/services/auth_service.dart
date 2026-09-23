@@ -101,12 +101,12 @@ class AuthService {
 
   /// Garante a existência do documento do usuário no Firestore.
   ///
-  /// Se o documento ainda não existir (ex.: primeiro acesso via Google),
-  /// cria-o com [user]. Retorna o [UserModel] persistido.
+  /// Grava [user] com `merge` (upsert): cria o doc se ainda não existir
+  /// (ex.: primeiro acesso) e, se já existir, atualiza apenas os campos de
+  /// identidade sem sobrescrever favoritos/publicações nem a data de
+  /// criação. Sem leitura prévia: atômico e idempotente (double-tap não
+  /// perde dados). Retorna o [UserModel] gravado.
   Future<UserModel> ensureUserDocument(UserModel user) async {
-    final existing = await FirestoreService.instance.getUser(user.id);
-    if (existing != null) return existing;
-
     await FirestoreService.instance.createUser(user);
     return user;
   }

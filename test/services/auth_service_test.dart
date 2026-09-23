@@ -156,21 +156,28 @@ void main() {
       expect(doc.get('name'), 'Ana');
     });
 
-    test('devolve o usuário persistido quando o documento já existe', () async {
+    test('merge não sobrescreve favoritos e telefone já gravados', () async {
       await db.collection('users').doc('uid_1').set({
-        'name': 'Versão Persistida',
-        'email': 'persistido@test.com',
-        'phone': '',
-        'address': '',
-        'photoUrl': '',
-        'favoritePetIds': <String>[],
-        'myPublishedPetIds': <String>[],
+        'name': 'Nome Antigo',
+        'email': 'antigo@test.com',
+        'phone': '(11) 99999-0000',
+        'address': 'Rua A',
+        'photoUrl': 'https://foto.example.com/a.png',
+        'favoritePetIds': ['pet_a'],
+        'myPublishedPetIds': ['pet_b'],
       });
 
       final result = await service.ensureUserDocument(user);
 
-      expect(result.name, 'Versão Persistida');
-      expect(result.email, 'persistido@test.com');
+      // A garantia devolve o modelo gravado...
+      expect(result.id, 'uid_1');
+      // ...e o doc existente ganha nome/e-mail novos sem perder o resto.
+      final doc = await db.collection('users').doc('uid_1').get();
+      expect(doc.get('name'), 'Ana');
+      expect(doc.get('email'), 'ana@test.com');
+      expect(doc.get('phone'), '(11) 99999-0000');
+      expect(doc.get('favoritePetIds'), ['pet_a']);
+      expect(doc.get('myPublishedPetIds'), ['pet_b']);
     });
   });
 }

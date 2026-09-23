@@ -21,9 +21,14 @@ class FirestoreService {
   @visibleForTesting
   Object? debugGetUserError;
 
-  // Cria o documento do usuário na coleção `users`.
+  // Garante o documento do usuário na coleção `users` com `merge`: cria o
+  // doc se faltar e, se já existir, apenas atualiza os campos de identidade
+  // (não sobrescreve favoritos/publicações nem a data de criação).
   Future<void> createUser(UserModel user) async {
-    await _db.collection('users').doc(user.id).set(user.toMap());
+    await _db
+        .collection('users')
+        .doc(user.id)
+        .set(user.toMergeMap(), SetOptions(merge: true));
   }
 
   // Busca o documento do usuário pelo UID; retorna `null` se não existir.

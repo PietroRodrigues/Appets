@@ -35,6 +35,9 @@ class AuthStrings {
 
   static const LOGIN_ERROR = 'Erro ao fazer login.';
 
+  static const LOGIN_ACCOUNT_ERROR =
+      'Não foi possível acessar sua conta. Tente novamente.';
+
   static const USER_NOT_FOUND = 'Usuário não encontrado.';
 
   static const WRONG_PASSWORD_MESSAGE = 'Senha incorreta.';

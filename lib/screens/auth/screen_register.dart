@@ -2,7 +2,6 @@ import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
-import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/validators/validators.dart';
@@ -79,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
           final user = credential.user;
           if (user != null) {
             final userModel = UserModel.fromFirebaseUser(user, name: name);
-            await FirestoreService.instance.createUser(userModel);
+            await AuthService.instance.ensureUserDocument(userModel);
           }
 
           // Nome do perfil do Auth é cosmético (o app lê o Firestore);

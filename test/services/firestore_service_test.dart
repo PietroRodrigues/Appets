@@ -40,6 +40,30 @@ void main() {
       expect(result.email, 'ana@test.com');
     });
 
+    test('createUser com merge preserva listas e telefone já gravados', () async {
+      await db.collection('users').doc('uid_1').set({
+        'name': 'Nome Antigo',
+        'email': 'antigo@test.com',
+        'phone': '(11) 99999-0000',
+        'address': 'Rua A',
+        'photoUrl': 'https://foto.example.com/a.png',
+        'favoritePetIds': ['pet_a', 'pet_b'],
+        'myPublishedPetIds': ['pet_b'],
+      });
+
+      // Login/cadastro rodando sobre um doc existente (identity apenas).
+      await service.createUser(user);
+
+      final doc = await db.collection('users').doc('uid_1').get();
+      expect(doc.get('name'), 'Ana');
+      expect(doc.get('email'), 'ana@test.com');
+      expect(doc.get('phone'), '(11) 99999-0000');
+      expect(doc.get('address'), 'Rua A');
+      expect(doc.get('photoUrl'), 'https://foto.example.com/a.png');
+      expect(doc.get('favoritePetIds'), ['pet_a', 'pet_b']);
+      expect(doc.get('myPublishedPetIds'), ['pet_b']);
+    });
+
     test('updateUser atualiza campos do documento', () async {
       await service.createUser(user);
 
