@@ -6,38 +6,84 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Valida os campos sensíveis ao criar o usuário
-    function isValidUserCreate() {
-      return request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.email is string
-        && request.resource.data.email.size() > 0
-        && request.resource.data.phone is string
-        && request.resource.data.address is string;
+    // Texto não vazio (nome, e-mail, telefone, endereço, tokens,...).
+    function isNonEmptyString(value) {
+      return value is string && value.size() > 0;
     }
 
-    // Valida os campos sensíveis de um pet.
-    // ATENÇÃO: só usa em create/update. Em delete o request.resource
-    // é null e acessá-lo nega a regra.
-    function isValidPet() {
-      return request.resource.data.ownerId is string
-        && request.resource.data.ownerId.size() > 0
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
+    // Lista contendo apenas strings (favoritos, publicações, imagens).
+    function isStringList(value) {
+      return value is List && value.all((item) => item is string);
+    }
+
+    // searchTokens do app é limitado a 150 (kMaxSearchTokens).
+    function isValidSearchTokens(value) {
+      return value is List && value.all((item) => item is string)
+        && value.size() <= 150;
+    }
+
+    // Valida os campos sensíveis ao criar o usuário (doc completo).
+    function isValidUserCreate() {
+      return isNonEmptyString(request.resource.data.name)
+        && isNonEmptyString(request.resource.data.email)
+        && isNonEmptyString(request.resource.data.phone)
+        && isNonEmptyString(request.resource.data.address);
+    }
+
+    // Valida o update do usuário por CAMPO PRESENTE no doc resultante.
+    // Doc legado com campos faltando continua passando (login/merge).
+    function hasValidUserFields(doc) {
+      return (!('name' in doc) || isNonEmptyString(doc.name))
+        && (!('email' in doc) || isNonEmptyString(doc.email))
+        && (!('phone' in doc) || isNonEmptyString(doc.phone))
+        && (!('address' in doc) || isNonEmptyString(doc.address))
+        && (!('photoUrl' in doc) || doc.photoUrl is string)
+        && (!('favoritePetIds' in doc) || isStringList(doc.favoritePetIds))
+        && (!('myPublishedPetIds' in doc) || isStringList(doc.myPublishedPetIds))
+        && (!('createdAt' in doc) || doc.createdAt is timestamp);
+    }
+
+    // Create de pet: exige doc completo (o app sempre grava tudo no create).
+    function isValidPetCreate() {
+      return isNonEmptyString(request.resource.data.ownerId)
+        && isNonEmptyString(request.resource.data.name)
         && request.resource.data.age is int
         && request.resource.data.age >= 0
-        && request.resource.data.ageUnit is string
-        && request.resource.data.gender is string
-        && request.resource.data.images is list
-        && request.resource.data.publicationType is string
-        && request.resource.data.race is string
-        && request.resource.data.species is string
-        && request.resource.data.searchTokens is list;
+        && isNonEmptyString(request.resource.data.ageUnit)
+        && isNonEmptyString(request.resource.data.gender)
+        && request.resource.data.images is List
+        && isNonEmptyString(request.resource.data.publicationType)
+        && isNonEmptyString(request.resource.data.race)
+        && isNonEmptyString(request.resource.data.species)
+        && isValidSearchTokens(request.resource.data.searchTokens);
+    }
+
+    // Update de pet: valida APENAS o que está presente no doc resultante.
+    // Um doc legado sem searchTokens/specifications/createdAt passa (batch
+    // de telefone/backfill não derruba mais).
+    function hasValidPetFields(doc) {
+      return (!('ownerId' in doc) || isNonEmptyString(doc.ownerId))
+        && (!('name' in doc) || isNonEmptyString(doc.name))
+        && (!('age' in doc) || (doc.age is int && doc.age >= 0))
+        && (!('ageUnit' in doc) || isNonEmptyString(doc.ageUnit))
+        && (!('gender' in doc) || isNonEmptyString(doc.gender))
+        && (!('address' in doc) || doc.address is string)
+        && (!('ownerPhone' in doc) || doc.ownerPhone is string)
+        && (!('ownerAddress' in doc) || doc.ownerAddress is string)
+        && (!('description' in doc) || doc.description is string)
+        && (!('publicationType' in doc) || isNonEmptyString(doc.publicationType))
+        && (!('species' in doc) || isNonEmptyString(doc.species))
+        && (!('race' in doc) || isNonEmptyString(doc.race))
+        && (!('images' in doc) || doc.images is List)
+        && (!('searchTokens' in doc) || isValidSearchTokens(doc.searchTokens))
+        && (!('specifications' in doc) || doc.specifications is List)
+        && (!('createdAt' in doc) || doc.createdAt is timestamp);
     }
 
     match /users/{userId} {
       allow create: if isOwner(userId) && isValidUserCreate();
-      allow read, update, delete: if isOwner(userId);
+      allow read, delete: if isOwner(userId);
+      allow update: if isOwner(userId) && hasValidUserFields(request.resource.data);
     }
 
     match /pets/{petId} {
@@ -45,15 +91,13 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
-        && isValidPet();
+        && isValidPetCreate();
 
       allow update: if isSignedIn()
         && resource.data.ownerId == request.auth.uid
         && request.resource.data.ownerId == request.auth.uid
-        && isValidPet();
+        && hasValidPetFields(request.resource.data);
 
-      // DELETE: sem isValidPet() (request.resource é null) e sem
-      // validação do "novo doc" — só confirma que o DONO está excluindo.
       allow delete: if isSignedIn()
         && resource.data.ownerId == request.auth.uid;
     }
