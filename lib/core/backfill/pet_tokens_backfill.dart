@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/core/utils/storage_tokens.dart';
 import 'package:appets/models/model_pet.dart';
@@ -20,15 +21,18 @@ Map<String, dynamic> petTokenFields(Pet pet) => {
       ),
     };
 
-/// Lógica pura da migração de tokens dos pets.
+/// Lógica pura da migração de um lote de pets.
 ///
 /// Compara os campos persistidos ([storedFieldsByPetId]) com os valores
 /// PT derivados atuais e devolve, por id, apenas o que diverge (ausente,
-/// legado em inglês ou desatualizado). Sem dependência de Firestore —
-/// testável.
+/// legado em inglês ou desatualizado). Além dos tokens, também agenda
+/// `createdAt` quando o documento não tem o campo: pets legados ficariam
+/// invisíveis para feed/busca e para o próprio backfill, porque o Firestore
+/// exclui de `orderBy('createdAt')` documentos sem o campo. Sem dependência
+/// de Firestore — testável.
 ///
 /// Idempotente por construção: na segunda execução nada fica pendente.
-Map<String, Map<String, dynamic>> petTokensNeedingBackfill(
+Map<String, Map<String, dynamic>> petBackfillNeeding(
   Iterable<Pet> pets,
   Map<String, Map<String, dynamic>> storedFieldsByPetId,
 ) {
@@ -40,6 +44,9 @@ Map<String, Map<String, dynamic>> petTokensNeedingBackfill(
       if (!_sameStoredField(stored[field], expected)) {
         update[field] = expected;
       }
+    }
+    if (stored['createdAt'] == null) {
+      update['createdAt'] = FieldValue.serverTimestamp();
     }
     if (update.isNotEmpty) pending[pet.id] = update;
   }

@@ -153,6 +153,31 @@ void main() {
       expect(user.deleteCalls, 1);
     });
 
+    test('exclui também pets legados sem createdAt (sem órfãos)', () async {
+      final user = await seedUser(metadata: _RecentUserMetadata());
+      // Pet legado: documento sem o campo createdAt. O Firestore real o
+      // excluiria de leituras com orderBy('createdAt'); a leitura
+      // tolerante (sem orderBy) garante que ele também é apagado.
+      await db.collection('pets').doc('pet_legado').set({
+        'ownerId': 'uid_test',
+        'name': 'Bob',
+        'images': <String>[],
+      });
+
+      final result = await service.deleteAccount(
+        user: user,
+        onReauthenticate: () async => const WGProcessResult.success(),
+      );
+
+      expect(result.status, WGProcessStatus.success);
+      expect(user.deleteCalls, 1);
+      for (final id in ['pet_1', 'pet_legado']) {
+        final exists =
+            await db.collection('pets').doc(id).get().then((d) => d.exists);
+        expect(exists, isFalse, reason: 'pet $id deveria ser apagado');
+      }
+    });
+
     test('reauth cancelado aborta a exclusão antes de apagar dados', () async {
       final user = await seedUser();
       favorites.favoriteIds.value = {'pet_1'};

@@ -63,10 +63,18 @@ void main() {
     };
   }
 
+  // Pet legado (sem o campo createdAt), que o Firestore real exclui de
+  // consultas com orderBy('createdAt').
+  Map<String, dynamic> petDocLegacy(String id, {required String ownerId}) {
+    final data = petDoc(id, ownerId: ownerId)..remove('createdAt');
+    return data;
+  }
+
   group('PetService · leitura por dono', () {
-    test('getPetsByOwner retorna apenas os pets do dono', () async {
+    test('getPetsByOwner retorna todos os pets do dono, inclusive os '
+        'legados sem createdAt', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
-      await insertPet(petDoc('p2', ownerId: 'dono_a'));
+      await insertPet(petDocLegacy('p2', ownerId: 'dono_a'));
       await insertPet(petDoc('p3', ownerId: 'dono_b'));
 
       final pets = await service.getPetsByOwner('dono_a');
@@ -74,29 +82,15 @@ void main() {
       expect(pets.map((p) => p.id).toSet(), {'p1', 'p2'});
     });
 
-    test('getPetsByOwner ordena do mais recente para o mais antigo', () async {
-      await insertPet(
-        petDoc('p1', ownerId: 'dono_a', createdAt: DateTime(2024, 1, 1)),
-      );
-      await insertPet(
-        petDoc('p2', ownerId: 'dono_a', createdAt: DateTime(2024, 3, 3)),
-      );
-      await insertPet(
-        petDoc('p3', ownerId: 'dono_a', createdAt: DateTime(2024, 2, 2)),
-      );
-
-      final pets = await service.getPetsByOwner('dono_a');
-
-      expect([pets[0].id, pets[1].id, pets[2].id], ['p2', 'p3', 'p1']);
-    });
-
-    test('getOwnerPetDocuments retorna os documentos crus do dono', () async {
+    test('getOwnerPetDocuments retorna os documentos crus do dono, '
+        'inclusive os legados sem createdAt', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
-      await insertPet(petDoc('p2', ownerId: 'dono_b'));
+      await insertPet(petDocLegacy('p2', ownerId: 'dono_a'));
+      await insertPet(petDoc('p3', ownerId: 'dono_b'));
 
       final docs = await service.getOwnerPetDocuments('dono_a');
 
-      expect(docs.map((d) => d.id), ['p1']);
+      expect(docs.map((d) => d.id).toSet(), {'p1', 'p2'});
     });
   });
 
@@ -139,6 +133,18 @@ void main() {
         expect(doc2.get('ownerPhone'), '(11) 99999-0000');
       },
     );
+
+    test('updateOwnerPhone cobre também pets legados sem createdAt', () async {
+      await insertPet(petDoc('p1', ownerId: 'dono_a'));
+      await insertPet(petDocLegacy('p2', ownerId: 'dono_a'));
+
+      await service.updateOwnerPhone('dono_a', '(11) 99999-0000');
+
+      final doc1 = await db.collection('pets').doc('p1').get();
+      final doc2 = await db.collection('pets').doc('p2').get();
+      expect(doc1.get('ownerPhone'), '(11) 99999-0000');
+      expect(doc2.get('ownerPhone'), '(11) 99999-0000');
+    });
 
     test('updateOwnerPhone não falha quando o dono não tem pets', () async {
       await service.updateOwnerPhone('dono_sozinho', '(11) 99999-0000');

@@ -39,25 +39,29 @@ class PetService {
   Object? debugFirstPageError;
 
   // Retorna os pets publicados por um determinado dono (UID).
+  //
+  // Leitura tolerante: sem `orderBy('createdAt')`, porque o Firestore exclui
+  // de consultas ordenadas documentos sem esse campo — pets legados ficariam
+  // fora da exclusão de conta e do backfill. A ordem não é relevante para os
+  // consumidores (purge, telefone em lote, IDs de publicações).
   Future<List<Pet>> getPetsByOwner(String ownerId) async {
     final snapshot = await _db
         .collection('pets')
         .where('ownerId', isEqualTo: ownerId)
-        .orderBy('createdAt', descending: true)
         .get();
     return snapshot.docs.map((doc) => Pet.fromFirestore(doc)).toList();
   }
 
-  // Retorna os documentos crus dos pets publicados por um dono (UID),
-  // dos mais recentes aos mais antigos.
+  // Retorna os documentos crus dos pets publicados por um dono (UID).
   //
   // Exposto para a migração de `specifications` (backfill) inspecionar o
-  // campo persistido antes de decidir o que regravar.
+  // campo persistido antes de decidir o que regravar. Também sem
+  // `orderBy('createdAt')` (idem [getPetsByOwner]): o backfill precisa
+  // enxergar os docs legados que não têm o campo.
   Future<List<DocumentSnapshot>> getOwnerPetDocuments(String ownerId) async {
     final snapshot = await _db
         .collection('pets')
         .where('ownerId', isEqualTo: ownerId)
-        .orderBy('createdAt', descending: true)
         .get();
     return snapshot.docs.toList();
   }

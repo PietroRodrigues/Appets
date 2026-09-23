@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/backfill/pet_tokens_backfill.dart';
@@ -35,6 +36,11 @@ class _FakeWriter implements PetTokensBackfillWriter {
 }
 
 void main() {
+  // Campos de token já migrados (PT) de um documento que TAMBÉM tem a
+  // data de criação — caso típico de pets criados pelo app.
+  Map<String, dynamic> migratedFields(Pet pet) =>
+      petTokenFields(pet)..['createdAt'] = DateTime(2024, 1, 1);
+
   group('petTokenFields', () {
     test('gera os 6 campos de token em PT normalizado', () {
       final fields = petTokenFields(_pet('p1'));
@@ -50,7 +56,7 @@ void main() {
     });
   });
 
-  group('petTokensNeedingBackfill', () {
+  group('petBackfillNeeding', () {
     test('migra todos os campos quando o documento é legado (inglês)', () {
       final pet = _pet('p1');
       final stored = {
@@ -60,10 +66,11 @@ void main() {
           'ageUnit': 'years',
           'publicationType': 'adoption',
           'specifications': ['dog', 'male', 'adoption', 'young'],
+          'createdAt': DateTime(2024, 1, 1),
         },
       };
 
-      final pending = petTokensNeedingBackfill([pet], stored);
+      final pending = petBackfillNeeding([pet], stored);
 
       expect(pending, {
         'p1': {
@@ -79,9 +86,9 @@ void main() {
 
     test('pula quando tudo já está em PT', () {
       final pet = _pet('p1');
-      final stored = {'p1': petTokenFields(pet)};
+      final stored = {'p1': migratedFields(pet)};
 
-      final pending = petTokensNeedingBackfill([pet], stored);
+      final pending = petBackfillNeeding([pet], stored);
 
       expect(pending, isEmpty);
     });
@@ -96,10 +103,11 @@ void main() {
           'publicationType': 'adocao',
           'specifications': ['dog', 'male', 'adoption', 'young'],
           'searchTokens': ['rex'],
+          'createdAt': DateTime(2024, 1, 1),
         },
       };
 
-      final pending = petTokensNeedingBackfill([pet], stored);
+      final pending = petBackfillNeeding([pet], stored);
 
       expect(pending, {
         'p1': {
@@ -111,22 +119,35 @@ void main() {
     test('campos extras e ausentes são tratados como divergência', () {
       final pet = _pet('p1');
 
-      final semCampos = petTokensNeedingBackfill([pet], {});
+      final semCampos = petBackfillNeeding([pet], {});
 
       expect(semCampos['p1'], containsPair('species', 'cachorro'));
       expect(semCampos['p1'], containsPair('specifications', pet.specifications));
       expect(semCampos['p1'], containsPair('searchTokens', ['rex']));
-      // Campos de token pendentes são exatamente os 6.
-      expect(semCampos['p1']!.length, 6);
+      // Campos de token pendentes (6) + o createdAt ausente.
+      expect(semCampos['p1']!.length, 7);
+      expect(semCampos['p1']!['createdAt'], isA<FieldValue>());
+    });
+
+    test('agenda createdAt quando o documento não tem o campo', () {
+      final pet = _pet('p1');
+      // Tokens já em PT (dados válidos), mas documento sem createdAt.
+      final stored = {'p1': petTokenFields(pet)};
+
+      final pending = petBackfillNeeding([pet], stored);
+
+      expect(pending.keys, {'p1'});
+      expect(pending['p1']!.length, 1);
+      expect(pending['p1']!['createdAt'], isA<FieldValue>());
     });
 
     test('mistura pendentes e já migrados corretamente', () {
       final ok = _pet('ok');
       final legacy = _pet('legacy');
 
-      final pending = petTokensNeedingBackfill(
+      final pending = petBackfillNeeding(
         [ok, legacy],
-        {'ok': petTokenFields(ok)},
+        {'ok': migratedFields(ok)},
       );
 
       expect(pending.keys.toSet(), {'legacy'});
@@ -139,7 +160,7 @@ void main() {
       final runner = PetTokensBackfillRunner(_FakeWriter(writes));
       final pet = _pet('p1');
 
-      final written = await runner.run([pet], {'p1': petTokenFields(pet)});
+      final written = await runner.run([pet], {'p1': migratedFields(pet)});
 
       expect(written, 0);
       expect(writes, isEmpty);
@@ -154,12 +175,13 @@ void main() {
       final written = await runner.run(
         [ok, legacy],
         {
-          'ok': petTokenFields(ok),
+          'ok': migratedFields(ok),
           'legacy': {
             'species': 'cat',
             'gender': 'male',
             'ageUnit': 'years',
             'publicationType': 'adoption',
+            'createdAt': DateTime(2024, 1, 1),
           },
         },
       );
