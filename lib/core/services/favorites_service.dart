@@ -41,32 +41,35 @@ class FavoritesService {
   }
 
   /// Adiciona um pet aos favoritos de forma otimista, persistindo no
-  /// Firestore. Devolve `true` em caso de sucesso; `false` (com o
-  /// estado local revertido) se a persistência falhar.
+  /// Firestore. Devolve `true` em caso de sucesso; `false` (com o estado
+  /// local revertido ao snapshot capturado antes da escrita) se a
+  /// persistência falhar.
   Future<bool> add(String uid, String petId) async {
-    final next = Set<String>.from(_favoriteIds.value)..add(petId);
+    final snapshot = Set<String>.from(_favoriteIds.value);
+    final next = Set<String>.from(snapshot)..add(petId);
     _favoriteIds.value = next;
     try {
       await FirestoreService.instance.addFavorite(uid, petId);
       return true;
     } catch (_) {
-      _favoriteIds.value = _favoriteIds.value.difference({petId});
+      _favoriteIds.value = snapshot;
       return false;
     }
   }
 
   /// Remove um pet dos favoritos de forma otimista, persistindo no
   /// Firestore. Devolve `true` em caso de sucesso; `false` (com o
-  /// estado local revertido) se a persistência falhar.
+  /// estado local revertido ao snapshot capturado antes da escrita) se
+  /// a persistência falhar.
   Future<bool> remove(String uid, String petId) async {
-    final next = Set<String>.from(_favoriteIds.value)..remove(petId);
+    final snapshot = Set<String>.from(_favoriteIds.value);
+    final next = Set<String>.from(snapshot)..remove(petId);
     _favoriteIds.value = next;
     try {
       await FirestoreService.instance.removeFavorite(uid, petId);
       return true;
     } catch (_) {
-      final restored = Set<String>.from(_favoriteIds.value)..add(petId);
-      _favoriteIds.value = restored;
+      _favoriteIds.value = snapshot;
       return false;
     }
   }

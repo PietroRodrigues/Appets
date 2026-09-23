@@ -114,6 +114,34 @@ void main() {
         expect(ok, isFalse);
         expect(service.isMine('pet_a'), isTrue);
       });
+
+      test('add falha: rollback restaura o snapshot pré-escrita em vez de '
+          'recalcular do estado atual', () async {
+        service.myPetIds.value = {'pet_a'};
+
+        final future = service.add('user_test', 'pet_b');
+        // Escrita de outra operação em voo muda o estado antes da falha.
+        service.myPetIds.value = {'pet_x'};
+
+        final ok = await future;
+
+        expect(ok, isFalse);
+        expect(service.myPetIds.value, {'pet_a'});
+      });
+
+      test('remove falha: rollback restaura o snapshot pré-escrita em vez de '
+          'recalcular do estado atual', () async {
+        service.myPetIds.value = {'pet_a', 'pet_b'};
+
+        final future = service.remove('user_test', 'pet_a');
+        // Escrita de outra operação em voo muda o estado antes da falha.
+        service.myPetIds.value = {'pet_a'};
+
+        final ok = await future;
+
+        expect(ok, isFalse);
+        expect(service.myPetIds.value, {'pet_a', 'pet_b'});
+      });
     });
 
     group('cleanOrphans', () {

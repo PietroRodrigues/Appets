@@ -66,31 +66,34 @@ class MyPublicationsService {
 
   /// Adiciona um pet às publicações de forma otimista, persistindo no
   /// Firestore. Devolve `true` em caso de sucesso; `false` (com o estado
-  /// local revertido) se a persistência falhar.
+  /// local revertido ao snapshot capturado antes da escrita) se a
+  /// persistência falhar.
   Future<bool> add(String uid, String petId) async {
-    final next = Set<String>.from(_myPetIds.value)..add(petId);
+    final snapshot = Set<String>.from(_myPetIds.value);
+    final next = Set<String>.from(snapshot)..add(petId);
     _myPetIds.value = next;
     try {
       await FirestoreService.instance.addMyPet(uid, petId);
       return true;
     } catch (_) {
-      _myPetIds.value = _myPetIds.value.difference({petId});
+      _myPetIds.value = snapshot;
       return false;
     }
   }
 
   /// Remove um pet das publicações de forma otimista, persistindo no
-  /// Firestore. Devolve `true` em caso de sucesso; `false` (com o estado
-  /// local revertido) se a persistência falhar.
+  /// Firestore. Devolve `true` em caso de sucesso; `false` (com o
+  /// estado local revertido ao snapshot capturado antes da escrita) se
+  /// a persistência falhar.
   Future<bool> remove(String uid, String petId) async {
-    final next = Set<String>.from(_myPetIds.value)..remove(petId);
+    final snapshot = Set<String>.from(_myPetIds.value);
+    final next = Set<String>.from(snapshot)..remove(petId);
     _myPetIds.value = next;
     try {
       await FirestoreService.instance.removeMyPet(uid, petId);
       return true;
     } catch (_) {
-      final restored = Set<String>.from(_myPetIds.value)..add(petId);
-      _myPetIds.value = restored;
+      _myPetIds.value = snapshot;
       return false;
     }
   }
