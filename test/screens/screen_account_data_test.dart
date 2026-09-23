@@ -5,6 +5,7 @@ import 'package:firebase_auth_platform_interface/firebase_auth_platform_interfac
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:appets/core/constants/constants_assets.dart';
 import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
@@ -93,7 +94,29 @@ UserInfo _passwordProvider(String uid, String email) => UserInfo.fromPigeon(
   ),
 );
 
+/// Provedor do Google para simular contas logadas com o Google.
+UserInfo _googleProvider(String uid, String email) => UserInfo.fromPigeon(
+  PigeonUserInfo(
+    uid: uid,
+    email: email,
+    isAnonymous: false,
+    isEmailVerified: true,
+    providerId: 'google.com',
+  ),
+);
+
 Widget _buildApp() => const MaterialApp(home: AccountDataScreen());
+
+/// Logo do Google dentro de um tile (usado no e-mail de contas Google).
+Finder _googleLogoInTile() => find.descendant(
+  of: find.byType(WGEditableTile),
+  matching: find.byWidgetPredicate(
+    (w) =>
+        w is Image &&
+        w.image is AssetImage &&
+        (w.image as AssetImage).assetName == AppAssets.GOOGLE_LOGO,
+  ),
+);
 
 /// Prepara os serviços e renderiza a tela logada com [user].
 Future<void> _pumpScreen(WidgetTester tester, MockUser user) async {
@@ -129,20 +152,14 @@ Future<void> _enterTextAndConfirm(WidgetTester tester, String text) async {
 void main() {
   tearDown(() => FirestoreService.instance.debugGetUserError = null);
   tearDown(() => ConnectivityService.instance.reset());
-  testWidgets('conta Google: tile de alterar senha fica bloqueado', (
+  testWidgets('conta Google: secao de seguranca fica invisivel (sem senha)', (
     tester,
   ) async {
     await _pumpScreen(tester, MockUser(uid: 'uid_1', email: 'ana@gmail.com'));
 
-    final tile = find.text(ProfileStrings.CHANGE_PASSWORD);
-    expect(tile, findsOneWidget);
-
-    // O toque no tile bloqueado não abre nenhum diálogo.
-    await tester.tap(tile);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(TextField), findsNothing);
-    expect(find.byType(AlertDialog), findsNothing);
+    // A opção "Alterar senha" e a seção inteira não existem em contas Google.
+    expect(find.text(ProfileStrings.CHANGE_PASSWORD), findsNothing);
+    expect(find.text(ProfileStrings.SECURITY_SECTION), findsNothing);
   });
 
   testWidgets('conta com senha: fluxo completo altera a senha', (tester) async {
@@ -153,7 +170,9 @@ void main() {
     );
     await _pumpScreen(tester, tracking);
 
-    await tester.tap(find.text(ProfileStrings.CHANGE_PASSWORD));
+    final changePassword = find.text(ProfileStrings.CHANGE_PASSWORD);
+    await tester.ensureVisible(changePassword);
+    await tester.tap(changePassword);
     await tester.pumpAndSettle();
 
     // Passo 1: senha atual.
@@ -177,7 +196,9 @@ void main() {
     );
     await _pumpScreen(tester, failing);
 
-    await tester.tap(find.text(ProfileStrings.CHANGE_PASSWORD));
+    final changePassword = find.text(ProfileStrings.CHANGE_PASSWORD);
+    await tester.ensureVisible(changePassword);
+    await tester.tap(changePassword);
     await tester.pumpAndSettle();
 
     await _enterTextAndConfirm(tester, 'errada');
@@ -189,7 +210,14 @@ void main() {
   testWidgets('conta Google: e-mail fica bloqueado com cadeado (item 12)', (
     tester,
   ) async {
-    await _pumpScreen(tester, MockUser(uid: 'uid_1', email: 'ana@gmail.com'));
+    await _pumpScreen(
+      tester,
+      MockUser(
+        uid: 'uid_1',
+        email: 'ana@gmail.com',
+        providerData: [_googleProvider('uid_1', 'ana@gmail.com')],
+      ),
+    );
 
     // O toque no e-mail não abre edição.
     await tester.tap(find.text('ana@gmail.com'));
@@ -202,6 +230,60 @@ void main() {
         matching: find.byIcon(Icons.lock_outline),
       ),
       findsOneWidget,
+    );
+
+    // Conta Google: o envelope é substituído pelo logo do Google.
+    expect(_googleLogoInTile(), findsOneWidget);
+    expect(tester.getSize(_googleLogoInTile()).width, 20);
+    expect(
+      find.descendant(
+        of: find.byType(WGEditableTile),
+        matching: find.byIcon(Icons.email_outlined),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('ordenacao: e-mail vem antes do nome e fica em destaque', (
+    tester,
+  ) async {
+    await _pumpScreen(
+      tester,
+      MockUser(
+        uid: 'uid_1',
+        email: 'ana@gmail.com',
+        providerData: [_passwordProvider('uid_1', 'ana@gmail.com')],
+      ),
+    );
+
+    // E-mail renderizado acima do nome.
+    final emailY = tester.getTopLeft(find.text('ana@gmail.com')).dy;
+    final nameY = tester.getTopLeft(find.text('Ana')).dy;
+    expect(emailY, lessThan(nameY));
+
+    // Conta com senha: mantém o envelope (sem logo do Google).
+    expect(_googleLogoInTile(), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(WGEditableTile),
+        matching: find.byIcon(Icons.email_outlined),
+      ),
+      findsOneWidget,
+    );
+
+    // Moldura maior: o tile do e-mail é mais alto que o do nome.
+    final emailTile = find
+        .ancestor(
+          of: find.text('ana@gmail.com'),
+          matching: find.byType(WGEditableTile),
+        )
+        .first;
+    final nameTile = find
+        .ancestor(of: find.text('Ana'), matching: find.byType(WGEditableTile))
+        .first;
+    expect(
+      tester.getSize(emailTile).height,
+      greaterThan(tester.getSize(nameTile).height),
     );
   });
 

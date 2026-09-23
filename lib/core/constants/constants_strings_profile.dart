@@ -68,9 +68,6 @@ class ProfileStrings {
 
   // ── Alterar senha ──────────────────────────────────────
 
-  static const CHANGE_PASSWORD_GOOGLE_HINT =
-      'Disponível apenas para contas com senha';
-
   static const CHANGE_PASSWORD_CURRENT_MESSAGE =
       'Digite sua senha atual para continuar';
 

@@ -1,3 +1,4 @@
+import 'package:appets/core/constants/constants_assets.dart';
 import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_delete_account.dart';
 import 'package:appets/core/constants/constants_strings_profile.dart';
@@ -673,6 +674,29 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                     const SizedBox(height: 12),
 
                     WGEditableTile(
+                      icon: Icons.email_outlined,
+                      title: AuthStrings.EMAIL,
+                      initialValue: _user?.email ?? '',
+                      committedValue: _draftEmail,
+                      isEditing: _editingField == 'email',
+                      enabled: _canChangeEmail,
+                      primary: true,
+                      leading: AuthService.instance.usesGoogleProvider
+                          ? Image(
+                              image: AssetImage(AppAssets.GOOGLE_LOGO),
+                              width: 24,
+                              height: 24,
+                            )
+                          : null,
+                      onStartEditing: () => _startEditing('email'),
+                      onCommit: (v) => _commitField('email', v),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: AppValidators.validateEmail,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    WGEditableTile(
                       icon: Icons.person_outline,
                       title: ProfileStrings.NAME_LABEL,
                       initialValue: _user?.name ?? '',
@@ -680,21 +704,6 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                       isEditing: _editingField == 'name',
                       onStartEditing: () => _startEditing('name'),
                       onCommit: (v) => _commitField('name', v),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    WGEditableTile(
-                      icon: Icons.email_outlined,
-                      title: AuthStrings.EMAIL,
-                      initialValue: _user?.email ?? '',
-                      committedValue: _draftEmail,
-                      isEditing: _editingField == 'email',
-                      enabled: _canChangeEmail,
-                      onStartEditing: () => _startEditing('email'),
-                      onCommit: (v) => _commitField('email', v),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: AppValidators.validateEmail,
                     ),
 
                     const SizedBox(height: 12),
@@ -730,22 +739,20 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
                     const SizedBox(height: 20),
 
-                    // SEÇÃO: SEGURANÇA
-                    const WGSectionTitle(
-                      title: ProfileStrings.SECURITY_SECTION,
-                    ),
+                    // SEÇÃO: SEGURANÇA (só contas com senha têm senha para trocar)
+                    if (_canChangePassword) ...[
+                      const WGSectionTitle(
+                        title: ProfileStrings.SECURITY_SECTION,
+                      ),
 
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                    WGOptionTile(
-                      icon: Icons.lock_outline,
-                      title: ProfileStrings.CHANGE_PASSWORD,
-                      subtitle: _canChangePassword
-                          ? null
-                          : ProfileStrings.CHANGE_PASSWORD_GOOGLE_HINT,
-                      enabled: _canChangePassword,
-                      onTap: _onChangePasswordPressed,
-                    ),
+                      WGOptionTile(
+                        icon: Icons.lock_outline,
+                        title: ProfileStrings.CHANGE_PASSWORD,
+                        onTap: _onChangePasswordPressed,
+                      ),
+                    ],
 
                     const SizedBox(height: 32),
 

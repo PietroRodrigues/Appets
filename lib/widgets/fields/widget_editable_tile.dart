@@ -24,6 +24,8 @@ class WGEditableTile extends StatefulWidget {
     required this.onStartEditing,
     required this.isEditing,
     this.enabled = true,
+    this.primary = false,
+    this.leading,
     this.phone = false,
     this.keyboardType,
     this.textInputAction,
@@ -32,6 +34,11 @@ class WGEditableTile extends StatefulWidget {
 
   // PROPERTIES
   final IconData icon;
+
+  /// Widget que substitui o ícone na caixa à esquerda quando fornecido
+  /// (ex.: logo do Google no tile de e-mail de contas Google).
+  final Widget? leading;
+
   final String title;
 
   /// Valor carregado da conta (restaurado ao cancelar).
@@ -52,6 +59,10 @@ class WGEditableTile extends StatefulWidget {
   /// Quando `false`, o tile não abre edição (bloqueado). Útil para campos
   /// que não podem ser alterados (ex.: e-mail em conta Google).
   final bool enabled;
+
+  /// Quando `true`, o tile fica em destaque: moldura maior, ícone maior,
+  /// fundo e borda da cor primária (ex.: o e-mail da conta).
+  final bool primary;
 
   /// Se `true`, usa o campo de telefone com máscara.
   final bool phone;
@@ -109,13 +120,12 @@ class _WGEditableTileState extends State<WGEditableTile> {
 
   @override
   Widget build(BuildContext context) {
+    final highlight = widget.primary || widget.isEditing;
     return Container(
       decoration: BoxDecoration(
-        color: widget.isEditing
-            ? ThemeColors.cardHighlight
-            : ThemeColors.surface,
+        color: highlight ? ThemeColors.cardHighlight : ThemeColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: widget.isEditing
+        border: highlight
             ? Border.all(color: ThemeColors.primary, width: 1.5)
             : null,
       ),
@@ -123,18 +133,25 @@ class _WGEditableTileState extends State<WGEditableTile> {
         onTap: widget.enabled ? _onTapTile : null,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: widget.primary ? 18 : 12,
+          ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // ÍCONE
               Container(
-                width: 44,
-                height: 44,
+                width: widget.primary ? 52 : 44,
+                height: widget.primary ? 52 : 44,
                 decoration: BoxDecoration(
                   color: ThemeColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(widget.icon, color: ThemeColors.primary),
+                child: Center(
+                  child: widget.leading ??
+                      Icon(widget.icon, color: ThemeColors.primary),
+                ),
               ),
 
               const SizedBox(width: 14),
@@ -150,7 +167,7 @@ class _WGEditableTileState extends State<WGEditableTile> {
                   padding: const EdgeInsets.only(left: 8),
                   child: Icon(
                     Icons.lock_outline,
-                    size: 18,
+                    size: 34,
                     color: ThemeColors.hint,
                   ),
                 ),

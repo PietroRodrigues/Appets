@@ -68,6 +68,87 @@ void main() {
       expect(find.text('Rex'), findsOneWidget);
     });
 
+    testWidgets('leading: substitui o ícone pela imagem fornecida', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: WGEditableTile(
+                icon: Icons.email_outlined,
+                title: 'E-mail',
+                initialValue: 'Valor original',
+                committedValue: 'a@test.com',
+                onCommit: (_) {},
+                onStartEditing: () {},
+                isEditing: false,
+                leading: Image(
+                  image: AssetImage('assets/logos/google_logo.png'),
+                  width: 28,
+                  height: 28,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.byIcon(Icons.email_outlined), findsNothing);
+    });
+
+    testWidgets('primary: fica mais alto que o normal', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  WGEditableTile(
+                    icon: Icons.person_outline,
+                    title: 'Nome',
+                    initialValue: 'Valor original',
+                    committedValue: 'a@test.com',
+                    onCommit: (_) {},
+                    onStartEditing: () {},
+                    isEditing: false,
+                    primary: true,
+                  ),
+                  const SizedBox(height: 8),
+                  WGEditableTile(
+                    icon: Icons.person_outline,
+                    title: 'Nome',
+                    initialValue: 'Valor original',
+                    committedValue: 'Ana',
+                    onCommit: (_) {},
+                    onStartEditing: () {},
+                    isEditing: false,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Moldura maior que a do tile comum (destaque de importância).
+      final primaryTileFinder = find
+          .ancestor(
+            of: find.text('a@test.com'),
+            matching: find.byType(WGEditableTile),
+          )
+          .first;
+      final normalTileFinder = find
+          .ancestor(
+            of: find.text('Ana'),
+            matching: find.byType(WGEditableTile),
+          )
+          .first;
+      expect(
+        tester.getSize(primaryTileFinder).height,
+        greaterThan(tester.getSize(normalTileFinder).height),
+      );
+    });
+
     testWidgets('blocked (enabled false) nao abre edicao e mostra cadeado', (
       tester,
     ) async {
@@ -100,6 +181,7 @@ void main() {
       expect(editing, isFalse);
       expect(find.byType(TextFormField), findsNothing);
       expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+      expect(tester.widget<Icon>(find.byIcon(Icons.lock_outline)).size, 34);
     });
 
     testWidgets('entra em edição e devolve o valor via onCommit', (
