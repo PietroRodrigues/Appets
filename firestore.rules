@@ -11,15 +11,16 @@ service cloud.firestore {
       return value is string && value.size() > 0;
     }
 
-    // Lista contendo apenas strings (favoritos, publicações, imagens).
-    function isStringList(value) {
-      return value is List && value.all((item) => item is string);
+    // Declara o tipo List das listas do documento. (Validação de tipos dos
+    // elementos via list.all não existe na linguagem de regras; mantém-se o
+    // tipo `is list`, mesmo padrão da regra original.)
+    function isList(value) {
+      return value is list;
     }
 
     // searchTokens do app é limitado a 150 (kMaxSearchTokens).
-    function isValidSearchTokens(value) {
-      return value is List && value.all((item) => item is string)
-        && value.size() <= 150;
+    function isValidSearchTokens(list) {
+      return list is list && list.size() <= 150;
     }
 
     // Valida os campos sensíveis ao criar o usuário (doc completo).
@@ -38,8 +39,8 @@ service cloud.firestore {
         && (!('phone' in doc) || isNonEmptyString(doc.phone))
         && (!('address' in doc) || isNonEmptyString(doc.address))
         && (!('photoUrl' in doc) || doc.photoUrl is string)
-        && (!('favoritePetIds' in doc) || isStringList(doc.favoritePetIds))
-        && (!('myPublishedPetIds' in doc) || isStringList(doc.myPublishedPetIds))
+        && (!('favoritePetIds' in doc) || isList(doc.favoritePetIds))
+        && (!('myPublishedPetIds' in doc) || isList(doc.myPublishedPetIds))
         && (!('createdAt' in doc) || doc.createdAt is timestamp);
     }
 
@@ -51,7 +52,7 @@ service cloud.firestore {
         && request.resource.data.age >= 0
         && isNonEmptyString(request.resource.data.ageUnit)
         && isNonEmptyString(request.resource.data.gender)
-        && request.resource.data.images is List
+        && request.resource.data.images is list
         && isNonEmptyString(request.resource.data.publicationType)
         && isNonEmptyString(request.resource.data.race)
         && isNonEmptyString(request.resource.data.species)
@@ -74,9 +75,9 @@ service cloud.firestore {
         && (!('publicationType' in doc) || isNonEmptyString(doc.publicationType))
         && (!('species' in doc) || isNonEmptyString(doc.species))
         && (!('race' in doc) || isNonEmptyString(doc.race))
-        && (!('images' in doc) || doc.images is List)
+        && (!('images' in doc) || doc.images is list)
         && (!('searchTokens' in doc) || isValidSearchTokens(doc.searchTokens))
-        && (!('specifications' in doc) || doc.specifications is List)
+        && (!('specifications' in doc) || doc.specifications is list)
         && (!('createdAt' in doc) || doc.createdAt is timestamp);
     }
 
