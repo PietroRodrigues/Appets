@@ -4,6 +4,7 @@ import 'package:appets/core/backfill/pet_tokens_backfill_initializer.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/session_state_cleaner.dart';
 import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/buttons/widget_buttons.dart';
@@ -49,6 +50,9 @@ class _SplashScreenState extends State<SplashScreen> {
       // Inicia a migração de tokens em background (assíncrona e idempotente),
       // longe do primeiro frame da splash.
       PetTokensBackfillInitializer.instance.attach();
+      // Zera favoritos/publicações em memória quando a sessão é perdida ou
+      // trocada sem logout explícito (token expirado/revogado).
+      SessionStateCleaner.instance.attach();
 
       if (user != null) {
         Navigator.pushReplacementNamed(context, AppRoutes.home);

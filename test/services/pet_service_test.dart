@@ -207,6 +207,26 @@ void main() {
 
       expect(pets, hasLength(15));
     });
+
+    test('devolve na ordem dos IDs, ignorando os inexistentes', () async {
+      await insertPet(petDoc('p1', ownerId: 'dono_a'));
+      await insertPet(petDoc('p2', ownerId: 'dono_a'));
+      await insertPet(petDoc('p3', ownerId: 'dono_a'));
+
+      final pets = await service.getPetsByIds(
+        ['p2', 'p1', 'inexistente', 'p3'],
+      );
+
+      expect(pets.map((p) => p.id), ['p2', 'p1', 'p3']);
+    });
+
+    test('não duplica pet quando o mesmo ID aparece repetido', () async {
+      await insertPet(petDoc('p1', ownerId: 'dono_a'));
+
+      final pets = await service.getPetsByIds(['p1', 'p1']);
+
+      expect(pets.map((p) => p.id), ['p1']);
+    });
   });
 
   group('PetService · busca por tokens', () {

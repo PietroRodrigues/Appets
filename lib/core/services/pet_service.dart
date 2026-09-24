@@ -112,6 +112,11 @@ class PetService {
   //
   // O Firestore limita `whereIn` a no máximo 10 valores por consulta, então
   // os IDs são divididos em lotes de 10 e as consultas rodam em paralelo.
+  //
+  // A ordem do resultado acompanha a ordem de [petIds] (a ordem dos arrays
+  // `favoritePetIds`/`myPublishedPetIds`), porque o `whereIn` devolve os
+  // documentos em ordem arbitrária; IDs inexistentes são ignorados e IDs
+  // repetidos não duplicam o pet.
   Future<List<Pet>> getPetsByIds(
     List<String> petIds, {
     bool fromCache = false,
@@ -132,7 +137,13 @@ class PetService {
           .get(options);
       results.addAll(snapshot.docs.map((doc) => Pet.fromFirestore(doc)));
     }
-    return results;
+
+    final byId = {for (final pet in results) pet.id: pet};
+    final seen = <String>{};
+    return [
+      for (final id in petIds)
+        if (seen.add(id) && byId.containsKey(id)) byId[id]!,
+    ];
   }
 
   // ── Página inicial do feed de todos os pets ──────────────────────

@@ -684,8 +684,8 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                       leading: AuthService.instance.usesGoogleProvider
                           ? Image(
                               image: AssetImage(AppAssets.GOOGLE_LOGO),
-                              width: 24,
-                              height: 24,
+                              width: 20,
+                              height: 20,
                             )
                           : null,
                       onStartEditing: () => _startEditing('email'),

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/connectivity_service.dart';
+import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -28,6 +29,7 @@ void main() {
     service.debugDb = null;
     service.debugFirstPageError = null;
     connectivity.reset();
+    FavoritesService.instance.reset();
   });
 
   Widget wrap({
@@ -384,5 +386,81 @@ void main() {
         expect(find.text(SharedStrings.NO_CONNECTION), findsOneWidget);
       },
     );
+  });
+
+  group('WGResponsivePetGrid · ordem dos favoritos (item 13)', () {
+    testWidgets('favoritos aparecem na ordem dos IDs, não a do Firestore', (
+      tester,
+    ) async {
+      await insertPet(
+        petDoc(
+          'fido',
+          species: 'cachorro',
+          gender: 'macho',
+          createdAt: now,
+        ),
+      );
+      await insertPet(
+        petDoc(
+          'rex',
+          species: 'cachorro',
+          gender: 'macho',
+          createdAt: now,
+        ),
+      );
+      await insertPet(
+        petDoc(
+          'mia',
+          species: 'gato',
+          gender: 'femea',
+          createdAt: now,
+        ),
+      );
+      await insertPet(
+        petDoc(
+          'luna',
+          species: 'gato',
+          gender: 'femea',
+          createdAt: now,
+        ),
+      );
+
+      FavoritesService.instance.favoriteIds.value = {
+        'rex',
+        'fido',
+        'luna',
+        'mia',
+      };
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WGResponsivePetGrid(
+              filter: AppPetFilter.favorites,
+              itemBuilder: (context, pet) => Text(pet.name),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Confere a ordem visual (leitura natural: linha a linha, da
+      // esquerda para a direita) contra a ordem dos IDs.
+      Offset? previous;
+      for (final name in ['rex', 'fido', 'luna', 'mia']) {
+        final current = tester.getTopLeft(find.text(name));
+        if (previous != null) {
+          final inSameRowToTheRight = (current.dy - previous.dy).abs() < 1 &&
+              current.dx > previous.dx;
+          final below = current.dy > previous.dy;
+          expect(
+            inSameRowToTheRight || below,
+            isTrue,
+            reason: '$name deveria vir depois na grade',
+          );
+        }
+        previous = current;
+      }
+    });
   });
 }
