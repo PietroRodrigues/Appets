@@ -245,39 +245,40 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     return value.startsWith('http://') || value.startsWith('https://');
   }
 
-  /// Aplica as alterações de fotos de um pet em edição diretamente no
-  /// Storage, devolvendo a lista final de URLs na ordem da grade.
-  ///
-  /// Fotos mantidas permanecem como estão; remoções apagam os arquivos do
-  /// Storage; novas são enviadas com índice após as atuais (evita colisão
-  /// de nomes mesmo depois de remoções intermediárias).
-  Future<List<String>> _applyPhotoChanges(
-    String ownerId,
-    String petId,
-  ) async {
-    final originalUrls = widget.pet!.images;
-    final keptUrls = <String>[];
-    final newPaths = <String>[];
+/// Aplica as alterações de fotos de um pet em edição, devolvendo a lista
+/// final de URLs na ordem da grade.
+///
+/// Somente faz os UPLOADS das fotos novas: **nada é apagado aqui**. As
+/// remoções ficam em [removedUrls] para serem apagadas APÓS o commit no
+/// Firestore (feito pelo chamador), evitando URLs quebradas se o salvar
+/// falhar. Fotos mantidas permanecem como estão; novas sobem com índice
+/// após as atuais (evita colisão de nomes mesmo depois de remoções).
+///
+/// Se um upload novo falhar no meio, as fotos já enviadas são apagadas
+/// (rollback) e a exceção segue para o chamador.
+Future<({List<String> finalImages, List<String> uploadedUrls, List<String> removedUrls})>
+    _applyPhotoChanges(String ownerId, String petId) async {
+  final originalUrls = widget.pet!.images;
+  final keptUrls = <String>[];
+  final newPaths = <String>[];
 
-    for (final entry in _imagePaths) {
-      if (_isNetworkUrl(entry)) {
-        keptUrls.add(entry);
-      } else {
-        newPaths.add(entry);
-      }
+  for (final entry in _imagePaths) {
+    if (_isNetworkUrl(entry)) {
+      keptUrls.add(entry);
+    } else {
+      newPaths.add(entry);
     }
+  }
 
-    // Remove do Storage as imagens que saíram da grade (se houver).
-    final removedUrls =
-        originalUrls.where((url) => !keptUrls.contains(url)).toList();
-    if (removedUrls.isNotEmpty) {
-      await StorageService.instance.deletePetImagesByUrls(removedUrls);
-    }
+  final removedUrls =
+      originalUrls.where((url) => !keptUrls.contains(url)).toList();
 
-    // Novas fotos sobem após os índices atuais (nunca colidem com os
-    // arquivos existentes, mesmo que a ordem tenha mudado).
-    final finalImages = <String>[];
-    int nextIndex = originalUrls.length;
+  // Novas fotos sobem após os índices atuais (nunca colidem com os
+  // arquivos existentes, mesmo que a ordem tenha mudado).
+  final finalImages = <String>[];
+  final uploadedUrls = <String>[];
+  int nextIndex = originalUrls.length;
+  try {
     for (final entry in _imagePaths) {
       if (_isNetworkUrl(entry)) {
         finalImages.add(entry);
@@ -289,12 +290,30 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
           File(entry),
         );
         nextIndex++;
+        uploadedUrls.add(url);
         finalImages.add(url);
       }
     }
-
-    return finalImages;
+  } on Exception {
+    // Desfaz os uploads que já aconteceram antes da falha, para não
+    // deixar fotos órfãs no Storage.
+    try {
+      if (uploadedUrls.isNotEmpty) {
+        await StorageService.instance.deletePetImagesByUrls(uploadedUrls);
+      }
+    } catch (_) {
+      // Melhor esforço: o erro original segue, o lixo pode ser removido
+      // depois.
+    }
+    rethrow;
   }
+
+  return (
+    finalImages: finalImages,
+    uploadedUrls: uploadedUrls,
+    removedUrls: removedUrls,
+  );
+}
 
   /// Salva o pet: publica um novo (sem [pet]) ou atualiza os dados e as
   /// fotos do existente (com [pet]).
@@ -367,14 +386,38 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
               if (_isEditing) {
                 // Atualiza dados e fotos (mantidas/removidas/novas).
                 petId = pet.id;
-                final finalImages = await _applyPhotoChanges(
-                  user.uid,
-                  petId,
-                );
-                await PetService.instance.updatePet(petId, {
-                  ...pet.toUpdateMap(),
-                  'images': finalImages,
-                });
+                final photos = await _applyPhotoChanges(user.uid, petId);
+                try {
+                  await PetService.instance.updatePet(petId, {
+                    ...pet.toUpdateMap(),
+                    'images': photos.finalImages,
+                  });
+                } on Exception {
+                  // Commit falhou: devolve os uploads novos já feitos. As
+                  // fotos removidas NÃO foram apagadas ainda, então o
+                  // Firestore segue apontando para arquivos válidos (sem
+                  // URLs quebradas).
+                  try {
+                    if (photos.uploadedUrls.isNotEmpty) {
+                      await StorageService.instance
+                          .deletePetImagesByUrls(photos.uploadedUrls);
+                    }
+                  } catch (_) {
+                    // Melhor esforço: o erro do commit segue, o lixo pode
+                    // ser removido depois.
+                  }
+                  rethrow;
+                }
+                // Commit ok: só agora apaga as fotos removidas (melhor
+                // esforço — se falhar sobra lixo, mas nada quebrado).
+                if (photos.removedUrls.isNotEmpty) {
+                  try {
+                    await StorageService.instance
+                        .deletePetImagesByUrls(photos.removedUrls);
+                  } catch (_) {
+                    // Melhor esforço.
+                  }
+                }
               } else {
                 // 1. Criar pet no Firestore
                 petId = await PetService.instance.createPet(pet);

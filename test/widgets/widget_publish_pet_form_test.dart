@@ -694,6 +694,153 @@ void main() {
 
       expect(find.text(SharedStrings.NO_CONNECTION), findsOneWidget);
     });
+
+    Pet editPetWithImages(int count) {
+      return Pet(
+        id: 'pet_001',
+        ownerId: 'user_test_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        ownerPhone: '(11) 98765-4321',
+        ownerAddress: 'São Paulo',
+        description: 'Muito dócil.',
+        publicationType: AppPetPublicationType.lost,
+        species: AppPetSpecies.dog,
+        race: 'Poodle',
+        images: _networkImages(count),
+      );
+    }
+
+    testWidgets('fotos removidas só são apagadas do Storage após o commit', (
+      tester,
+    ) async {
+      _signInUser();
+      ConnectivityService.instance.debugOnline = true;
+      addTearDown(() => ConnectivityService.instance.debugOnline = null);
+
+      final db = FakeFirebaseFirestore();
+      FirestoreService.instance.debugDb = db;
+      PetService.instance.debugDb = db;
+      addTearDown(() {
+        FirestoreService.instance.debugDb = null;
+        PetService.instance.debugDb = null;
+      });
+
+      final pet = editPetWithImages(2);
+      await db.collection('pets').doc(pet.id).set(pet.toMap());
+
+      final storage = _EditOrderStorage(db: db, petId: pet.id);
+      StorageService.instance.debugStorage = storage;
+      addTearDown(() => StorageService.instance.debugStorage = null);
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: WGPublishPetForm(pet: pet)),
+      ));
+
+      // Remove a segunda foto (X -> confirma "Sim").
+      await tester.tap(find.byIcon(Icons.close).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(SharedStrings.YES));
+      await tester.pumpAndSettle();
+
+      // Salvar.
+      await tester.ensureVisible(find.text('Salvar Alterações'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Salvar Alterações'));
+      await tester.pumpAndSettle();
+
+      // Commit no Firestore com a imagem mantida.
+      final snap = await db.collection('pets').doc(pet.id).get();
+      final images = ((snap.data()?['images'] as List?) ?? []).cast<String>();
+      expect(images, ['https://exemplo.com/foto_0.jpg']);
+
+      // A remoção foi para o Storage, mas apenas sentido DEPOIS do commit:
+      // no momento do delete o doc já não listava a foto apagada.
+      expect(storage.deletedUrls, ['https://exemplo.com/foto_1.jpg']);
+      expect(
+        storage.deletedDocImages.single.contains(storage.deletedUrls.single),
+        isFalse,
+      );
+    });
+
+    testWidgets('falha no salvar desfaz uploads novos sem apagar fotos antigas', (
+      tester,
+    ) async {
+      _signInUser();
+      ConnectivityService.instance.debugOnline = true;
+      addTearDown(() => ConnectivityService.instance.debugOnline = null);
+
+      final db = FakeFirebaseFirestore();
+      FirestoreService.instance.debugDb = db;
+      PetService.instance.debugDb = db;
+      addTearDown(() {
+        FirestoreService.instance.debugDb = null;
+        PetService.instance.debugDb = null;
+      });
+
+      final pet = editPetWithImages(2);
+      await db.collection('pets').doc(pet.id).set(pet.toMap());
+
+      final storage = _EditOrderStorage(db: db, petId: pet.id);
+      StorageService.instance.debugStorage = storage;
+      addTearDown(() => StorageService.instance.debugStorage = null);
+
+      // Foto local temporária usada pelo slot.
+      final tempDir = Directory.systemTemp.createTempSync('appets_edit_photo');
+      final photoPath = '${tempDir.path}/photo_1.jpg';
+      File(photoPath).writeAsBytesSync(List<int>.filled(64, 1));
+      addTearDown(() {
+        if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
+      });
+      final originalPicker = ImagePickerPlatform.instance;
+      ImagePickerPlatform.instance = _PickerReturnsFile(photoPath);
+      addTearDown(() => ImagePickerPlatform.instance = originalPicker);
+
+      // Commit falha: o updatePen no Firestore lança.
+      PetService.instance.debugUpdatePetError = Exception('falha no commit');
+      addTearDown(() => PetService.instance.debugUpdatePetError = null);
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: WGPublishPetForm(pet: pet)),
+      ));
+
+      // Remove a segunda foto (X -> confirma "Sim").
+      await tester.tap(find.byIcon(Icons.close).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(SharedStrings.YES));
+      await tester.pumpAndSettle();
+
+      // Adiciona uma foto nova (I/O real: roda fora do FakeAsync).
+      await tester.ensureVisible(find.byIcon(Icons.add_a_photo_outlined));
+      await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      });
+      await tester.pumpAndSettle();
+
+      // Salvar: o commit falha e o erro é informado.
+      await tester.ensureVisible(find.text('Salvar Alterações'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Salvar Alterações'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      // Rollback: a foto NOVA enviada foi apagada do Storage...
+      expect(storage.deletedUrls, storage.uploadedUrls);
+      expect(storage.uploadedUrls, isNotEmpty);
+      // ...mas a foto antiga removida NÃO foi apagada (Firestore intacto).
+      expect(
+        storage.deletedUrls.contains('https://exemplo.com/foto_1.jpg'),
+        isFalse,
+      );
+      final snap = await db.collection('pets').doc(pet.id).get();
+      final images = ((snap.data()?['images'] as List?) ?? []).cast<String>();
+      expect(images, ['https://exemplo.com/foto_0.jpg', 'https://exemplo.com/foto_1.jpg']);
+    });
   });
 }
 
@@ -808,6 +955,85 @@ class _PublishOrderUploadTask implements UploadTask {
 }
 
 class _FakeTaskSnapshot implements TaskSnapshot {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+/// Storage fake para a edição: rastreia uploads (novas fotos), deletes e,
+/// no momento do delete, o estado do doc no Firestore (para provar a
+/// ordem: a foto removida só pode ser apagada DEPOIS do commit).
+class _EditOrderStorage implements FirebaseStorage {
+  _EditOrderStorage({this.db, this.petId});
+
+  final FakeFirebaseFirestore? db;
+  final String? petId;
+
+  /// URLs removidas (delete por URL).
+  final List<String> deletedUrls = [];
+
+  /// Lista `images` do doc no instante de cada delete (ordem alinhada a
+  /// [deletedUrls]) — usado para garantir delete pós-commit.
+  final List<List<String>> deletedDocImages = [];
+
+  /// URLs das fotos novas enviadas (upload).
+  final List<String> uploadedUrls = [];
+
+  @override
+  Reference ref([String? path]) => _EditOrderReference(this, path: path);
+
+  @override
+  Reference refFromURL(String url) =>
+      _EditOrderReference(this, fromUrl: url);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+class _EditOrderReference implements Reference {
+  _EditOrderReference(this.storage, {this.path, String? fromUrl})
+      : _fromUrl = fromUrl,
+        assert(fromUrl == null || path == null);
+
+  @override
+  final _EditOrderStorage storage;
+  final String? path;
+  final String? _fromUrl;
+
+  @override
+  Reference child(String childPath) => _EditOrderReference(
+    storage,
+    path: path == null ? childPath : '$path/$childPath',
+  );
+
+  @override
+  UploadTask putFile(File file, [SettableMetadata? metadata]) {
+    return _PublishOrderUploadTask();
+  }
+
+  @override
+  Future<String> getDownloadURL() async {
+    final url = 'https://fake.storage/${_fromUrl ?? path}';
+    if (_fromUrl == null) storage.uploadedUrls.add(url);
+    return url;
+  }
+
+  @override
+  Future<void> delete() async {
+    // Deletes só acontecem por URL (remoção pós-commit e rollback).
+    if (_fromUrl == null) return;
+    storage.deletedUrls.add(_fromUrl);
+    if (storage.db != null && storage.petId != null) {
+      final snap = await storage.db!
+          .collection('pets')
+          .doc(storage.petId!)
+          .get();
+      final raw = snap.data()?['images'];
+      storage.deletedDocImages.add(
+        raw == null ? <String>[] : (raw as List).cast<String>(),
+      );
+    }
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }

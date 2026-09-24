@@ -38,6 +38,10 @@ class PetService {
   @visibleForTesting
   Object? debugFirstPageError;
 
+  /// Erro injetado em testes no `updatePet` (ex.: simular falha de commit).
+  @visibleForTesting
+  Object? debugUpdatePetError;
+
   // Retorna os pets publicados por um determinado dono (UID).
   //
   // Leitura tolerante: sem `orderBy('createdAt')`, porque o Firestore exclui
@@ -99,6 +103,8 @@ class PetService {
 
   // Atualiza campos de um pet existente.
   Future<void> updatePet(String petId, Map<String, dynamic> data) async {
+    final err = debugUpdatePetError;
+    if (err != null) throw err;
     await _db.collection('pets').doc(petId).update(data);
   }
 
