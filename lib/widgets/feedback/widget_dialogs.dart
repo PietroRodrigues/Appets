@@ -113,6 +113,7 @@ class WGDialog extends StatefulWidget {
     String confirmLabel = SharedStrings.YES,
     String cancelLabel = SharedStrings.NO,
     String? messageHighlight,
+    Color confirmColor = ThemeColors.error,
   }) async {
     final result = await showDialog<bool>(
       context: context,
@@ -123,7 +124,7 @@ class WGDialog extends StatefulWidget {
         confirmLabel: confirmLabel,
         cancelLabel: cancelLabel,
         isConfirmation: true,
-        confirmColor: ThemeColors.error,
+        confirmColor: confirmColor,
       ),
     );
     return result == true;

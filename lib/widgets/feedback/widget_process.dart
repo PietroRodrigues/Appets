@@ -16,19 +16,50 @@ enum WGProcessStatus { success, canceled, failure }
 class WGProcessResult {
   const WGProcessResult.success()
     : status = WGProcessStatus.success,
-      message = null;
+      message = null,
+      cause = null,
+      stackTrace = null;
 
   const WGProcessResult.canceled()
     : status = WGProcessStatus.canceled,
-      message = null;
+      message = null,
+      cause = null,
+      stackTrace = null;
 
-  const WGProcessResult.failure(this.message)
-    : status = WGProcessStatus.failure;
+  const WGProcessResult.failure(
+    this.message, {
+    this.cause,
+    this.stackTrace,
+  }) : status = WGProcessStatus.failure;
 
   final WGProcessStatus status;
 
   /// Mensagem de erro exibida quando [status] é [WGProcessStatus.failure].
   final String? message;
+
+  /// Exceção original que causou a falha (se conhecida).
+  final Object? cause;
+
+  /// Stack trace da exceção original (se conhecido).
+  final StackTrace? stackTrace;
+
+  /// Mensagem amigável acompanhada da causa técnica resumida, para que o
+  /// usuário saiba qual erro realmente ocorreu.
+  String get userFacingMessage {
+    final text = message ?? '';
+    final raw = cause;
+    if (raw == null) return text;
+
+    var detail = raw.toString().trim();
+    final firstLine = detail.indexOf('\n');
+    if (firstLine > 0) detail = detail.substring(0, firstLine);
+    const maxLength = 140;
+    if (detail.length > maxLength) {
+      detail = '${detail.substring(0, maxLength)}…';
+    }
+
+    return '$text\n\nErro: $detail';
+  }
 }
 
 /// Tela full-screen de carregamento no estilo da splash.

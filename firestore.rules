@@ -23,12 +23,19 @@ service cloud.firestore {
       return list is list && list.size() <= 150;
     }
 
-    // Valida os campos sensíveis ao criar o usuário (doc completo).
+    // Valida os campos ao criar o usuário (doc pode ser PARTIAL: o app cria
+    // o doc já no cadastro/login com name+email e completa phone/address
+    // depois em "Meus dados"). Campos presentes seguem as mesmas regras do
+    // update (isValidUserFields).
     function isValidUserCreate() {
       return isNonEmptyString(request.resource.data.name)
         && isNonEmptyString(request.resource.data.email)
-        && isNonEmptyString(request.resource.data.phone)
-        && isNonEmptyString(request.resource.data.address);
+        && (!('phone' in request.resource.data)
+          || isNonEmptyString(request.resource.data.phone))
+        && (!('address' in request.resource.data)
+          || isNonEmptyString(request.resource.data.address))
+        && (!('photoUrl' in request.resource.data)
+          || request.resource.data.photoUrl is string);
     }
 
     // Valida o update do usuário por CAMPO PRESENTE no doc resultante.
@@ -44,23 +51,7 @@ service cloud.firestore {
         && (!('createdAt' in doc) || doc.createdAt is timestamp);
     }
 
-    // Create de pet: exige doc completo (o app sempre grava tudo no create).
-    function isValidPetCreate() {
-      return isNonEmptyString(request.resource.data.ownerId)
-        && isNonEmptyString(request.resource.data.name)
-        && request.resource.data.age is int
-        && request.resource.data.age >= 0
-        && isNonEmptyString(request.resource.data.ageUnit)
-        && isNonEmptyString(request.resource.data.gender)
-        && request.resource.data.images is list
-        && isNonEmptyString(request.resource.data.publicationType)
-        && isNonEmptyString(request.resource.data.race)
-        && isNonEmptyString(request.resource.data.species)
-        && isValidSearchTokens(request.resource.data.searchTokens)
-        && request.resource.data.createdAt is timestamp;
-    }
-
-    // Update de pet: valida APENAS o que está presente no doc resultante.
+    // Valida o update do pet por CAMPO PRESENTE no doc resultante.
     // Um doc legado sem searchTokens/specifications/createdAt passa (batch
     // de telefone/backfill não derruba mais).
     function hasValidPetFields(doc) {
@@ -75,11 +66,24 @@ service cloud.firestore {
         && (!('description' in doc) || doc.description is string)
         && (!('publicationType' in doc) || isNonEmptyString(doc.publicationType))
         && (!('species' in doc) || isNonEmptyString(doc.species))
-        && (!('race' in doc) || isNonEmptyString(doc.race))
+        && (!('race' in doc) || doc.race is string)
         && (!('images' in doc) || doc.images is list)
         && (!('searchTokens' in doc) || isValidSearchTokens(doc.searchTokens))
         && (!('specifications' in doc) || doc.specifications is list)
         && (!('createdAt' in doc) || doc.createdAt is timestamp);
+    }
+
+    // Create de pet: exige os campos obrigatórios da publicação — dono,
+    // título (nome), telefone, endereço, espécie e gênero — e valida os
+    // demais apenas se presentes (isValidPetFields aceita a ausência).
+    function isValidPetCreate() {
+      return isNonEmptyString(request.resource.data.ownerId)
+        && isNonEmptyString(request.resource.data.name)
+        && isNonEmptyString(request.resource.data.ownerPhone)
+        && isNonEmptyString(request.resource.data.address)
+        && isNonEmptyString(request.resource.data.species)
+        && isNonEmptyString(request.resource.data.gender)
+        && hasValidPetFields(request.resource.data);
     }
 
     match /users/{userId} {

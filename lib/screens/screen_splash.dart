@@ -45,6 +45,14 @@ class _SplashScreenState extends State<SplashScreen> {
       // para o login (forçando reautenticação).
       final user = await authService.waitFirstAuthState();
 
+      if (user != null) {
+        // Revalida a sessão com o servidor: o token local pode ainda estar
+        // válido mesmo com a conta excluída/revogada (~1h). Se a conta não
+        // existe mais, o refresh falha e o AuthService encerra a sessão
+        // (volta para o login). Offline mantém a sessão de cache.
+        await authService.validateSession();
+      }
+
       if (!mounted) return;
 
       // Inicia a migração de tokens em background (assíncrona e idempotente),
@@ -54,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // trocada sem logout explícito (token expirado/revogado).
       SessionStateCleaner.instance.attach();
 
-      if (user != null) {
+      if (authService.currentUser != null) {
         Navigator.pushReplacementNamed(context, AppRoutes.home);
       } else {
         Navigator.pushReplacementNamed(context, AppRoutes.login);

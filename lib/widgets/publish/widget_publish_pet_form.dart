@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
-import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
@@ -185,8 +184,10 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   /// Atualiza o estado das fotos ao receber alterações da grade de slots.
   void _onImageSlotsChanged(List<String> paths) {
-    _isDirty = true;
-    _imagePaths = paths;
+    setState(() {
+      _isDirty = true;
+      _imagePaths = paths;
+    });
   }
 
   /// Atualiza o tipo de publicação selecionado.
@@ -303,21 +304,41 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     final user = AuthService.instance.currentUser;
     if (user == null) return;
 
-    // Perfil incompleto (sem celular/endereço) -> orientar a completar o
-    // cadastro antes de validar os demais campos (evita erros confusos).
-    if (!_hasContactFilled) {
-      _redirectToCompleteProfile();
-      return;
-    }
+    // Acende os erros inline dos campos antes de checar as barreiras.
+    _formKey.currentState?.validate();
 
-    // Barreira de fotos: exige ao menos 1 foto para publicar/editar.
+    // Barreira única: junta as pendências dos campos obrigatórios (nome,
+    // telefone e endereço) com a foto faltando num só aviso.
+    final problems = _missingRequiredFields();
     if (_imagePaths.isEmpty) {
+      problems.add(PublishStrings.PHOTO_REQUIRED_HINT);
+    }
+    if (problems.isNotEmpty) {
+      await WGDialog.showAction(
+        context,
+        title: PublishStrings.INCOMPLETE_FORM_TITLE,
+        message: problems.map((p) => '• $p').join('\n'),
+      );
       return;
     }
 
-    if (!_formKey.currentState!.validate()) {
-      return;
+    // Descrição vazia: pergunta se o usuário quer continuar mesmo assim.
+    if (_descriptionController.text.trim().isEmpty) {
+      final shouldContinue = await WGDialog.showConfirm(
+        context,
+        title: PublishStrings.EMPTY_DESCRIPTION_TITLE,
+        message: PublishStrings.EMPTY_DESCRIPTION_MESSAGE,
+        confirmLabel: PublishStrings.CONTINUE_BUTTON,
+        cancelLabel: PublishStrings.FILL_BUTTON,
+        confirmColor: ThemeColors.primary,
+      );
+      if (!shouldContinue) {
+        if (mounted) _descriptionFocusNode.requestFocus();
+        return;
+      }
     }
+
+    if (!mounted) return;
 
     // Sem rede não há como publicar: avisa e aborta antes de travar na
     // tela de carregamento (que ficaria presa esperando a rede).
@@ -357,7 +378,6 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
               } else {
                 // 1. Criar pet no Firestore
                 petId = await PetService.instance.createPet(pet);
-                await MyPublicationsService.instance.add(user.uid, petId);
 
                 // 2. Upload das imagens (se houver). Se o Storage falhar
                 //    (ex.: ainda não configurado no Firebase), desfaz a
@@ -377,7 +397,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                     await PetService.instance.updatePet(petId, {
                       'images': imageUrls,
                     });
-                  } catch (_) {
+                  } on Exception catch (error, stackTrace) {
                     try {
                       // Desfaz também os uploads que já aconteceram antes
                       // da falha, para não deixar fotos órfãs no Storage.
@@ -386,25 +406,32 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                             .deletePetImagesByUrls(imageUrls);
                       }
                       await PetService.instance.deletePet(petId);
-                      await MyPublicationsService.instance.remove(
-                        user.uid,
-                        petId,
-                      );
                     } catch (_) {
                       // Melhor esforço: se o rollback falhar, o usuário é
                       // informado do erro e o pet pode ser removido depois.
                     }
-                    rethrow;
+                    return WGProcessResult.failure(
+                      PublishStrings.PUBLISH_PHOTOS_ERROR,
+                      cause: error,
+                      stackTrace: stackTrace,
+                    );
                   }
                 }
+
+                // 3. Só notifica a "Minhas Publicações" depois de as fotos
+                //    estarem anexadas ao pet, para o grid já recarregar o
+                //    card com as imagens (sem precisar de pull-to-refresh).
+                await MyPublicationsService.instance.add(user.uid, petId);
               }
 
               return const WGProcessResult.success();
-            } on Exception {
+            } on Exception catch (error, stackTrace) {
               return WGProcessResult.failure(
                 _isEditing
                     ? PublishStrings.SAVE_ERROR
                     : PublishStrings.PUBLISH_ERROR,
+                cause: error,
+                stackTrace: stackTrace,
               );
             }
           },
@@ -441,7 +468,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
           await WGDialog.showAction(
             context,
             title: SharedStrings.ERROR_TITLE,
-            message: result!.message!,
+            message: result!.userFacingMessage,
             actionColor: ThemeColors.error,
           );
         }
@@ -453,11 +480,26 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     _isSaving = false;
   }
 
-  // Indica se os campos de contato obrigatórios estão corretos
-  // (celular válido e endereço preenchido).
-  bool get _hasContactFilled =>
-      _phoneController.text.trim().isNotEmpty &&
-      _addressController.text.trim().isNotEmpty;
+  // Lista as pendências dos campos obrigatórios (nome, telefone e
+  // endereço). Vazia quando todos estão corretos.
+  List<String> _missingRequiredFields() {
+    final problems = <String>[];
+
+    if ((_nameController.text.trim().length) < 2) {
+      problems.add(PublishStrings.PET_NAME_REQUIRED);
+    }
+
+    final phoneError = AppValidators.validateCellPhone(_phoneController.text);
+    if (phoneError != null) {
+      problems.add(phoneError);
+    }
+
+    if (_addressController.text.trim().isEmpty) {
+      problems.add(PublishStrings.ADDRESS_REQUIRED);
+    }
+
+    return problems;
+  }
 
   // Indica se os campos obrigatórios (à exceção das fotos) estão ok.
   bool get _requiredFieldsFilled {
@@ -486,20 +528,6 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     final ownerPhone = _owner?.phone ?? '';
     final ownerAddress = _owner?.address ?? '';
     return phone != ownerPhone || address != ownerAddress;
-  }
-
-  /// Mostra o diálogo orientando a completar o cadastro e, ao clicar em
-  /// "Sim", navega para a tela de dados da conta.
-  Future<void> _redirectToCompleteProfile() async {
-    final shouldComplete = await WGDialog.showConfirm(
-      context,
-      title: PublishStrings.INCOMPLETE_PROFILE_TITLE,
-      message: PublishStrings.INCOMPLETE_PROFILE_MESSAGE,
-    );
-
-    if (shouldComplete && mounted) {
-      Navigator.pushNamed(context, AppRoutes.accountData);
-    }
   }
 
   /// Abre o diálogo Sim/Não para atualizar todas as publicações.
@@ -716,6 +744,13 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
                 controller: _descriptionController,
                 hintText: PublishStrings.ABOUT_PET_HINT,
                 maxLines: 6,
+                textInputAction: TextInputAction.done,
+                focusNode: _descriptionFocusNode,
+                onChanged: _onFieldChanged,
+                onFieldSubmitted: (_) {
+                  _descriptionFocusNode.unfocus();
+                  _savePet();
+                },
               ),
 
               const SizedBox(height: 32),

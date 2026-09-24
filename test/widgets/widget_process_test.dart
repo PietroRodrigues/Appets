@@ -188,4 +188,27 @@ void main() {
     final host = tester.state<_ProcessHostState>(find.byType(_ProcessHost));
     expect(host.result?.status, WGProcessStatus.success);
   });
+
+  group('WGProcessResult.userFacingMessage', () {
+    test('sem causa retorna apenas a mensagem', () {
+      const result = WGProcessResult.failure('Deu errado.');
+
+      expect(result.userFacingMessage, 'Deu errado.');
+    });
+
+    test('com causa anexa o erro em uma linha truncada', () {
+      final result = WGProcessResult.failure(
+        'Deu errado.',
+        cause: StateError(
+          'Linha um. ${'x' * 500}\nlinha dois que não deve aparecer',
+        ),
+      );
+
+      final text = result.userFacingMessage;
+      expect(text, startsWith('Deu errado.\n\nErro: '));
+      expect(text, contains('Linha um.'));
+      expect(text, endsWith('…'));
+      expect(text, isNot(contains('linha dois')));
+    });
+  });
 }

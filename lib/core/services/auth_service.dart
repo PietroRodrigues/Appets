@@ -171,6 +171,36 @@ class AuthService {
     await _auth.currentUser?.delete();
   }
 
+  /// Revalida a sessão restaurada no cold start com o Identity Platform,
+  /// forçando um refresh de token.
+  ///
+  /// O Firebase restaura a sessão do token local mesmo com a conta já
+  /// excluída/desabilitada — enquanto o ID token estiver dentro do prazo
+  /// (~1h), chamadas ainda são autorizadas. [getIdToken(forceRefresh: true)]
+  /// troca o refresh token no servidor: para conta inexistente/revogada o
+  /// Firebase lança e a sessão é encerrada.
+  ///
+  /// Erro de rede (`network-request-failed`) NÃO desconecta: o usuário pode
+  /// estar só offline, e a sessão de cache deve ser mantida.
+  ///
+  /// Retorna `true` quando a sessão segue válida (ou sem usuário ainda
+  /// válido a validar) e `false` quando o logout foi executado.
+  Future<bool> validateSession() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    try {
+      await user.getIdToken(true);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'network-request-failed') return true;
+      await _auth.signOut();
+      return false;
+    } catch (_) {
+      await _auth.signOut();
+      return false;
+    }
+  }
+
   // Desconecta o usuário do Google e do Firebase Auth.
   //
   // O signOut do Firebase é realizado num finally: mesmo que o signOut do

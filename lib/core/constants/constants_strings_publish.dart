@@ -21,6 +21,9 @@ class PublishStrings {
 
   static const PUBLISH_ERROR = 'Erro ao publicar o pet. Tente novamente.';
 
+  static const PUBLISH_PHOTOS_ERROR =
+      'Não foi possível enviar as fotos. Tente novamente.';
+
   static const SAVE_BUTTON = 'Salvar Alterações';
 
   static const SAVE_LOADING = 'Salvando alterações...';
@@ -79,11 +82,18 @@ class PublishStrings {
 
   // ── Cadastro incompleto ────────────────────────────────
 
-  static const INCOMPLETE_PROFILE_TITLE = 'Complete seu cadastro';
+  static const INCOMPLETE_FORM_TITLE = 'Algo está faltando';
 
-  static const INCOMPLETE_PROFILE_MESSAGE =
-      'Para publicar um pet, é preciso ter celular e endereço cadastrados '
-      'na sua conta. Deseja completar o cadastro agora?';
+  // ── Descrição vazia ao publicar ────────────────────────
+
+  static const EMPTY_DESCRIPTION_TITLE = 'Sobre o pet vazio';
+
+  static const EMPTY_DESCRIPTION_MESSAGE =
+      'O campo "Sobre o pet" está vazio. Deseja continuar mesmo assim?';
+
+  static const CONTINUE_BUTTON = 'Continuar';
+
+  static const FILL_BUTTON = 'Preencher';
 
   // ── Atualização de contato em publicações ──────────────
 

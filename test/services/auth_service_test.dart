@@ -1,6 +1,7 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:appets/core/services/auth_service.dart';
@@ -32,6 +33,28 @@ class _TrackingEmailUser extends MockUser {
   @override
   Future<void> updateEmail(String newEmail) async {
     updateEmailCalls++;
+  }
+}
+
+/// MockUser que simula uma conta excluída/revogada: o refresh de token
+/// (getIdToken com forceRefresh) falha com user-not-found.
+class _RevokedUser extends MockUser {
+  _RevokedUser({super.uid, super.email});
+
+  @override
+  Future<String> getIdToken([bool forceRefresh = false]) async {
+    throw FirebaseAuthException(code: 'user-not-found');
+  }
+}
+
+/// MockUser com sessão restaurada, mas offline: o refresh falha por rede
+/// e a sessão de cache deve ser mantida.
+class _OfflineUser extends MockUser {
+  _OfflineUser({super.uid, super.email});
+
+  @override
+  Future<String> getIdToken([bool forceRefresh = false]) async {
+    throw FirebaseAuthException(code: 'network-request-failed');
   }
 }
 
@@ -167,6 +190,44 @@ void main() {
       service.debugAuthStateError = StateError('auth quebrado');
 
       expect(() => service.waitFirstAuthState(), throwsA(isA<StateError>()));
+    });
+  });
+
+  group('AuthService · validateSession', () {
+    test('sem usuário não há sessão para validar', () async {
+      service.debugAuth = MockFirebaseAuth();
+
+      expect(await service.validateSession(), isFalse);
+    });
+
+    test('sessão restaurada válida é mantida', () async {
+      service.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'uid_1', email: 'b@test.com'),
+      );
+
+      expect(await service.validateSession(), isTrue);
+      expect(service.currentUser, isNotNull);
+    });
+
+    test('conta excluída/revogada encerra a sessão', () async {
+      service.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: _RevokedUser(uid: 'uid_1', email: 'b@test.com'),
+      );
+
+      expect(await service.validateSession(), isFalse);
+      expect(service.currentUser, isNull);
+    });
+
+    test('erro de rede mantém a sessão de cache', () async {
+      service.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: _OfflineUser(uid: 'uid_1', email: 'b@test.com'),
+      );
+
+      expect(await service.validateSession(), isTrue);
+      expect(service.currentUser, isNotNull);
     });
   });
 
