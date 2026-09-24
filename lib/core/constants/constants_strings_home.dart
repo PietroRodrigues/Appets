@@ -120,6 +120,8 @@ class HomeStrings {
 
   static const DELETE_PET_SUCCESS = 'Publicação excluída.';
 
+  static const DELETE_PET_LOADING = 'Excluindo publicação…';
+
   static const DELETE_PET_ERROR =
       'Não foi possível excluir a publicação. Tente novamente.';
 }

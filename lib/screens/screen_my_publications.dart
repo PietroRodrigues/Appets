@@ -6,7 +6,6 @@ import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/core/theme/theme_colors.dart';
-import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/core/utils/pet_filters_controller.dart';
 import 'package:appets/core/utils/search_query_controller.dart';
 import 'package:appets/models/enums/enums_app.dart';
@@ -17,6 +16,7 @@ import 'package:appets/widgets/feed/widget_pet_card.dart';
 import 'package:appets/widgets/feed/widget_responsive_pet_grid.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_page_states.dart';
+import 'package:appets/widgets/feedback/widget_process.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:flutter/material.dart';
 
@@ -34,7 +34,8 @@ class MyPublicationsScreen extends StatefulWidget {
   State<MyPublicationsScreen> createState() => _MyPublicationsScreenState();
 }
 
-class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
+class _MyPublicationsScreenState extends State<MyPublicationsScreen>
+    with WGProcessMixin<MyPublicationsScreen> {
   final ValueNotifier<String> _search = SearchQueryController();
   final PetFiltersController _filters = PetFiltersController();
   final GlobalKey<WGResponsivePetGridState> _gridKey = GlobalKey();
@@ -75,8 +76,10 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
   // Confirma e exclui uma publicação, refletindo na grade automaticamente
   // (o `remove` dispara o notifier `myPetIds`, que recarrega a grade).
   //
-  // As fotos do pet também são removidas do Storage (melhor esforço),
-  // mesmo padrão da exclusão de conta.
+  // O processo roda na WGProcessLoadingScreen: dá feedback visível, bloqueia
+  // duplo toque e só toca o Firebase online (guarda do pushProcess). As
+  // fotos do pet também são removidas do Storage (melhor esforço), mesmo
+  // padrão da exclusão de conta.
   Future<void> _deletePet(Pet pet) async {
     final confirmed = await WGDialog.showConfirm(
       context,
@@ -86,38 +89,45 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen> {
     );
     if (!confirmed || !mounted) return;
 
-    // Excluir pet exige rede (apaga fotos e dados): avisa e aborta.
-    if (!await ensureOnline(context)) {
-      return;
-    }
-
-    try {
-      final uid = AuthService.instance.currentUser?.uid;
-      if (pet.images.isNotEmpty) {
-        await StorageService.instance.deletePetImagesByUrls(pet.images);
-      }
-      await PetService.instance.deletePet(pet.id);
-      if (uid != null) {
-        // Best-effort: se a persistência falhar, o ID órfão é limpo
-        // pelo `cleanOrphans` na próxima carga.
-        await MyPublicationsService.instance.remove(uid, pet.id);
-      }
-      if (mounted) {
+    final result = await pushProcess(
+      message: HomeStrings.DELETE_PET_LOADING,
+      task: () async {
+        try {
+          final uid = AuthService.instance.currentUser?.uid;
+          if (pet.images.isNotEmpty) {
+            await StorageService.instance.deletePetImagesByUrls(pet.images);
+          }
+          await PetService.instance.deletePet(pet.id);
+          if (uid != null) {
+            // Best-effort: se a persistência falhar, o ID órfão é limpo
+            // pelo `cleanOrphans` na próxima carga.
+            await MyPublicationsService.instance.remove(uid, pet.id);
+          }
+          return const WGProcessResult.success();
+        } on Exception catch (e) {
+          // Nada foi excluído: a falha aborta antes do commit (fotos e pet).
+          return WGProcessResult.failure(HomeStrings.DELETE_PET_ERROR, cause: e);
+        }
+      },
+    );
+    if (!mounted) return;
+    switch (result?.status) {
+      case WGProcessStatus.success:
         WGDialog.showAction(
           context,
           title: SharedStrings.SUCCESS_TITLE,
           message: HomeStrings.DELETE_PET_SUCCESS,
         );
-      }
-    } catch (_) {
-      if (mounted) {
+      case WGProcessStatus.failure:
         WGDialog.showAction(
           context,
           title: SharedStrings.ERROR_TITLE,
-          message: HomeStrings.DELETE_PET_ERROR,
+          message: result!.userFacingMessage,
           actionColor: ThemeColors.error,
         );
-      }
+      case WGProcessStatus.canceled:
+      case null:
+        break;
     }
   }
 

@@ -42,6 +42,10 @@ class PetService {
   @visibleForTesting
   Object? debugUpdatePetError;
 
+  /// Erro injetado em testes no `deletePet`.
+  @visibleForTesting
+  Object? debugDeletePetError;
+
   // Retorna os pets publicados por um determinado dono (UID).
   //
   // Leitura tolerante: sem `orderBy('createdAt')`, porque o Firestore exclui
@@ -110,6 +114,8 @@ class PetService {
 
   // Remove um pet pelo ID.
   Future<void> deletePet(String petId) async {
+    final err = debugDeletePetError;
+    if (err != null) throw err;
     await _db.collection('pets').doc(petId).delete();
   }
 
