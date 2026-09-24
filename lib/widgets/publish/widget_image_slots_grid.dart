@@ -148,11 +148,18 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
   /// Remove a imagem do [index] e desloca as imagens seguintes
   /// para a esquerda, mantendo ao menos 1 slot vazio visível.
   void _removeImage(int index) {
+    String? removed;
     setState(() {
       if (index < 0 || index >= _imagePaths.length) return;
 
-      _imagePaths.removeAt(index);
+      removed = _imagePaths.removeAt(index);
     });
+
+    // Foto descartada sem salvar: apaga o temporário `.webp` da compressão
+    // para não acumular lixo (best-effort, só mexe em `.webp`).
+    if (removed != null) {
+      ImageCompressor.deleteTempWebpFiles([removed!]);
+    }
 
     _notifyChanged();
   }

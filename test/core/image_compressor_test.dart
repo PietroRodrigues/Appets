@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_publish.dart';
@@ -5,81 +8,183 @@ import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/image_compressor.dart';
 
 void main() {
-  group('chooseBestCompression', () {
-    const target = ImageCompressor.targetMaxBytes; // 350 * 1024
-    const original = 5 * 1024 * 1024; // 5 MB
+  group('compressForUpload', () {
+    late Directory tempDir;
 
-    test('escolhe a maior qualidade que caiba no teto', () {
-      final choice = chooseBestCompression(
-        originalBytes: original,
-        targetMaxBytes: target,
-        qualities: ImageCompressor.qualityCandidates,
-        sizeFor: (quality) => switch (quality) {
-          85 => 420 * 1024,
-          70 => 300 * 1024,
-          _ => 250 * 1024,
-        },
-      );
-
-      expect(choice, isNotNull);
-      expect(choice!.quality, 70);
-      expect(choice.bytes, 300 * 1024);
+    setUp(() {
+      ImageCompressor.debugCompress = null;
+      tempDir = Directory.systemTemp.createTempSync('img_comp_test_');
     });
 
-    test('aceita tamanho exatamente igual ao teto', () {
-      final choice = chooseBestCompression(
-        originalBytes: original,
-        targetMaxBytes: target,
-        qualities: ImageCompressor.qualityCandidates,
-        sizeFor: (quality) => switch (quality) {
-          85 => target,
-          _ => 200 * 1024,
-        },
+    tearDown(() {
+      ImageCompressor.debugCompress = null;
+      try {
+        tempDir.deleteSync(recursive: true);
+      } catch (_) {
+        // Melhor esforço no ambiente de teste.
+      }
+    });
+
+    Future<File> createOriginal(int size) {
+      final file = File(
+        '${tempDir.path}${Platform.pathSeparator}orig_$size.bin',
+      );
+      return file.writeAsBytes(Uint8List(size), flush: true);
+    }
+
+    test('arquivo original inexistente: devolve null', () async {
+      final result = await ImageCompressor.compressForUpload(
+        '${tempDir.path}${Platform.pathSeparator}nao_existe.jpg',
       );
 
-      expect(choice, isNotNull);
-      expect(choice!.quality, 85);
-      expect(choice.bytes, target);
+      expect(result, isNull);
+    });
+
+    test('arquivo vazio (0 bytes): devolve null sem criar temporário',
+        () async {
+      final original = await createOriginal(0);
+
+      final result = await ImageCompressor.compressForUpload(original.path);
+
+      expect(result, isNull);
+      expect(File('${original.path}.webp').existsSync(), isFalse);
+    });
+
+    test('para na primeira qualidade que cabe no teto', () async {
+      final original = await createOriginal(5 * 1024 * 1024);
+      final calls = <int>[];
+      ImageCompressor.debugCompress = (source, quality) async {
+        calls.add(quality);
+        switch (quality) {
+          case 85:
+            return Uint8List(450 * 1024); // não cabe (> 350 KB)
+          case 70:
+            return Uint8List(300 * 1024); // cabe
+          case 60:
+            return Uint8List(250 * 1024); // não deve ser tentada
+          default:
+            return Uint8List(0);
+        }
+      };
+
+      final result = await ImageCompressor.compressForUpload(original.path);
+
+      expect(calls, [85, 70]);
+      expect(result, isNotNull);
+      expect(result!.path, '${original.path}.webp');
+      expect(await result.length(), 300 * 1024);
+    });
+
+    test('aceita tamanho exatamente igual ao teto', () async {
+      final original = await createOriginal(700 * 1024);
+      ImageCompressor.debugCompress = (source, quality) async =>
+          Uint8List(ImageCompressor.targetMaxBytes);
+
+      final result = await ImageCompressor.compressForUpload(original.path);
+
+      expect(result, isNotNull);
+      expect(result!.path, '${original.path}.webp');
+      expect(await result.length(), ImageCompressor.targetMaxBytes);
+    });
+
+    test('qualidade que falha é ignorada (não envenena a escolha)', () async {
+      final original = await createOriginal(5 * 1024 * 1024);
+      ImageCompressor.debugCompress = (source, quality) async {
+        switch (quality) {
+          case 85:
+            return null; // falhou; antigamente virava "size 0" e descartava
+          case 70:
+            return Uint8List(300 * 1024);
+          case 60:
+            return Uint8List(250 * 1024);
+          default:
+            return Uint8List(0);
+        }
+      };
+
+      final result = await ImageCompressor.compressForUpload(original.path);
+
+      expect(result, isNotNull);
+      expect(await result!.length(), 300 * 1024);
     });
 
     test('nenhuma cabe no teto: usa a menor qualidade que ainda reduza',
-        () {
-      final choice = chooseBestCompression(
-        originalBytes: original,
-        targetMaxBytes: target,
-        qualities: ImageCompressor.qualityCandidates,
-        sizeFor: (quality) => switch (quality) {
-          85 => 600 * 1024,
-          70 => 500 * 1024,
-          _ => 400 * 1024,
-        },
-      );
+        () async {
+      final original = await createOriginal(5 * 1024 * 1024);
+      ImageCompressor.debugCompress = (source, quality) async {
+        switch (quality) {
+          case 85:
+            return Uint8List(600 * 1024);
+          case 70:
+            return Uint8List(500 * 1024);
+          case 60:
+            return Uint8List(400 * 1024);
+          default:
+            return Uint8List(0);
+        }
+      };
 
-      expect(choice, isNotNull);
-      expect(choice!.quality, 60);
-      expect(choice.bytes, 400 * 1024);
+      final result = await ImageCompressor.compressForUpload(original.path);
+
+      expect(result, isNotNull);
+      expect(await result!.length(), 400 * 1024);
     });
 
-    test('nenhuma qualidade reduz: retorna null (manter original)', () {
-      final choice = chooseBestCompression(
-        originalBytes: original,
-        targetMaxBytes: target,
-        qualities: ImageCompressor.qualityCandidates,
-        sizeFor: (quality) => original + 100 * 1024,
-      );
+    test('nada reduz: devolve null e apaga temporário órfão', () async {
+      final original = await createOriginal(1 * 1024 * 1024);
+      final orphan = File('${original.path}.webp');
+      await orphan.writeAsBytes(Uint8List(100), flush: true);
 
-      expect(choice, isNull);
+      ImageCompressor.debugCompress = (source, quality) async =>
+          Uint8List(2 * 1024 * 1024); // todas maiores que o original
+
+      final result = await ImageCompressor.compressForUpload(original.path);
+
+      expect(result, isNull);
+      expect(await orphan.exists(), isFalse);
     });
 
-    test('imagem já menor que o teto pode manter o original', () {
-      final choice = chooseBestCompression(
-        originalBytes: 200 * 1024,
-        targetMaxBytes: target,
-        qualities: ImageCompressor.qualityCandidates,
-        sizeFor: (quality) => 210 * 1024,
-      );
+    test('imagem já menor que o teto pode manter o original', () async {
+      final original = await createOriginal(200 * 1024);
+      ImageCompressor.debugCompress = (source, quality) async =>
+          Uint8List(210 * 1024); // compressão não reduz
 
-      expect(choice, isNull);
+      final result = await ImageCompressor.compressForUpload(original.path);
+
+      expect(result, isNull);
+      expect(File('${original.path}.webp').existsSync(), isFalse);
+    });
+  });
+
+  group('deleteTempWebpFiles', () {
+    late Directory tempDir;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('img_comp_del_');
+    });
+
+    tearDown(() {
+      try {
+        tempDir.deleteSync(recursive: true);
+      } catch (_) {
+        // Melhor esforço no ambiente de teste.
+      }
+    });
+
+    test('apaga só temporários `.webp` e ignora inexistentes/erros', () async {
+      final a = File('${tempDir.path}${Platform.pathSeparator}a.webp');
+      final png = File('${tempDir.path}${Platform.pathSeparator}foto.png');
+      await a.writeAsBytes(Uint8List(10), flush: true);
+      await png.writeAsBytes(Uint8List(10), flush: true);
+
+      await ImageCompressor.deleteTempWebpFiles([
+        a.path,
+        '${tempDir.path}${Platform.pathSeparator}b.webp', // inexistente
+        png.path, // não é `.webp` → preservado
+      ]);
+
+      expect(await a.exists(), isFalse);
+      expect(await png.exists(), isTrue);
     });
   });
 

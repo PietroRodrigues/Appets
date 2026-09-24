@@ -4,6 +4,7 @@ import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/services/image_compressor.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
@@ -465,6 +466,12 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
                 //    estarem anexadas ao pet, para o grid já recarregar o
                 //    card com as imagens (sem precisar de pull-to-refresh).
                 await MyPublicationsService.instance.add(user.uid, petId);
+              }
+
+              // Upload concluído e commit ok: remove os temporários `.webp`
+              // da compressão (best-effort, mexe apenas em arquivos `.webp`).
+              if (_imagePaths.isNotEmpty) {
+                await ImageCompressor.deleteTempWebpFiles(_imagePaths);
               }
 
               return const WGProcessResult.success();
