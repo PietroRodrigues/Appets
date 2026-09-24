@@ -128,4 +128,12 @@ class PublishStrings {
   static String photoTooLargeMessage() =>
       'A imagem selecionada excede $IMAGE_TOO_LARGE_MAX_MB MB. '
       'Escolha uma imagem menor para continuar.';
+
+  // ── Erro ao abrir a galeria ────────────────────────────
+
+  static const PICK_PHOTO_ERROR_TITLE = 'Não foi possível abrir a galeria';
+
+  static const PICK_PHOTO_ERROR_MESSAGE =
+      'Permissão negada ou erro ao acessar as fotos. Verifique a permissão '
+      'do app e tente novamente.';
 }

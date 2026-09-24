@@ -92,12 +92,25 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
 
   /// Abre o seletor de imagem (galeria) e adiciona no [index].
   Future<void> _addImage(int index) async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-      maxWidth: ImageCompressor.maxDimension.toDouble(),
-      maxHeight: ImageCompressor.maxDimension.toDouble(),
-    );
+    final XFile? image;
+    try {
+      image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: ImageCompressor.maxDimension.toDouble(),
+        maxHeight: ImageCompressor.maxDimension.toDouble(),
+      );
+    } on Exception {
+      // Permissão negada ou erro da plataforma: avisa em vez de deixar a
+      // exceção escapar sem tratamento.
+      if (!mounted) return;
+      await WGDialog.showAction(
+        context,
+        title: PublishStrings.PICK_PHOTO_ERROR_TITLE,
+        message: PublishStrings.PICK_PHOTO_ERROR_MESSAGE,
+      );
+      return;
+    }
 
     if (image == null || !mounted) return;
 
