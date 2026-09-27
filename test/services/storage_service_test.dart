@@ -42,5 +42,24 @@ void main() {
         'url totalmente inválida',
       ]);
     });
+
+    test('deletePetImagesByUrls dispara as exclusões em paralelo', () async {
+      service.debugDeleteDelay = const Duration(milliseconds: 20);
+      service.debugMaxConcurrentDeletes = 0;
+
+      await service.deletePetImagesByUrls([
+        'https://firebasestorage.googleapis.com/um.png',
+        'https://firebasestorage.googleapis.com/dois.png',
+        'https://firebasestorage.googleapis.com/tres.png',
+        'https://firebasestorage.googleapis.com/quatro.png',
+        'https://firebasestorage.googleapis.com/cinco.png',
+      ]);
+
+      // Sequencial teria pico 1; paralelo fecha o pico de 5.
+      expect(service.debugMaxConcurrentDeletes, 5);
+
+      service.debugDeleteDelay = null;
+      service.debugMaxConcurrentDeletes = 0;
+    });
   });
 }

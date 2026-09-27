@@ -16,6 +16,16 @@ class StorageService {
   @visibleForTesting
   set debugStorage(FirebaseStorage? storage) => _debugStorage = storage;
 
+  /// Atraso injetado por exclusão em testes (prova o paralelismo).
+  @visibleForTesting
+  Duration? debugDeleteDelay;
+
+  /// Pico de exclusões simultâneas observado (testes: paralelo = N).
+  @visibleForTesting
+  int debugMaxConcurrentDeletes = 0;
+
+  int _activeDeletes = 0;
+
   // Monta o caminho de uma foto no Storage, no padrão dono→pet→índice.
   static String petImagePath(
     String ownerId,
@@ -55,13 +65,29 @@ class StorageService {
   //
   // Usa a própria URL (via refFromURL) em vez de derivar o caminho por
   // índice: robusto mesmo quando a edição deixou índices esparsos.
+  //
+  // Dispara todas as exclusões em paralelo (Future.wait) — o custo não é
+  // a soma das latências — mantendo o melhor esforço: cada URL engole a
+  // própria falha e as demais seguem normalmente.
   Future<void> deletePetImagesByUrls(List<String> imageUrls) async {
-    for (final url in imageUrls) {
-      try {
-        await _storage.refFromURL(url).delete();
-      } catch (_) {
-        // Ignorar se a imagem não existe ou o URL for inválido.
-      }
-    }
+    await Future.wait(
+      imageUrls.map((url) async {
+        _activeDeletes++;
+        if (_activeDeletes > debugMaxConcurrentDeletes) {
+          debugMaxConcurrentDeletes = _activeDeletes;
+        }
+        try {
+          final delay = debugDeleteDelay;
+          if (delay != null) {
+            await Future<void>.delayed(delay);
+          }
+          await _storage.refFromURL(url).delete();
+        } catch (_) {
+          // Ignorar se a imagem não existe ou o URL for inválido.
+        } finally {
+          _activeDeletes--;
+        }
+      }),
+    );
   }
 }

@@ -19,6 +19,17 @@ void main() {
     test('remove espaços nas bordas', () {
       expect(normalizeText('  Rex  '), 'rex');
     });
+
+    test('aplica os 24 mapeamentos de acento', () {
+      expect(
+        normalizeText('Áàâãä Éèêë Íìîï Óòôõö Úùûü ÇÑ'),
+        'aaaaa eeee iiii ooooo uuuu cn',
+      );
+    });
+
+    test('caracteres fora do mapa passam intactos', () {
+      expect(normalizeText('Rex ß ø'), 'rex ß ø');
+    });
   });
 
   group('buildSearchTokens', () {

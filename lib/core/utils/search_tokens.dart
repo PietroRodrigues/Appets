@@ -4,39 +4,46 @@
 /// para que "Rex", "REX" e "rex" encontrem o mesmo pet.
 library;
 
-/// Remove acentos e converte para minúsculas.
+/// Mapeamento ruine (código) → letra sem acento, usado por [normalizeText].
+///
+/// Índice por ruine para um único lookup O(1) por caractere em 1 passada,
+/// sem percorrer a string 24x (um replaceAll por letra acentuada).
+const Map<int, String> _accentByRune = {
+  0x00E1: 'a', // á
+  0x00E0: 'a', // à
+  0x00E2: 'a', // â
+  0x00E3: 'a', // ã
+  0x00E4: 'a', // ä
+  0x00E9: 'e', // é
+  0x00E8: 'e', // è
+  0x00EA: 'e', // ê
+  0x00EB: 'e', // ë
+  0x00ED: 'i', // í
+  0x00EC: 'i', // ì
+  0x00EE: 'i', // î
+  0x00EF: 'i', // ï
+  0x00F3: 'o', // ó
+  0x00F2: 'o', // ò
+  0x00F4: 'o', // ô
+  0x00F5: 'o', // õ
+  0x00F6: 'o', // ö
+  0x00FA: 'u', // ú
+  0x00F9: 'u', // ù
+  0x00FB: 'u', // û
+  0x00FC: 'u', // ü
+  0x00E7: 'c', // ç
+  0x00F1: 'n', // ñ
+};
+
+/// Remove acentos e converte para minúsculas em uma única passada.
 String normalizeText(String input) {
-  var text = input.toLowerCase().trim();
-  const replacements = {
-    'á': 'a',
-    'à': 'a',
-    'â': 'a',
-    'ã': 'a',
-    'ä': 'a',
-    'é': 'e',
-    'è': 'e',
-    'ê': 'e',
-    'ë': 'e',
-    'í': 'i',
-    'ì': 'i',
-    'î': 'i',
-    'ï': 'i',
-    'ó': 'o',
-    'ò': 'o',
-    'ô': 'o',
-    'õ': 'o',
-    'ö': 'o',
-    'ú': 'u',
-    'ù': 'u',
-    'û': 'u',
-    'ü': 'u',
-    'ç': 'c',
-    'ñ': 'n',
-  };
-  for (final MapEntry(key: from, value: to) in replacements.entries) {
-    text = text.replaceAll(from, to);
+  final text = input.toLowerCase().trim();
+  if (text.isEmpty) return text;
+  final buffer = StringBuffer();
+  for (final rune in text.runes) {
+    buffer.write(_accentByRune[rune] ?? String.fromCharCode(rune));
   }
-  return text;
+  return buffer.toString();
 }
 
 /// Quantidade máxima de tokens de busca persistidos por pet.
