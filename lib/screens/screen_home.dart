@@ -67,9 +67,11 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final authUser = AuthService.instance.currentUser;
       if (authUser != null) {
+        // Leitura única do documento do usuário: o mesmo model alimenta o
+        // header da Home e os serviços de favoritos/publicações das abas.
         _user = await FirestoreService.instance.getUser(authUser.uid);
-        await FavoritesService.instance.loadForUser(authUser.uid);
-        await MyPublicationsService.instance.loadForUser(authUser.uid);
+        FavoritesService.instance.applyUser(_user);
+        await MyPublicationsService.instance.applyUser(_user);
       }
       if (mounted) {
         setState(() => _loadError = false);

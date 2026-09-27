@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/models/user_model.dart';
 
 /// Fonte única e reativa das publicações do usuário logado, mantida em
 /// memória.
@@ -11,10 +12,10 @@ import 'package:appets/core/services/pet_service.dart';
 /// dos pets publicados (persistida em `users/{uid}.myPublishedPetIds`) e
 /// notifica a interface via [ValueNotifier] quando a lista muda.
 ///
-/// Durante [loadForUser] é feito um *backfill*: busca os pets do dono
-/// (pelo `ownerId`) e grava na lista quaisquer IDs que ainda não constem,
-/// migrando publicações antigas criadas antes deste campo existir e se
-/// auto-reparando caso a lista fique dessincronizada.
+/// Durante [applyUser] é feito um *backfill*: busca os pets do dono
+  /// (pelo `ownerId`) e grava na lista quaisquer IDs que ainda não constem,
+  /// migrando publicações antigas criadas antes deste campo existir e se
+  /// auto-reparando caso a lista fique dessincronizada.
 class MyPublicationsService {
   MyPublicationsService._();
 
@@ -34,11 +35,20 @@ class MyPublicationsService {
   /// Indica se o pet é uma publicação do usuário logado.
   bool isMine(String petId) => _myPetIds.value.contains(petId);
 
-  /// Carrega as publicações do usuário a partir do Firestore, preenchendo
-  /// com o backfill para migrar pets já publicados.
-  Future<void> loadForUser(String uid) async {
-    final user = await FirestoreService.instance.getUser(uid);
+  /// Carrega as publicações a partir do [user] já buscado (única leitura do
+  /// documento do usuário, feita por quem chama — não há getUser aqui).
+  /// `user == null` significa lista vazia, sem backfill. Com o user, roda o
+  /// *backfill*: busca os pets do dono (pelo `ownerId`) e grava na lista
+  /// quaisquer IDs que ainda não constem, migrando publicações antigas e se
+  /// auto-reparando caso a lista fique dessincronizada. O uid para armazenar
+  /// vem de [UserModel.id].
+  Future<void> applyUser(UserModel? user) async {
+    final uid = user?.id;
     final stored = (user?.myPublishedPetIds ?? const <String>[]).toSet();
+    if (uid == null) {
+      _myPetIds.value = stored;
+      return;
+    }
     final known = await _fetchOwnedPetIds(uid);
     final merged = stored.union(known);
     _myPetIds.value = merged;

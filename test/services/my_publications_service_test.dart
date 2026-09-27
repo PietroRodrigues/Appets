@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
+import 'package:appets/models/user_model.dart';
 
 void main() {
   final service = MyPublicationsService.instance;
@@ -201,6 +203,45 @@ void main() {
     test('current é uma visão mutável mas começa vazia', () {
       expect(service.current, isEmpty);
       expect(service.myPetIds, isA<ValueNotifier<Set<String>>>());
+    });
+
+    group('applyUser', () {
+      test('preenche as publicações a partir do UserModel', () async {
+        final user = UserModel(
+          id: 'uid_1',
+          name: 'Ana',
+          email: 'ana@test.com',
+          myPublishedPetIds: const ['pet_a'],
+        );
+
+        await service.applyUser(user);
+
+        expect(service.myPetIds.value, contains('pet_a'));
+      });
+
+      test('user null zera o estado (lista vazia, sem backfill)', () async {
+        service.myPetIds.value = {'pet_x'};
+
+        await service.applyUser(null);
+
+        expect(service.current, isEmpty);
+      });
+
+      test('não chama getUser (falha nele não afeta o applyUser)', () async {
+        FirestoreService.instance.debugGetUserError =
+            StateError('não deve ler');
+        addTearDown(() => FirestoreService.instance.debugGetUserError = null);
+        final user = UserModel(
+          id: 'uid_1',
+          name: 'Ana',
+          email: 'ana@test.com',
+          myPublishedPetIds: const ['pet_a'],
+        );
+
+        await service.applyUser(user);
+
+        expect(service.myPetIds.value, contains('pet_a'));
+      });
     });
   });
 }

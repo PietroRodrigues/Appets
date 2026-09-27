@@ -10,6 +10,8 @@ import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/models/enums/enums_app.dart';
+import 'package:appets/models/model_pet.dart';
 import 'package:appets/screens/screen_home.dart';
 
 void main() {
@@ -77,5 +79,56 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(SharedStrings.LOAD_DATA_ERROR_TITLE), findsNothing);
+  });
+
+  testWidgets('a única leitura do usuário alimenta favoritos e publicações', (
+    tester,
+  ) async {
+    AuthService.instance.debugAuth = MockFirebaseAuth(
+      signedIn: true,
+      mockUser: MockUser(uid: 'uid_1'),
+    );
+
+    await db.collection('users').doc('uid_1').set({
+      'name': 'Ana',
+      'email': 'ana@test.com',
+      'phone': '(11) 99999-9999',
+      'address': 'São Paulo',
+      'photoUrl': '',
+      'favoritePetIds': ['pet_fav'],
+      'myPublishedPetIds': ['pet_pub'],
+    });
+
+    // Pets reais para o cleanOrphans do grid não tratar os favoritos/
+    // publicações como órfãos durante a carga.
+    Pet pet(String id, {required String ownerId}) => Pet(
+          id: id,
+          ownerId: ownerId,
+          name: 'Rex',
+          age: 2,
+          ageUnit: AppPetAgeUnit.years,
+          gender: AppPetGender.male,
+          address: 'São Paulo',
+          ownerPhone: '(11) 98765-4321',
+          ownerAddress: 'São Paulo',
+          description: 'Muito dócil.',
+          publicationType: AppPetPublicationType.lost,
+          species: AppPetSpecies.dog,
+          race: 'Poodle',
+          images: const [],
+        );
+    for (final p in [pet('pet_fav', ownerId: 'outro'), pet('pet_pub', ownerId: 'uid_1')]) {
+      await db
+          .collection('pets')
+          .doc(p.id)
+          .set(Map<String, dynamic>.of(p.toMap())
+            ..['createdAt'] = DateTime(2024, 1, 1));
+    }
+
+    await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
+    await tester.pumpAndSettle();
+
+    expect(FavoritesService.instance.isFavorite('pet_fav'), isTrue);
+    expect(MyPublicationsService.instance.isMine('pet_pub'), isTrue);
   });
 }

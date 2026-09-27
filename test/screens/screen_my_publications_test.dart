@@ -133,7 +133,7 @@ void main() {
         .set(Map<String, dynamic>.of(pet.toMap())
           ..['createdAt'] = DateTime(2024, 1, 1));
 
-    await MyPublicationsService.instance.loadForUser(user.id);
+    await MyPublicationsService.instance.applyUser(user);
   }
 
   Finder deleteButton() => find.descendant(

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/models/user_model.dart';
 
 /// Fonte única e reativa dos favoritos do usuário logado, mantida em
 /// memória.
@@ -33,10 +34,10 @@ class FavoritesService {
   /// Indica se o pet é favorito do usuário logado.
   bool isFavorite(String petId) => _favoriteIds.value.contains(petId);
 
-  /// Carrega os favoritos do usuário a partir do Firestore,
-  /// substituindo o estado local.
-  Future<void> loadForUser(String uid) async {
-    final user = await FirestoreService.instance.getUser(uid);
+  /// Carrega os favoritos a partir do [user] já buscado (única leitura do
+  /// documento do usuário, feita quem chama). Sem leitura do Firestore aqui;
+  /// `null` significa lista vazia.
+  void applyUser(UserModel? user) {
     _favoriteIds.value = (user?.favoritePetIds ?? const <String>[]).toSet();
   }
 

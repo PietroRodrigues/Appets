@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/services/favorites_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/models/user_model.dart';
 
 void main() {
   final service = FavoritesService.instance;
@@ -208,6 +210,45 @@ void main() {
     test('current é uma visão mutável mas começa vazia', () {
       expect(service.current, isEmpty);
       expect(service.favoriteIds, isA<ValueNotifier<Set<String>>>());
+    });
+
+    group('applyUser', () {
+      test('preenche os favoritos a partir do UserModel', () {
+        final user = UserModel(
+          id: 'uid_1',
+          name: 'Ana',
+          email: 'ana@test.com',
+          favoritePetIds: const ['pet_a', 'pet_b'],
+        );
+
+        service.applyUser(user);
+
+        expect(service.favoriteIds.value, {'pet_a', 'pet_b'});
+      });
+
+      test('user null zera o estado (lista vazia)', () {
+        service.favoriteIds.value = {'pet_x'};
+
+        service.applyUser(null);
+
+        expect(service.current, isEmpty);
+      });
+
+      test('não lê do Firestore (usa só o model recebido)', () {
+        FirestoreService.instance.debugGetUserError =
+            StateError('não deve ler');
+        addTearDown(() => FirestoreService.instance.debugGetUserError = null);
+        final user = UserModel(
+          id: 'uid_1',
+          name: 'Ana',
+          email: 'ana@test.com',
+          favoritePetIds: const ['pet_a'],
+        );
+
+        service.applyUser(user);
+
+        expect(service.favoriteIds.value, {'pet_a'});
+      });
     });
   });
 }
