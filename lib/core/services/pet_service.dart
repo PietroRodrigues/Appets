@@ -137,18 +137,28 @@ class PetService {
 
     const batchSize = 10;
     final options = fromCache ? const GetOptions(source: Source.cache) : null;
-    final results = <Pet>[];
+
+    final batches = <List<String>>[];
     for (var i = 0; i < petIds.length; i += batchSize) {
       final end = (i + batchSize > petIds.length)
           ? petIds.length
           : i + batchSize;
-      final batch = petIds.sublist(i, end);
-      final snapshot = await _db
-          .collection('pets')
-          .where(FieldPath.documentId, whereIn: batch)
-          .get(options);
-      results.addAll(snapshot.docs.map((doc) => Pet.fromFirestore(doc)));
+      batches.add(petIds.sublist(i, end));
     }
+
+    final snapshots = await Future.wait(
+      batches.map(
+        (batch) => _db
+            .collection('pets')
+            .where(FieldPath.documentId, whereIn: batch)
+            .get(options),
+      ),
+    );
+
+    final results = <Pet>[
+      for (final snapshot in snapshots)
+        ...snapshot.docs.map((doc) => Pet.fromFirestore(doc)),
+    ];
 
     final byId = {for (final pet in results) pet.id: pet};
     final seen = <String>{};

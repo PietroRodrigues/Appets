@@ -197,15 +197,15 @@ void main() {
     });
 
     test('divide em lotes de 10 quando há muitos IDs', () async {
-      for (var i = 0; i < 15; i++) {
+      for (var i = 0; i < 25; i++) {
         await insertPet(petDoc('pet_$i', ownerId: 'dono_a'));
       }
 
       final pets = await service.getPetsByIds([
-        for (var i = 0; i < 15; i++) 'pet_$i',
+        for (var i = 0; i < 25; i++) 'pet_$i',
       ]);
 
-      expect(pets, hasLength(15));
+      expect(pets, hasLength(25));
     });
 
     test('devolve na ordem dos IDs, ignorando os inexistentes', () async {
