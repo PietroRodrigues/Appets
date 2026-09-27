@@ -9,6 +9,7 @@ import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/display/widget_pet_image.dart';
+import 'package:appets/widgets/feedback/widget_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -126,7 +127,10 @@ class _WGPetCardState extends State<WGPetCard>
         : await service.add(authUser.uid, widget.pet.id);
 
     // Persistência falhou: o estado já foi revertido pelo serviço.
-    if (!ok) return;
+    if (!ok && mounted) {
+      WGSnackBar.showError(context, PetDetailsStrings.FAVORITE_ERROR);
+      return;
+    }
 
     HapticFeedback.mediumImpact();
   }

@@ -8,6 +8,9 @@ class PetDetailsStrings {
 
   static const REMOVE_FROM_FAVORITES = 'Remover dos favoritos';
 
+  static const FAVORITE_ERROR =
+      'Não foi possível favoritar. Tente novamente.';
+
   static const SHARE_TOOLTIP = 'Compartilhar';
 
   static const OWNER_PHONE_UNAVAILABLE =

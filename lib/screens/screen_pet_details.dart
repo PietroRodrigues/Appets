@@ -1,5 +1,4 @@
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
-import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/services/auth_service.dart';
@@ -8,6 +7,7 @@ import 'package:appets/core/theme/theme_colors.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
+import 'package:appets/widgets/feedback/widget_snackbar.dart';
 import 'package:appets/widgets/pet/widget_pet_details_info.dart';
 import 'package:appets/widgets/pet/widget_pet_gallery.dart';
 import 'package:flutter/material.dart';
@@ -64,12 +64,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         : await service.add(authUser.uid, widget.pet.id);
 
     if (!ok && mounted) {
-      WGDialog.showAction(
-        context,
-        title: SharedStrings.ERROR_TITLE,
-        message: ProfileStrings.CONTACT_SAVE_ERROR,
-        actionColor: ThemeColors.error,
-      );
+      WGSnackBar.showError(context, PetDetailsStrings.FAVORITE_ERROR);
     }
   }
 

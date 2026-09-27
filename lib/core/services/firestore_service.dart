@@ -21,6 +21,15 @@ class FirestoreService {
   @visibleForTesting
   Object? debugGetUserError;
 
+  /// Lançado em [addFavorite] quando definido (simula falha de persistência
+  /// do favorito nos testes).
+  @visibleForTesting
+  Object? debugAddFavoriteError;
+
+  /// Lançado em [removeFavorite] quando definido.
+  @visibleForTesting
+  Object? debugRemoveFavoriteError;
+
   // Garante o documento do usuário na coleção `users` com `merge`: cria o
   // doc se faltar e, se já existir, apenas atualiza os campos de identidade
   // (não sobrescreve favoritos/publicações nem a data de criação).
@@ -47,6 +56,8 @@ class FirestoreService {
 
   // Adiciona um pet aos favoritos do usuário.
   Future<void> addFavorite(String uid, String petId) async {
+    final err = debugAddFavoriteError;
+    if (err != null) throw err;
     await updateUser(uid, {
       'favoritePetIds': FieldValue.arrayUnion([petId]),
     });
@@ -54,6 +65,8 @@ class FirestoreService {
 
   // Remove um pet dos favoritos do usuário.
   Future<void> removeFavorite(String uid, String petId) async {
+    final err = debugRemoveFavoriteError;
+    if (err != null) throw err;
     await updateUser(uid, {
       'favoritePetIds': FieldValue.arrayRemove([petId]),
     });

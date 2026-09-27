@@ -3,6 +3,7 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
@@ -41,6 +42,9 @@ void main() {
     tearDown(() {
       ConnectivityService.instance.reset();
       FavoritesService.instance.reset();
+      FirestoreService.instance.debugDb = null;
+      FirestoreService.instance.debugAddFavoriteError = null;
+      FirestoreService.instance.debugRemoveFavoriteError = null;
     });
     testWidgets('exibe o nome do pet', (tester) async {
       final pet = _createTestPet(name: 'Thor');
@@ -306,6 +310,44 @@ void main() {
         FavoritesService.instance.favoriteIds.value,
         isNot(contains(pet.id)),
       );
+    });
+
+    testWidgets('favoritar falha mostra aviso e mantém a estrela vazia', (
+      tester,
+    ) async {
+      AuthService.instance.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'user_test_001'),
+      );
+      final db = FakeFirebaseFirestore();
+      await db.collection('users').doc('user_test_001').set({'name': 'Ana'});
+      FirestoreService.instance.debugDb = db;
+      FirestoreService.instance.debugAddFavoriteError = StateError('falha');
+
+      final pet = _createTestPet();
+      FavoritesService.instance.reset();
+
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: WGPetCard(pet: pet))),
+      );
+
+      // Aciona a estrela pelo gesto longo do card (mesmo caminho do botão
+      // da estrela): _toggleFavorite.
+      await tester.longPress(find.byType(WGPetCard));
+      await tester.pumpAndSettle();
+
+      expect(find.text(PetDetailsStrings.FAVORITE_ERROR), findsOneWidget);
+      // O serviço reverteu o otimista: estrela continua vazia e vazio no
+      // conjunto de favoritos.
+      expect(find.byIcon(Icons.star_rounded), findsNothing);
+      expect(
+        FavoritesService.instance.favoriteIds.value,
+        isNot(contains(pet.id)),
+      );
+
+      // Drena o timer do SnackBar para não deixar pendente.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
     });
   });
 }
