@@ -3,6 +3,7 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
@@ -131,4 +132,52 @@ void main() {
     expect(FavoritesService.instance.isFavorite('pet_fav'), isTrue);
     expect(MyPublicationsService.instance.isMine('pet_pub'), isTrue);
   });
+
+  testWidgets(
+    'aba oculta suspende o feed da Home e voltar recarrega',
+    (tester) async {
+      Pet pet(String id, {required DateTime createdAt}) => Pet(
+            id: id,
+            ownerId: 'outro',
+            name: id,
+            age: 2,
+            ageUnit: AppPetAgeUnit.years,
+            gender: AppPetGender.male,
+            address: 'São Paulo',
+            ownerPhone: '(11) 98765-4321',
+            ownerAddress: 'São Paulo',
+            description: 'Muito dócil.',
+            publicationType: AppPetPublicationType.lost,
+            species: AppPetSpecies.dog,
+            race: 'Poodle',
+            images: const [],
+          );
+      Future<void> seedPet(String id, {required DateTime createdAt}) {
+        return db
+            .collection('pets')
+            .doc(id)
+            .set(Map<String, dynamic>.of(pet(id, createdAt: createdAt).toMap())
+              ..['createdAt'] = createdAt);
+      }
+
+      await seedPet('fido', createdAt: DateTime(2024, 1, 1));
+      await pumpHome(tester);
+      expect(find.text('fido'), findsOneWidget);
+
+      // Vai para a aba Favoritos: o stream da Home é cancelado.
+      await tester.tap(find.text(HomeStrings.NAV_FAVORITES));
+      await tester.pumpAndSettle();
+
+      // Pet publicado/alterado enquanto a Home está oculta.
+      await seedPet('mia', createdAt: DateTime(2024, 1, 1, 0, 1));
+      await tester.pump();
+
+      // De volta à Home: o feed recarrega e mostra o pet novo.
+      await tester.tap(find.text(HomeStrings.NAV_HOME));
+      await tester.pumpAndSettle();
+
+      expect(find.text('mia'), findsOneWidget);
+      expect(find.text('fido'), findsOneWidget);
+    },
+  );
 }

@@ -64,6 +64,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 filter: AppPetFilter.favorites,
                 searchQuery: query,
                 filterOptions: _filters,
+                visibleTab: AppPage.favorites,
                 topSliverPadding: _headerHeight + 8,
                 physics: const AlwaysScrollableScrollPhysics(),
                 emptyBuilder: (context) => _refreshableEmptyState(),

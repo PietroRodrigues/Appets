@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/pet_service.dart';
@@ -30,12 +31,14 @@ void main() {
     service.debugFirstPageError = null;
     connectivity.reset();
     FavoritesService.instance.reset();
+    AppNavigation.selectedPage.value = AppPage.home;
   });
 
   Widget wrap({
     required ValueNotifier<List<PetFilterOption>>? filters,
     required Widget Function(BuildContext, Pet) itemBuilder,
     Widget Function(BuildContext)? emptyBuilder,
+    AppPage? visibleTab,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -44,6 +47,7 @@ void main() {
           filterOptions: filters,
           itemBuilder: itemBuilder,
           emptyBuilder: emptyBuilder,
+          visibleTab: visibleTab,
         ),
       ),
     );
@@ -462,5 +466,94 @@ void main() {
         previous = current;
       }
     });
+  });
+
+  group('WGResponsivePetGrid · stream pausada por aba (item 22)', () {
+    testWidgets(
+      'aba oculta suspende a stream e não reage a mudanças no banco',
+      (tester) async {
+        await insertPet(
+          petDoc(
+            'fido',
+            species: 'cachorro',
+            gender: 'macho',
+            createdAt: now,
+          ),
+        );
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+            visibleTab: AppPage.home,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('fido'), findsOneWidget);
+
+        AppNavigation.selectedPage.value = AppPage.favorites;
+        await tester.pump();
+
+        await insertPet(
+          petDoc(
+            'mia',
+            species: 'gato',
+            gender: 'femea',
+            createdAt: now.add(const Duration(minutes: 1)),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        // A stream foi cancelada: o pet novo não entra no grid oculto.
+        expect(find.text('mia'), findsNothing);
+        expect(find.text('fido'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'voltar para a aba recarrega e mostra o que mudou enquanto oculto',
+      (tester) async {
+        await insertPet(
+          petDoc(
+            'fido',
+            species: 'cachorro',
+            gender: 'macho',
+            createdAt: now,
+          ),
+        );
+
+        await tester.pumpWidget(
+          wrap(
+            filters: null,
+            itemBuilder: (context, pet) => Text(pet.name),
+            emptyBuilder: (_) => const Text('VAZIO'),
+            visibleTab: AppPage.home,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('fido'), findsOneWidget);
+
+        AppNavigation.selectedPage.value = AppPage.favorites;
+        await tester.pump();
+
+        await insertPet(
+          petDoc(
+            'mia',
+            species: 'gato',
+            gender: 'femea',
+            createdAt: now.add(const Duration(minutes: 1)),
+          ),
+        );
+        await tester.pump();
+
+        AppNavigation.selectedPage.value = AppPage.home;
+        await tester.pumpAndSettle();
+
+        expect(find.text('mia'), findsOneWidget);
+        expect(find.text('fido'), findsOneWidget);
+      },
+    );
   });
 }

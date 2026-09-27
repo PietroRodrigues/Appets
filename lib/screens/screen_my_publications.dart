@@ -147,6 +147,7 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen>
                 filter: AppPetFilter.myPublications,
                 searchQuery: query,
                 filterOptions: _filters,
+                visibleTab: AppPage.myPublications,
                 topSliverPadding: _headerHeight + 8,
                 physics: const AlwaysScrollableScrollPhysics(),
                 emptyBuilder: (context) => _refreshableEmptyState(),

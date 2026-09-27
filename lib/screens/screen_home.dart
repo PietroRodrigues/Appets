@@ -137,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 filter: AppPetFilter.all,
                 searchQuery: query,
                 filterOptions: _filters,
+                visibleTab: AppPage.home,
                 topSliverPadding: _headerHeight + 8,
                 physics: const AlwaysScrollableScrollPhysics(),
                 emptyBuilder: (context) => _refreshableEmptyState(

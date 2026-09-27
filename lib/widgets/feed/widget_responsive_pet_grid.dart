@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
@@ -49,6 +50,7 @@ class WGResponsivePetGrid extends StatefulWidget {
     this.bottomPadding = 16,
     this.topSliverPadding = 8,
     this.physics,
+    this.visibleTab,
   });
 
   /// Filtro que determina a estratégia de consulta.
@@ -78,6 +80,12 @@ class WGResponsivePetGrid extends StatefulWidget {
   /// Física de rolagem do grid.
   final ScrollPhysics? physics;
 
+  /// Aba da navegação onde este grid está visível (para grids montados em
+  /// um `IndexedStack`). Quando a aba ativa é outra, o grid suspende a
+  /// stream/consultas (cancela o `_sub`) e retoma (recarrega) ao voltar.
+  /// `null` → sempre ativo (grid fora de abas).
+  final AppPage? visibleTab;
+
   @override
   State<WGResponsivePetGrid> createState() => WGResponsivePetGridState();
 }
@@ -94,6 +102,10 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   QueryDocumentSnapshot? _lastDoc;
   StreamSubscription<PetsPage>? _sub;
   final ScrollController _scrollController = ScrollController();
+
+  /// Verdadeiro quando a aba deste grid não é a visível (`visibleTab`):
+  /// a stream/consultas ficam pausadas enquanto oculto.
+  bool _suspended = false;
 
   /// Listenable de filtros atualmente observado.
   ValueListenable<List<PetFilterOption>>? _filterListenable;
@@ -144,7 +156,11 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     MyPublicationsService.instance.myPetIds.addListener(_onMyPublicationsChanged);
     _filterListenable = widget.filterOptions;
     _filterListenable?.addListener(_onFiltersChanged);
-    _setup();
+    AppNavigation.selectedPage.addListener(_onTabChanged);
+    _suspended = _isHiddenByTab;
+    if (!_suspended) {
+      _setup();
+    }
   }
 
   @override
@@ -155,6 +171,9 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       _filterListenable = widget.filterOptions;
       _filterListenable?.addListener(_onFiltersChanged);
     }
+    if (oldWidget.visibleTab != widget.visibleTab) {
+      _syncTabVisibility();
+    }
     if (oldWidget.filter != widget.filter ||
         oldWidget.searchQuery != widget.searchQuery) {
       _setup();
@@ -163,6 +182,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
   @override
   void dispose() {
+    AppNavigation.selectedPage.removeListener(_onTabChanged);
     _filterListenable?.removeListener(_onFiltersChanged);
     _sub?.cancel();
     ConnectivityService.instance.isOnlineNotifier.removeListener(
@@ -180,7 +200,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   // de novo; caiu offline e não há o que exibir, alterna para o modo
   // "Sem conexão" (o cache-first cuida de repopular, se houver cache).
   void _onConnectivityChanged() {
-    if (!mounted) return;
+    if (!mounted || _suspended) return;
     final online = ConnectivityService.instance.isOnline;
     if (online) {
       _setup();
@@ -191,19 +211,43 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
   // Recarrega quando o conjunto de filtros muda.
   void _onFiltersChanged() {
-    if (mounted) _setup();
+    if (mounted && !_suspended) _setup();
   }
 
   void _onFavoritesChanged() {
-    if (widget.filter == AppPetFilter.favorites && mounted) {
+    if (widget.filter == AppPetFilter.favorites && mounted && !_suspended) {
       _setup();
     }
   }
 
   void _onMyPublicationsChanged() {
-    if (widget.filter == AppPetFilter.myPublications && mounted) {
+    if (widget.filter == AppPetFilter.myPublications && mounted && !_suspended) {
       _setup();
     }
+  }
+
+  bool get _isHiddenByTab =>
+      widget.visibleTab != null &&
+      AppNavigation.selectedPage.value != widget.visibleTab;
+
+  // Suspende quando a aba deste grid deixa de ser a visível e retoma
+  // (recarrega) quando ela volta a ser a ativa.
+  void _onTabChanged() {
+    if (!mounted) return;
+    _syncTabVisibility();
+  }
+
+  void _syncTabVisibility() {
+    final hidden = _isHiddenByTab;
+    if (hidden == _suspended) return;
+    if (hidden) {
+      _suspended = true;
+      _sub?.cancel();
+      _sub = null;
+      return;
+    }
+    _suspended = false;
+    _setup();
   }
 
   // ── Configuração da fonte de dados ───────────────────────────────
@@ -212,6 +256,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   // (imediato, mesmo offline) e depois atualiza com os dados do servidor,
   // quando online. Sem conexão e sem cache, mostra "Sem conexão".
   Future<void> _setup() async {
+    if (_suspended) return;
     _sub?.cancel();
     final id = ++_loadId;
     _items = [];
@@ -462,6 +507,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   }
 
   Future<void> _loadMore() async {
+    if (_suspended) return;
     final id = _loadId;
     _isLoadingMore = true;
     setState(() {});
@@ -517,6 +563,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
   /// Recarrega os dados (chamado pelas telas via pull-to-refresh).
   Future<void> reload() async {
+    if (_suspended) return;
     _setup();
   }
 
@@ -550,6 +597,12 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
 
   @override
   Widget build(BuildContext context) {
+    // Aba oculta e ainda sem conteúdo: nada para desenhar (evita inclusive
+    // o ticker do loading infinito girando de vez em quando atrás das abas).
+    if (_suspended && _items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     if (_isLoading || (_items.isEmpty && _isLoadingMore)) {
       return const Center(child: CircularProgressIndicator());
     }

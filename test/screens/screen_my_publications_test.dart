@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
@@ -76,6 +77,7 @@ void main() {
 
   setUp(() {
     ConnectivityService.instance.debugOnline = true;
+    AppNavigation.selectedPage.value = AppPage.myPublications;
     AuthService.instance.debugAuth = MockFirebaseAuth(
       signedIn: true,
       mockUser: MockUser(uid: 'user_test_001'),
@@ -85,6 +87,7 @@ void main() {
 
   tearDown(() {
     ConnectivityService.instance.reset();
+    AppNavigation.selectedPage.value = AppPage.home;
     AuthService.instance.debugAuth = null;
     AppImageCache.instance.debugManager = null;
     FirestoreService.instance.debugDb = null;
