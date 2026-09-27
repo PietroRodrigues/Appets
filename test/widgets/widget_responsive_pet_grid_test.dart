@@ -1,12 +1,15 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
+import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
+import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
@@ -23,14 +26,18 @@ void main() {
     db = FakeFirebaseFirestore();
     service.debugDb = db;
     service.debugFirstPageError = null;
+    service.debugGetPetsByIdsCalls = 0;
     connectivity.debugOnline = true;
   });
 
   tearDown(() {
     service.debugDb = null;
     service.debugFirstPageError = null;
+    service.debugGetPetsByIdsCalls = 0;
     connectivity.reset();
     FavoritesService.instance.reset();
+    MyPublicationsService.instance.reset();
+    AuthService.instance.debugAuth = null;
     AppNavigation.selectedPage.value = AppPage.home;
   });
 
@@ -553,6 +560,98 @@ void main() {
 
         expect(find.text('mia'), findsOneWidget);
         expect(find.text('fido'), findsOneWidget);
+      },
+    );
+  });
+
+  group('WGResponsivePetGrid · cleanOrphans sem reentrância (item 23)', () {
+    Future<void> seedAuth({
+      required List<String> favoriteIds,
+      required List<String> myPublishedIds,
+    }) async {
+      AuthService.instance.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'uid_test'),
+      );
+      await db.collection('users').doc('uid_test').set({
+        'name': 'Ana',
+        'favoritePetIds': favoriteIds,
+        'myPublishedPetIds': myPublishedIds,
+      });
+    }
+
+    testWidgets(
+      'limpar órfãos não recarrega o grid de favoritos durante a carga',
+      (tester) async {
+        await insertPet(
+          petDoc(
+            'fido',
+            species: 'cachorro',
+            gender: 'macho',
+            createdAt: now,
+          ),
+        );
+        FavoritesService.instance.favoriteIds.value = {'fido', 'fantasma'};
+        await seedAuth(
+          favoriteIds: ['fido', 'fantasma'],
+          myPublishedIds: [],
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: WGResponsivePetGrid(
+                filter: AppPetFilter.favorites,
+                itemBuilder: (context, pet) => Text(pet.name),
+                emptyBuilder: (_) => const Text('VAZIO'),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('fido'), findsOneWidget);
+        expect(FavoritesService.instance.current, {'fido'});
+        expect(service.debugGetPetsByIdsCalls, 2);
+      },
+    );
+
+    testWidgets(
+      'limpar órfãos não recarrega o grid de minhas publicações',
+      (tester) async {
+        await insertPet(
+          petDoc(
+            'meu_pet',
+            species: 'cachorro',
+            gender: 'macho',
+            createdAt: now,
+          ),
+        );
+        MyPublicationsService.instance.myPetIds.value = {
+          'meu_pet',
+          'fantasma',
+        };
+        await seedAuth(
+          favoriteIds: [],
+          myPublishedIds: ['meu_pet', 'fantasma'],
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: WGResponsivePetGrid(
+                filter: AppPetFilter.myPublications,
+                itemBuilder: (context, pet) => Text(pet.name),
+                emptyBuilder: (_) => const Text('VAZIO'),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('meu_pet'), findsOneWidget);
+        expect(MyPublicationsService.instance.current, {'meu_pet'});
+        expect(service.debugGetPetsByIdsCalls, 2);
       },
     );
   });

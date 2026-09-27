@@ -107,6 +107,12 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   /// a stream/consultas ficam pausadas enquanto oculto.
   bool _suspended = false;
 
+  /// Verdadeiro durante a carga por IDs deste próprio grid (favoritos/
+  /// minhas publicações): suprime o reload que o `cleanOrphans` dispararia
+  /// ao remover órfãos — a carga em andamento aplica o resultado já
+  /// correto em vez de recomeçar do zero (evita o dobro de leituras).
+  bool _isSuppressingOwnReload = false;
+
   /// Listenable de filtros atualmente observado.
   ValueListenable<List<PetFilterOption>>? _filterListenable;
 
@@ -215,13 +221,19 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   }
 
   void _onFavoritesChanged() {
-    if (widget.filter == AppPetFilter.favorites && mounted && !_suspended) {
+    if (widget.filter == AppPetFilter.favorites &&
+        mounted &&
+        !_suspended &&
+        !_isSuppressingOwnReload) {
       _setup();
     }
   }
 
   void _onMyPublicationsChanged() {
-    if (widget.filter == AppPetFilter.myPublications && mounted && !_suspended) {
+    if (widget.filter == AppPetFilter.myPublications &&
+        mounted &&
+        !_suspended &&
+        !_isSuppressingOwnReload) {
       _setup();
     }
   }
@@ -419,6 +431,11 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       return;
     }
 
+    // Janela da carga: o cleanOrphans remove órfãos (notificando os
+    // listeners); o guard impede que essa própria carga seja descartada
+    // por um reload reentrante. O finally garante o desligamento mesmo em
+    // erro ou quando o resultado é ignorado por outro loadId.
+    _isSuppressingOwnReload = true;
     try {
       final pets = await PetService.instance.getPetsByIds(ids);
       if (!mounted || id != _loadId) return;
@@ -435,6 +452,8 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       });
     } on Exception catch (e, st) {
       _onLoadError(id, e, st);
+    } finally {
+      _isSuppressingOwnReload = false;
     }
   }
 

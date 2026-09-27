@@ -46,6 +46,11 @@ class PetService {
   @visibleForTesting
   Object? debugDeletePetError;
 
+  /// Contador de chamadas a [getPetsByIds] (testes: prova que o grid não
+  /// recarrega 2x ao limpar órfãos durante a própria carga).
+  @visibleForTesting
+  int debugGetPetsByIdsCalls = 0;
+
   // Retorna os pets publicados por um determinado dono (UID).
   //
   // Leitura tolerante: sem `orderBy('createdAt')`, porque o Firestore exclui
@@ -134,6 +139,7 @@ class PetService {
     bool fromCache = false,
   }) async {
     if (petIds.isEmpty) return [];
+    debugGetPetsByIdsCalls++;
 
     const batchSize = 10;
     final options = fromCache ? const GetOptions(source: Source.cache) : null;
