@@ -1,3 +1,4 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/feed/widget_pet_card.dart';
@@ -36,7 +38,10 @@ Pet _createTestPet({
 
 void main() {
   group('WGPetCard', () {
-    tearDown(() => ConnectivityService.instance.reset());
+    tearDown(() {
+      ConnectivityService.instance.reset();
+      FavoritesService.instance.reset();
+    });
     testWidgets('exibe o nome do pet', (tester) async {
       final pet = _createTestPet(name: 'Thor');
 
@@ -247,6 +252,15 @@ void main() {
     testWidgets('sincroniza a estrela quando o favorito muda externamente', (
       tester,
     ) async {
+      AuthService.instance.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'user_test_001'),
+      );
+      final db = FakeFirebaseFirestore();
+      await db.collection('users').doc('user_test_001').set({'name': 'Ana'});
+      FirestoreService.instance.debugDb = db;
+      addTearDown(() => FirestoreService.instance.debugDb = null);
+
       final pet = _createTestPet();
       FavoritesService.instance.reset();
 
@@ -259,7 +273,7 @@ void main() {
       expect(find.byIcon(Icons.star_border_rounded), findsOneWidget);
 
       // Favorita externamente (ex.: a partir da tela de detalhes).
-      FavoritesService.instance.favoriteIds.value = {pet.id};
+      await FavoritesService.instance.add('user_test_001', pet.id);
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.star_rounded), findsOneWidget);

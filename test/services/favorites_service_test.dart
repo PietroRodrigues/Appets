@@ -1,3 +1,4 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -7,6 +8,8 @@ import 'package:appets/models/user_model.dart';
 
 void main() {
   final service = FavoritesService.instance;
+
+  FakeFirebaseFirestore();
 
   setUp(() {
     service.reset();
@@ -248,6 +251,156 @@ void main() {
         service.applyUser(user);
 
         expect(service.favoriteIds.value, {'pet_a'});
+      });
+    });
+
+    group('isFavoriteListenable', () {
+      late FakeFirebaseFirestore db;
+
+      setUp(() async {
+        db = FakeFirebaseFirestore();
+        FirestoreService.instance.debugDb = db;
+        await db.collection('users').doc('uid_1').set({
+          'name': 'Ana',
+          'favoritePetIds': <String>[],
+          'myPublishedPetIds': <String>[],
+        });
+      });
+
+      tearDown(() {
+        FirestoreService.instance.debugDb = null;
+      });
+
+      test('começa com o estado atual do pet', () {
+        service.favoriteIds.value = {'pet_a'};
+
+        expect(service.isFavoriteListenable('pet_a').value, isTrue);
+        expect(service.isFavoriteListenable('pet_b').value, isFalse);
+      });
+
+      test('add notifica o ouvinte do notifier do pet', () async {
+        final notifier =
+            service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
+        var notified = 0;
+        notifier.addListener(() => notified++);
+
+        expect(await service.add('uid_1', 'pet_a'), isTrue);
+
+        expect(notified, 1);
+        expect(notifier.value, isTrue);
+      });
+
+      test('remove notifica o ouvinte do notifier do pet', () async {
+        expect(await service.add('uid_1', 'pet_a'), isTrue);
+        final notifier =
+            service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
+        var notified = 0;
+        notifier.addListener(() => notified++);
+
+        expect(await service.remove('uid_1', 'pet_a'), isTrue);
+
+        expect(notified, 1);
+        expect(notifier.value, isFalse);
+      });
+
+      test('favoritar A não notifica o notifier de B', () async {
+        final notifierB =
+            service.isFavoriteListenable('pet_b') as ValueNotifier<bool>;
+        var notifiedB = 0;
+        notifierB.addListener(() => notifiedB++);
+
+        expect(await service.add('uid_1', 'pet_a'), isTrue);
+        expect(await service.remove('uid_1', 'pet_a'), isTrue);
+
+        expect(notifiedB, 0);
+        expect(notifierB.value, isFalse);
+      });
+
+      test('add falho reverte o notifier do pet para false', () async {
+        FirestoreService.instance.debugDb = null;
+        final notifier =
+            service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
+        var notified = 0;
+        notifier.addListener(() => notified++);
+
+        expect(await service.add('uid_1', 'pet_a'), isFalse);
+
+        expect(notified, 2);
+        expect(notifier.value, isFalse);
+      });
+
+      test('remove falho restaura o notifier do pet para true', () async {
+        service.favoriteIds.value = {'pet_a'};
+        final notifier =
+            service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
+        expect(notifier.value, isTrue);
+        var notified = 0;
+        notifier.addListener(() => notified++);
+
+        FirestoreService.instance.debugDb = null;
+        expect(await service.remove('uid_1', 'pet_a'), isFalse);
+
+        expect(notified, 2);
+        expect(notifier.value, isTrue);
+      });
+
+      test('removeLocal sincroniza o notifier do pet', () {
+        service.favoriteIds.value = {'pet_a', 'pet_b'};
+        final notifier =
+            service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
+        var notified = 0;
+        notifier.addListener(() => notified++);
+
+        service.removeLocal('pet_a');
+
+        expect(notified, 1);
+        expect(notifier.value, isFalse);
+      });
+
+      test('removeLocalMany sincroniza o notifier de cada pet', () {
+        service.favoriteIds.value = {'pet_a', 'pet_b', 'pet_c'};
+        final notifier =
+            service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
+        final notifierC =
+            service.isFavoriteListenable('pet_c') as ValueNotifier<bool>;
+
+        service.removeLocalMany(['pet_a', 'pet_c']);
+
+        expect(notifier.value, isFalse);
+        expect(notifierC.value, isFalse);
+      });
+
+      test('applyUser sincroniza os notifiers já criados', () {
+        service.favoriteIds.value = {'pet_a'};
+        final notifierA =
+            service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
+        final notifierB =
+            service.isFavoriteListenable('pet_b') as ValueNotifier<bool>;
+
+        service.applyUser(
+          UserModel(
+            id: 'uid_1',
+            name: 'Ana',
+            email: 'ana@test.com',
+            favoritePetIds: const ['pet_b'],
+          ),
+        );
+
+        expect(notifierA.value, isFalse);
+        expect(notifierB.value, isTrue);
+      });
+
+      test('reset zera todos os notifiers já criados', () {
+        service.favoriteIds.value = {'pet_a', 'pet_b'};
+        final notifier =
+            service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
+        final notifierB =
+            service.isFavoriteListenable('pet_b') as ValueNotifier<bool>;
+
+        service.reset();
+
+        expect(notifier.value, isFalse);
+        expect(notifierB.value, isFalse);
       });
     });
   });

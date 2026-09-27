@@ -24,6 +24,10 @@ class FavoritesService {
     <String>{},
   );
 
+  /// Caches reativos por pet (1 por ID já exibido em card). Mantêm a UI
+  /// reagindo apenas ao favorito do próprio pet.
+  final Map<String, ValueNotifier<bool>> _perPet = {};
+
   /// Notificador do conjunto de IDs favoritados. Escute para reagir
   /// às mudanças de favorito em qualquer tela.
   ValueNotifier<Set<String>> get favoriteIds => _favoriteIds;
@@ -34,11 +38,28 @@ class FavoritesService {
   /// Indica se o pet é favorito do usuário logado.
   bool isFavorite(String petId) => _favoriteIds.value.contains(petId);
 
+  /// Listenable reativo do estado de favorito de [petId], usado pelos
+  /// cards para redesenhar apenas o próprio pet quando qualquer favorito
+  /// muda (em vez de reconstruir o grid inteiro).
+  ValueListenable<bool> isFavoriteListenable(String petId) => _perPet
+      .putIfAbsent(petId, () => ValueNotifier<bool>(isFavorite(petId)));
+
+  void _syncPet(String petId, bool value) {
+    _perPet[petId]?.value = value;
+  }
+
+  void _syncAllPets() {
+    for (final entry in _perPet.entries) {
+      entry.value.value = _favoriteIds.value.contains(entry.key);
+    }
+  }
+
   /// Carrega os favoritos a partir do [user] já buscado (única leitura do
   /// documento do usuário, feita quem chama). Sem leitura do Firestore aqui;
   /// `null` significa lista vazia.
   void applyUser(UserModel? user) {
     _favoriteIds.value = (user?.favoritePetIds ?? const <String>[]).toSet();
+    _syncAllPets();
   }
 
   /// Adiciona um pet aos favoritos de forma otimista, persistindo no
@@ -49,11 +70,13 @@ class FavoritesService {
     final snapshot = Set<String>.from(_favoriteIds.value);
     final next = Set<String>.from(snapshot)..add(petId);
     _favoriteIds.value = next;
+    _syncPet(petId, true);
     try {
       await FirestoreService.instance.addFavorite(uid, petId);
       return true;
     } catch (_) {
       _favoriteIds.value = snapshot;
+      _syncPet(petId, false);
       return false;
     }
   }
@@ -66,11 +89,13 @@ class FavoritesService {
     final snapshot = Set<String>.from(_favoriteIds.value);
     final next = Set<String>.from(snapshot)..remove(petId);
     _favoriteIds.value = next;
+    _syncPet(petId, false);
     try {
       await FirestoreService.instance.removeFavorite(uid, petId);
       return true;
     } catch (_) {
       _favoriteIds.value = snapshot;
+      _syncPet(petId, true);
       return false;
     }
   }
@@ -81,6 +106,7 @@ class FavoritesService {
     if (!_favoriteIds.value.contains(petId)) return;
     final next = Set<String>.from(_favoriteIds.value)..remove(petId);
     _favoriteIds.value = next;
+    _syncPet(petId, false);
   }
 
   /// Remove vários pets do estado local de uma só vez (uma única
@@ -92,11 +118,16 @@ class FavoritesService {
     final next = Set<String>.from(_favoriteIds.value)..removeAll(ids);
     if (next.length == _favoriteIds.value.length) return;
     _favoriteIds.value = next;
+    for (final id in ids) {
+      _syncPet(id, false);
+    }
   }
 
   /// Zera o estado (uso em testes e ao deslogar).
   void reset() {
     _favoriteIds.value = <String>{};
+    _syncAllPets();
+    _perPet.clear();
   }
 
   /// Remove dos favoritos (local + Firestore) os IDs que não constam

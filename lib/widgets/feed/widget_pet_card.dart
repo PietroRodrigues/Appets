@@ -60,6 +60,10 @@ class _WGPetCardState extends State<WGPetCard>
   // Estado de favorito derivado da fonte global de favoritos.
   bool get _isFavorited => FavoritesService.instance.isFavorite(widget.pet.id);
 
+  // Último valor de favorito exibido pela estrela; usado para animar
+  // apenas na transição do valor do PRÓPRIO pet.
+  late bool _lastFavorited;
+
   @override
   void initState() {
     super.initState();
@@ -75,33 +79,28 @@ class _WGPetCardState extends State<WGPetCard>
       curve: Curves.elasticOut,
     );
 
+    _lastFavorited = _isFavorited;
+
     // Se já estiver favoritado, mostra a estrela imediatamente.
-    if (_isFavorited) {
+    if (_lastFavorited) {
       _starController.value = 1.0;
     }
-
-    _favoritesListener = _onFavoritesChanged;
-    FavoritesService.instance.favoriteIds.addListener(_favoritesListener);
   }
 
-  // Listener da fonte global de favoritos.
-  late VoidCallback _favoritesListener;
-
-  // Quando qualquer favorito muda, sincroniza a animação da estrela.
-  void _onFavoritesChanged() {
-    if (!mounted) return;
-    if (_isFavorited) {
+  // Dispara a animação somente quando o favorito deste pet transita.
+  void _syncStar(bool favorited) {
+    if (favorited == _lastFavorited) return;
+    _lastFavorited = favorited;
+    if (favorited) {
       _starController.forward();
     } else {
       _starController.reverse();
     }
-    setState(() {});
   }
 
   // Libera o controlador da animação da estrela.
   @override
   void dispose() {
-    FavoritesService.instance.favoriteIds.removeListener(_favoritesListener);
     _starController.dispose();
     super.dispose();
   }
@@ -160,14 +159,21 @@ class _WGPetCardState extends State<WGPetCard>
                     SizedBox(
                       height: imageHeight,
                       width: double.infinity,
-                      child: _PetCardImage(
-                        url: widget.pet.images.isNotEmpty
-                            ? widget.pet.images.first
-                            : '',
-                        heroTag: widget.heroTag,
-                        scale: _starScaleAnimation,
-                        favorited: _isFavorited,
-                        onFavoritePressed: _toggleFavorite,
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: FavoritesService.instance
+                            .isFavoriteListenable(widget.pet.id),
+                        builder: (context, favorited, _) {
+                          _syncStar(favorited);
+                          return _PetCardImage(
+                            url: widget.pet.images.isNotEmpty
+                                ? widget.pet.images.first
+                                : '',
+                            heroTag: widget.heroTag,
+                            scale: _starScaleAnimation,
+                            favorited: favorited,
+                            onFavoritePressed: _toggleFavorite,
+                          );
+                        },
                       ),
                     ),
 
