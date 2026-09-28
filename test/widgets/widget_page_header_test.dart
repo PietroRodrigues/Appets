@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/models/enums/enums_app.dart';
+import 'package:appets/widgets/filters/widget_pet_filters_sheet.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 
 void main() {
@@ -18,26 +19,26 @@ void main() {
     AppNavigation.selectedPage.value = AppPage.home;
   });
 
-  // Abre a janela de filtros e aplica uma opção.
+  // Abre a janela de filtros, marca uma opção e fecha tocando fora (aplica).
   Future<void> applyFilter(
     WidgetTester tester, {
     String option = 'Cachorro',
   }) async {
-    await tester.tap(find.byIcon(Icons.tune));
+    await tester.tap(find.byIcon(Icons.filter_alt));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(CheckboxListTile, option));
+    await tester.tap(find.widgetWithText(WGFilterOptionTile, option));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Filtrar'));
+    await tester.tapAt(const Offset(10, 200));
     await tester.pumpAndSettle();
   }
 
   testWidgets('botão de filtro abre a janela de filtros', (tester) async {
     await tester.pumpWidget(wrap());
 
-    await tester.tap(find.byIcon(Icons.tune));
+    await tester.tap(find.byIcon(Icons.filter_alt));
     await tester.pumpAndSettle();
 
-    expect(find.text('Filtros'), findsOneWidget);
+    expect(find.text('Espécie'), findsOneWidget);
   });
 
   testWidgets('aplicar filtro exibe o chip abaixo do cabeçalho',
@@ -46,7 +47,7 @@ void main() {
 
     await applyFilter(tester);
 
-    expect(find.text('Filtros'), findsNothing);
+    expect(find.text('Espécie'), findsNothing);
     expect(find.text('Cachorro'), findsOneWidget);
   });
 
@@ -84,6 +85,6 @@ void main() {
       ),
     );
 
-    expect(find.byIcon(Icons.tune), findsNothing);
+    expect(find.byIcon(Icons.filter_alt), findsNothing);
   });
 }

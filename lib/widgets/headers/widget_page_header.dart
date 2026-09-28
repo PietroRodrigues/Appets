@@ -119,17 +119,17 @@ class _WGPageHeaderState extends State<WGPageHeader> {
     }
   }
 
-  Future<void> _openFilters() async {
+  Future<void> _openFilters(BuildContext anchor) async {
     final controller = widget.filters;
     if (controller != null) {
-      await controller.openDialog(context);
+      await controller.openDialog(anchor);
       return;
     }
     final options = await WGPetFiltersDialog.show(
-      context,
+      anchor,
       initialOptions: _activeFilters,
     );
-    // Fechou pelo X/fora: nenhuma alteração.
+    // Fechou sem aplicar: nenhuma alteração.
     if (!mounted || options == null) return;
     setState(() => _activeFilters = options);
   }

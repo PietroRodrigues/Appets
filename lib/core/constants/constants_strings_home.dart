@@ -36,8 +36,6 @@ class HomeStrings {
 
   // ── Filtros ────────────────────────────────────────────
 
-  static const FILTERS_TITLE = 'Filtros';
-
   static const FILTER_SPECIES = 'Espécie';
 
   static const FILTER_GENDER = 'Gênero';
@@ -46,7 +44,9 @@ class HomeStrings {
 
   static const FILTER_AGE = 'Idade';
 
-  static const FILTER_APPLY = 'Filtrar';
+  static const FILTER_CLEAR_ALL = 'Limpar tudo';
+
+  static const FILTER_CLOSE = 'Fechar';
 
   static const FILTER_REMOVE = 'Remover filtro';
 

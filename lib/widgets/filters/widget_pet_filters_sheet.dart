@@ -49,7 +49,7 @@ class PetFilterOptions {
     ),
   ];
 
-  static List<PetFilterOption> get speciesOptions => [
+  static final List<PetFilterOption> speciesOptions = [
     for (final species in AppPetSpecies.values)
       PetFilterOption(
         category: PetFilterCategory.species,
@@ -58,7 +58,7 @@ class PetFilterOptions {
       ),
   ];
 
-  static List<PetFilterOption> get genderOptions => [
+  static final List<PetFilterOption> genderOptions = [
     for (final gender in AppPetGender.values)
       PetFilterOption(
         category: PetFilterCategory.gender,
@@ -67,7 +67,7 @@ class PetFilterOptions {
       ),
   ];
 
-  static List<PetFilterOption> get publicationTypeOptions => [
+  static final List<PetFilterOption> publicationTypeOptions = [
     for (final type in AppPetPublicationType.values)
       PetFilterOption(
         category: PetFilterCategory.publicationType,
@@ -77,64 +77,212 @@ class PetFilterOptions {
   ];
 }
 
-/// Janela central de filtros com listas de opções e checkboxes.
+/// Linha leve de opção do popover de filtros (alternativa ao
+/// [CheckboxListTile]): 48px de toque, caixa própria desenhada e sem
+/// depender do tema global.
+class WGFilterOptionTile extends StatelessWidget {
+  const WGFilterOptionTile({
+    super.key,
+    required this.value,
+    required this.label,
+    required this.onTap,
+  });
+
+  /// Marcado ou não.
+  final bool value;
+
+  final String label;
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      checked: value,
+      button: true,
+      child: SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: value ? ThemeColors.primary : null,
+                    border: Border.all(
+                      color: ThemeColors.primary,
+                      width: 1.6,
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: value
+                      ? const Icon(
+                          Icons.check,
+                          size: 16,
+                          color: ThemeColors.white,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(label, style: ThemeTextStyles.body),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Popover de filtros minimalista, ancorado abaixo do botão de filtro.
 ///
-/// Exibe categorias (espécie, gênero, tipo e idade) com seleção
-/// múltipla via caixa de seleção à esquerda. O botão "Filtrar"
-/// fecha a janela devolvendo as opções marcadas; fechar pelo X
-/// (ou tocar fora) descarta a seleção.
+/// Aparece como um cartão discreto (200px de largura, no máximo 50% da
+/// altura da tela) sem título nem cabeçalho. A seleção múltipla (espécie,
+/// gênero, tipo e idade) é marcada em caixas de seleção; **fechar aplica**:
+/// tocar fora do cartão ou o gesto de voltar devolve o que está marcado
+/// (pode ser lista vazia, removendo os filtros). "Limpar tudo" desmarca
+/// tudo de uma vez.
 ///
-/// **Uso:** chamar o método estático [show] para exibir e obter
-/// a lista de opções aplicadas.
+/// **Uso:** chamar o método estático [show] passando o contexto do botão
+/// que abre o popover (âncora).
 class WGPetFiltersDialog extends StatefulWidget {
-  const WGPetFiltersDialog({super.key, this.initialOptions = const []});
+  const WGPetFiltersDialog({
+    super.key,
+    this.initialOptions = const [],
+    this.anchorRect,
+  });
 
   /// Filtros já aplicados, exibidos com o checkbox marcado ao abrir.
   final List<PetFilterOption> initialOptions;
 
-  /// Exibe a janela e retorna as opções marcadas ao tocar "Filtrar"
-  /// (pode ser uma lista vazia, indicando que todos os filtros foram
-  /// removidos); devolve `null` quando fechada pelo X ou pela barreira.
+  /// Retângulo (em coordenadas globais) do botão usado como âncora.
+  final Rect? anchorRect;
+
+  /// Largura do popover, ajustada para os rótulos curtos.
+  static const double panelWidth = 200;
+
+  /// Limite de altura do popover (fração da tela).
+  static const double panelHeightFraction = 0.5;
+
+  /// Exibe o popover abaixo do [context] do botão de filtro e devolve as
+  /// opções marcadas ao fechar (pode ser uma lista vazia).
   static Future<List<PetFilterOption>?> show(
     BuildContext context, {
     List<PetFilterOption> initialOptions = const [],
-  }) async {
-    final result = await showDialog<List<PetFilterOption>>(
+  }) {
+    final box = context.findRenderObject() as RenderBox?;
+    final anchorRect = box == null
+        ? null
+        : box.localToGlobal(Offset.zero) & box.size;
+
+    return showGeneralDialog<List<PetFilterOption>>(
       context: context,
-      builder: (_) => WGPetFiltersDialog(initialOptions: initialOptions),
+      // Fechar é feito pelo próprio popover (tocar fora/voltar), aplicando
+      // a seleção atual.
+      barrierDismissible: false,
+      barrierLabel:
+          MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (_, _, _) =>
+          WGPetFiltersDialog(initialOptions: initialOptions, anchorRect: anchorRect),
+      transitionBuilder: (_, animation, _, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: child,
+        );
+      },
     );
-    return result;
   }
 
   @override
   State<WGPetFiltersDialog> createState() => _WGPetFiltersDialogState();
 }
 
-class _WGPetFiltersDialogState extends State<WGPetFiltersDialog> {
+class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
+    with SingleTickerProviderStateMixin {
   late final Set<String> _selectedIds;
+
+  /// Entrada do cartão (Fade + deslize curto a partir do botão).
+  late final AnimationController _entrance;
+
+  late final Animation<double> _entranceCurved;
+
+  bool _startedEntrance = false;
 
   @override
   void initState() {
     super.initState();
     _selectedIds = widget.initialOptions.map((o) => o.id).toSet();
+    _entrance = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _entranceCurved = CurvedAnimation(
+      parent: _entrance,
+      curve: Curves.easeOutCubic,
+    );
   }
 
-  /// Expande uma lista de opções em linhas com checkbox.
+  @override
+  void dispose() {
+    _entrance.dispose();
+    super.dispose();
+  }
+
+  /// Desmarca todos os filtros, mantendo o popover aberto para o usuário
+  /// marcar novamente antes de fechar (e aplicar).
+  void _clearAll() {
+    setState(() => _selectedIds.clear());
+  }
+
+  /// Opções atualmente marcadas, na ordem das categorias.
+  List<PetFilterOption> _selectedOptions() {
+    return [
+      for (final group in [
+        PetFilterOptions.speciesOptions,
+        PetFilterOptions.genderOptions,
+        PetFilterOptions.publicationTypeOptions,
+        PetFilterOptions.ageOptions,
+      ])
+        for (final option in group)
+          if (_selectedIds.contains(option.id)) option,
+    ];
+  }
+
+  /// Fecha o popover aplicando a seleção atual.
+  void _closeApplying() {
+    Navigator.pop(context, _selectedOptions());
+  }
+
+  /// Alterna marcação de uma opção.
+  void _toggleOption(PetFilterOption option) {
+    setState(() {
+      if (!_selectedIds.add(option.id)) {
+        _selectedIds.remove(option.id);
+      }
+    });
+  }
+
+  /// Expande uma lista de opções em linhas leves.
   List<Widget> _buildOptions(List<PetFilterOption> options) {
     return [
       for (final option in options)
-        CheckboxListTile(
+        WGFilterOptionTile(
           value: _selectedIds.contains(option.id),
-          onChanged: (_) {
-            setState(() {
-              if (!_selectedIds.add(option.id)) {
-                _selectedIds.remove(option.id);
-              }
-            });
-          },
-          controlAffinity: ListTileControlAffinity.leading,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-          title: Text(option.label, style: ThemeTextStyles.body),
+          label: option.label,
+          onTap: () => _toggleOption(option),
         ),
     ];
   }
@@ -156,7 +304,7 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog> {
     }
   }
 
-  /// Constrói uma seção (título + opções) da janela.
+  /// Constrói uma seção (título + opções) do popover.
   Widget _buildSection(
     PetFilterCategory category,
     List<PetFilterOption> options,
@@ -165,15 +313,21 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
           child: Text(
             _categoryLabel(category),
-            style: ThemeTextStyles.subtitle.copyWith(
-              fontSize: 16,
+            style: ThemeTextStyles.caption.copyWith(
               fontWeight: FontWeight.w600,
-              color: ThemeColors.textPrimary,
+              color: ThemeColors.textSecondary,
             ),
           ),
+        ),
+        const Divider(
+          height: 1,
+          thickness: 1,
+          color: ThemeColors.divider,
+          indent: 16,
+          endIndent: 16,
         ),
         ..._buildOptions(options),
       ],
@@ -182,118 +336,147 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final checkboxTheme = CheckboxThemeData(
-      side: const BorderSide(color: ThemeColors.primary, width: 1.8),
-      fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) return ThemeColors.primary;
-        return null;
-      }),
-      checkColor: WidgetStatePropertyAll(ThemeColors.white),
-    );
+    // Reduce motion: abre sem deslize/animação (já visível).
+    if (!_startedEntrance) {
+      _startedEntrance = true;
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _entrance.value = 1.0;
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _entrance.forward();
+        });
+      }
+    }
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      backgroundColor: ThemeColors.background,
-      child: Theme(
-        data: Theme.of(context).copyWith(checkboxTheme: checkboxTheme),
-        child: SizedBox(
-          width: 380,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── Cabeçalho ───────────────────────────────────────────
-              Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: ThemeColors.primary,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                ),
-                padding: const EdgeInsets.fromLTRB(20, 12, 8, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        HomeStrings.FILTERS_TITLE,
-                        style: ThemeTextStyles.heading.copyWith(
-                          color: ThemeColors.white,
+    final screen = MediaQuery.sizeOf(context);
+    const gap = 8.0;
+    final maxHeight = screen.height * WGPetFiltersDialog.panelHeightFraction;
+
+    // Posiciona logo abaixo do botão âncora (borda direita alinhada).
+    var left = (widget.anchorRect?.right ?? screen.width) -
+        WGPetFiltersDialog.panelWidth;
+    var top = (widget.anchorRect?.bottom ?? screen.height) + gap;
+    if (top + maxHeight > screen.height) {
+      top = screen.height - maxHeight - gap;
+    }
+    if (left < 0) left = 0;
+    if (top < 0) top = 0;
+
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _closeApplying();
+      },
+      child: Stack(
+        children: [
+          // Tocar fora (barreira) fecha aplicando a seleção.
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _closeApplying,
+            ),
+          ),
+
+          // Popover ancorado abaixo do botão de filtro.
+          Positioned(
+            left: left,
+            top: top,
+            width: WGPetFiltersDialog.panelWidth,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              child: FadeTransition(
+                opacity: _entranceCurved,
+                child: SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, 0.06),
+                    end: Offset.zero,
+                  ).animate(_entranceCurved),
+                  child: Material(
+                    color: ThemeColors.background,
+                    elevation: 6,
+                    borderRadius: BorderRadius.circular(18),
+                    clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      // ── "Limpar tudo" (à esquerda) + Fechar X (à direita) ────
+                      Material(
+                        color: ThemeColors.primary,
+                        child: Row(
+                          children: [
+                            // "Limpar tudo": tocar limpa tudo.
+                            Expanded(
+                              child: InkWell(
+                                onTap: _clearAll,
+                                child: Container(
+                                  alignment: Alignment.centerLeft,
+                                  height: 48,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: Text(
+                                    HomeStrings.FILTER_CLEAR_ALL,
+                                    style: ThemeTextStyles.caption.copyWith(
+                                      color: ThemeColors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // X: fecha aplicando a seleção (como tocar fora).
+                            IconButton(
+                              onPressed: _closeApplying,
+                              tooltip: HomeStrings.FILTER_CLOSE,
+                              icon: const Icon(
+                                Icons.close,
+                                color: ThemeColors.white,
+                                size: 20,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 48,
+                                minHeight: 48,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      tooltip: HomeStrings.CLEAR_SEARCH,
-                      icon: const Icon(
-                        Icons.close,
-                        size: 24,
-                        color: ThemeColors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
 
-              // ── Opções (rolável) ────────────────────────────────────
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildSection(
-                        PetFilterCategory.species,
-                        PetFilterOptions.speciesOptions,
+                      // ── Opções (rolável) ─────────────────────────────
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              _buildSection(
+                                PetFilterCategory.species,
+                                PetFilterOptions.speciesOptions,
+                              ),
+                              _buildSection(
+                                PetFilterCategory.gender,
+                                PetFilterOptions.genderOptions,
+                              ),
+                              _buildSection(
+                                PetFilterCategory.publicationType,
+                                PetFilterOptions.publicationTypeOptions,
+                              ),
+                              _buildSection(
+                                PetFilterCategory.age,
+                                PetFilterOptions.ageOptions,
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
+                        ),
                       ),
-                      _buildSection(
-                        PetFilterCategory.gender,
-                        PetFilterOptions.genderOptions,
-                      ),
-                      _buildSection(
-                        PetFilterCategory.publicationType,
-                        PetFilterOptions.publicationTypeOptions,
-                      ),
-                      _buildSection(
-                        PetFilterCategory.age,
-                        PetFilterOptions.ageOptions,
-                      ),
-                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
               ),
-
-              // ── Rodapé ──────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                child: FilledButton(
-                  onPressed: () {
-                    final selected = <PetFilterOption>[
-                      for (final group in [
-                        PetFilterOptions.speciesOptions,
-                        PetFilterOptions.genderOptions,
-                        PetFilterOptions.publicationTypeOptions,
-                        PetFilterOptions.ageOptions,
-                      ])
-                        for (final option in group)
-                          if (_selectedIds.contains(option.id)) option,
-                    ];
-                    Navigator.pop(context, selected);
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: ThemeColors.primary,
-                    foregroundColor: ThemeColors.onPrimary,
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    HomeStrings.FILTER_APPLY,
-                    style: ThemeTextStyles.button,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          ),
+        ],
       ),
     );
   }

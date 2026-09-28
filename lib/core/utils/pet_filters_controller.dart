@@ -15,10 +15,11 @@ class PetFiltersController extends ValueNotifier<List<PetFilterOption>> {
   /// usados como tokens do pré-filtro do servidor.
   List<String> get tags => [for (final option in value) option.value];
 
-  /// Abre a janela de filtros; aplica o resultado ([null] = cancelado).
-  Future<void> openDialog(BuildContext context) async {
+  /// Abre o popover de filtros ancorado no botão ([anchor]); aplica o
+  /// resultado ao fechar.
+  Future<void> openDialog(BuildContext anchor) async {
     final options = await WGPetFiltersDialog.show(
-      context,
+      anchor,
       initialOptions: value,
     );
     if (options == null) return;

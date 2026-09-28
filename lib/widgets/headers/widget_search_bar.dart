@@ -34,7 +34,7 @@ class WGSearchBar extends StatefulWidget {
   /// feed de pets das telas.
   final ValueNotifier<String>? searchQuery;
 
-  final VoidCallback? onFilterPressed;
+  final ValueChanged<BuildContext>? onFilterPressed;
 
   final bool showFilterButton;
 
@@ -211,20 +211,26 @@ class _WGSearchBarState extends State<WGSearchBar> {
 
             height: 48,
 
-            child: Tooltip(
-              message: HomeStrings.FILTERS,
+            child: Builder(
+              // Passa o contexto do próprio botão (âncora do popover).
+              builder: (buttonContext) => Tooltip(
+                message: HomeStrings.FILTERS,
 
-              child: Material(
-                color: ThemeColors.primary,
+                child: Material(
+                  color: ThemeColors.primary,
 
-                borderRadius: BorderRadius.circular(14),
-
-                child: InkWell(
                   borderRadius: BorderRadius.circular(14),
 
-                  onTap: widget.onFilterPressed,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
 
-                  child: const Icon(Icons.tune, color: ThemeColors.white),
+                    onTap: () => widget.onFilterPressed?.call(buttonContext),
+
+                    child: const Icon(
+                      Icons.filter_alt,
+                      color: ThemeColors.white,
+                    ),
+                  ),
                 ),
               ),
             ),

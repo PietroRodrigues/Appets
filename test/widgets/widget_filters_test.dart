@@ -8,38 +8,64 @@ void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
   group('WGPetFiltersDialog', () {
-    // Abre a janela e devolve o resultado do show.
+    // Abre o popover (ancorado no próprio botão) e entrega o resultado.
     Future<void> openDialog(
       WidgetTester tester, {
       required void Function(List<PetFilterOption>?) onResult,
+      List<PetFilterOption> initialOptions = const [],
+      bool disableAnimations = false,
     }) async {
-      await tester.pumpWidget(
-        wrap(
-          Builder(
-            builder: (context) => Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  onResult(await WGPetFiltersDialog.show(context));
-                },
-                child: const Text('abrir'),
-              ),
-            ),
+      final button = Center(
+        child: Builder(
+          // Âncora = o próprio botão (contexto do Builder).
+          builder: (buttonContext) => ElevatedButton(
+            onPressed: () async {
+              onResult(
+                await WGPetFiltersDialog.show(
+                  buttonContext,
+                  initialOptions: initialOptions,
+                ),
+              );
+            },
+            child: const Text('abrir'),
           ),
         ),
+      );
+
+      await tester.pumpWidget(
+        disableAnimations
+            ? MediaQuery(
+                data: const MediaQueryData(
+                  size: Size(800, 600),
+                  devicePixelRatio: 1.0,
+                  disableAnimations: true,
+                ),
+                child: wrap(button),
+              )
+            : wrap(button),
       );
       await tester.tap(find.text('abrir'));
       await tester.pumpAndSettle();
     }
 
-    CheckboxListTile tileFor(WidgetTester tester, String label) =>
-        tester.widget<CheckboxListTile>(
-          find.widgetWithText(CheckboxListTile, label),
+    // Fecha o popover tocando longe dele (equivale ao usuário fechar).
+    Future<void> closeOutside(WidgetTester tester) async {
+      await tester.tapAt(const Offset(10, 500));
+      await tester.pumpAndSettle();
+    }
+
+    WGFilterOptionTile tileFor(WidgetTester tester, String label) =>
+        tester.widget<WGFilterOptionTile>(
+          find.widgetWithText(WGFilterOptionTile, label),
         );
 
     testWidgets('exibe as categorias com opções', (tester) async {
+      final handle = tester.ensureSemantics();
       await openDialog(tester, onResult: (_) {});
 
-      expect(find.text('Filtros'), findsOneWidget);
+      expect(find.bySemanticsLabel('Limpar tudo'), findsWidgets);
+      expect(find.bySemanticsLabel('Espécie'), findsOneWidget);
+      expect(find.text('Limpar tudo'), findsOneWidget);
       expect(find.text('Espécie'), findsOneWidget);
       expect(find.text('Cachorro'), findsOneWidget);
       expect(find.text('Gato'), findsOneWidget);
@@ -53,45 +79,108 @@ void main() {
       expect(find.text('Filhote'), findsOneWidget);
       expect(find.text('Jovem'), findsOneWidget);
       expect(find.text('Adulto'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Filtrar'), findsOneWidget);
+
+      handle.dispose();
     });
 
-    testWidgets('Filtrar devolve as opções marcadas', (tester) async {
-      List<PetFilterOption>? result;
-      await openDialog(tester, onResult: (options) => result = options);
+    testWidgets('linhas de opção têm alvo de toque ≥ 48px', (tester) async {
+      await openDialog(tester, onResult: (_) {});
 
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'Cachorro'));
-      await tester.scrollUntilVisible(
-        find.widgetWithText(CheckboxListTile, 'Macho'),
-        120,
-        scrollable: find.byType(Scrollable).first,
+      final size = tester.getSize(
+        find.widgetWithText(WGFilterOptionTile, 'Cachorro'),
       );
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'Macho'));
-      await tester.pump();
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Filtrar'));
-      await tester.pumpAndSettle();
-
-      expect(result, hasLength(2));
-      expect(result![0].id, 'species:cachorro');
-      expect(result![0].label, 'Cachorro');
-      expect(result![1].id, 'gender:macho');
+      expect(size.height, greaterThanOrEqualTo(48));
     });
 
-    testWidgets('X fecha a janela descartando a seleção', (tester) async {
+    testWidgets('X fecha e aplica a seleção (igual a tocar fora)',
+        (tester) async {
       List<PetFilterOption>? result;
       await openDialog(tester, onResult: (options) => result = options);
 
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'Gato'));
+      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Gato'));
       await tester.pump();
+
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();
 
-      expect(result, isNull);
-      expect(find.text('Filtros'), findsNothing);
+      expect(result, hasLength(1));
+      expect(result!.single.id, 'species:gato');
+      expect(find.text('Espécie'), findsNothing);
     });
 
-    testWidgets('aplicar filtros pré-marcados mantém os selecionados',
+    testWidgets('reduced motion: reduzir animações abre e interage (smoke)',
+        (tester) async {
+      List<PetFilterOption>? result;
+      await openDialog(
+        tester,
+        onResult: (options) => result = options,
+        disableAnimations: true,
+      );
+
+      expect(find.text('Espécie'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Gato'));
+      await tester.pump();
+      await closeOutside(tester);
+
+      expect(result, hasLength(1));
+      expect(result!.single.id, 'species:gato');
+    });
+
+    testWidgets('fechar tocando fora aplica as opções marcadas',
+        (tester) async {
+      List<PetFilterOption>? result;
+      await openDialog(tester, onResult: (options) => result = options);
+
+      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Cachorro'));
+      await tester.scrollUntilVisible(
+        find.widgetWithText(WGFilterOptionTile, 'Macho'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Macho'));
+      await tester.pump();
+
+      await closeOutside(tester);
+
+      expect(result, hasLength(2));
+      expect(result![0].id, 'species:cachorro');
+      expect(result![1].id, 'gender:macho');
+      expect(find.text('Espécie'), findsNothing);
+    });
+
+    testWidgets('tocar fora do popover fecha e aplica o que está marcado',
+        (tester) async {
+      List<PetFilterOption>? result;
+      await openDialog(tester, onResult: (options) => result = options);
+
+      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Gato'));
+      await tester.pump();
+      await closeOutside(tester);
+
+      expect(result, hasLength(1));
+      expect(result!.single.id, 'species:gato');
+      expect(find.text('Espécie'), findsNothing);
+    });
+
+    testWidgets('barreira (outro ponto fora) aplica a seleção atual',
+        (tester) async {
+      List<PetFilterOption>? result;
+      await openDialog(tester, onResult: (options) => result = options);
+
+      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Gato'));
+      await tester.pump();
+
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(result, hasLength(1));
+      expect(result!.single.id, 'species:gato');
+      expect(find.text('Espécie'), findsNothing);
+    });
+
+    testWidgets('abrir com pré-aplicados e desmarcar um mantém o resto',
         (tester) async {
       List<PetFilterOption>? result;
       final applied = [
@@ -107,81 +196,50 @@ void main() {
         ),
       ];
 
-      await tester.pumpWidget(
-        wrap(
-          Builder(
-            builder: (context) => Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  result = await WGPetFiltersDialog.show(
-                    context,
-                    initialOptions: applied,
-                  );
-                },
-                child: const Text('abrir'),
-              ),
-            ),
-          ),
-        ),
+      await openDialog(
+        tester,
+        onResult: (options) => result = options,
+        initialOptions: applied,
       );
-      await tester.tap(find.text('abrir'));
-      await tester.pumpAndSettle();
 
       // Desmarca apenas "Macho".
       await tester.scrollUntilVisible(
-        find.widgetWithText(CheckboxListTile, 'Macho'),
+        find.widgetWithText(WGFilterOptionTile, 'Macho'),
         120,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'Macho'));
+      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Macho'));
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Filtrar'));
-      await tester.pumpAndSettle();
+      await closeOutside(tester);
 
       expect(result, hasLength(1));
       expect(result!.single.id, 'age:adulto');
     });
 
-    testWidgets('desmarcar todos e aplicar devolve lista vazia',
-        (tester) async {
+    testWidgets('desmarcar todos e fechar devolve lista vazia', (tester) async {
       List<PetFilterOption>? result;
-      final applied = [
-        const PetFilterOption(
+      const applied = [
+        PetFilterOption(
           category: PetFilterCategory.gender,
           value: 'macho',
           label: 'Macho',
         ),
       ];
 
-      await tester.pumpWidget(
-        wrap(
-          Builder(
-            builder: (context) => Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  result = await WGPetFiltersDialog.show(
-                    context,
-                    initialOptions: applied,
-                  );
-                },
-                child: const Text('abrir'),
-              ),
-            ),
-          ),
-        ),
+      await openDialog(
+        tester,
+        onResult: (options) => result = options,
+        initialOptions: applied,
       );
-      await tester.tap(find.text('abrir'));
-      await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
-        find.widgetWithText(CheckboxListTile, 'Macho'),
+        find.widgetWithText(WGFilterOptionTile, 'Macho'),
         120,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.widgetWithText(CheckboxListTile, 'Macho'));
+      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Macho'));
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Filtrar'));
-      await tester.pumpAndSettle();
+      await closeOutside(tester);
 
       expect(result, isNotNull);
       expect(result, isEmpty);
@@ -190,50 +248,75 @@ void main() {
     testWidgets('reaplica filtros já aplicados como marcados ao abrir',
         (tester) async {
       List<PetFilterOption>? result;
-      final applied = [
-        const PetFilterOption(
+      const applied = [
+        PetFilterOption(
           category: PetFilterCategory.gender,
           value: 'macho',
           label: 'Macho',
         ),
-        const PetFilterOption(
+        PetFilterOption(
           category: PetFilterCategory.age,
           value: 'adulto',
           label: 'Adulto',
         ),
       ];
 
-      await tester.pumpWidget(
-        wrap(
-          Builder(
-            builder: (context) => Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  result = await WGPetFiltersDialog.show(
-                    context,
-                    initialOptions: applied,
-                  );
-                },
-                child: const Text('abrir'),
-              ),
-            ),
-          ),
-        ),
+      await openDialog(
+        tester,
+        onResult: (options) => result = options,
+        initialOptions: applied,
       );
-      await tester.tap(find.text('abrir'));
-      await tester.pumpAndSettle();
 
       expect(tileFor(tester, 'Macho').value, isTrue);
       expect(tileFor(tester, 'Adulto').value, isTrue);
       expect(tileFor(tester, 'Gato').value, isFalse);
       expect(tileFor(tester, 'Fêmea').value, isFalse);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Filtrar'));
-      await tester.pumpAndSettle();
+      // Fechar sem mexer devolve o que veio marcado.
+      await closeOutside(tester);
 
       expect(result, hasLength(2));
       expect(result![0].id, 'gender:macho');
       expect(result![1].id, 'age:adulto');
+    });
+
+    testWidgets('Limpar tudo desmarca e fechar aplica vazio', (tester) async {
+      List<PetFilterOption>? result;
+      const applied = [
+        PetFilterOption(
+          category: PetFilterCategory.gender,
+          value: 'macho',
+          label: 'Macho',
+        ),
+        PetFilterOption(
+          category: PetFilterCategory.age,
+          value: 'adulto',
+          label: 'Adulto',
+        ),
+      ];
+
+      await openDialog(
+        tester,
+        onResult: (options) => result = options,
+        initialOptions: applied,
+      );
+
+      expect(tileFor(tester, 'Macho').value, isTrue);
+      expect(tileFor(tester, 'Adulto').value, isTrue);
+
+      // Limpar tudo desmarca e mantém o popover aberto.
+      await tester.tap(find.text('Limpar tudo'));
+      await tester.pump();
+
+      expect(find.text('Espécie'), findsOneWidget);
+      expect(tileFor(tester, 'Macho').value, isFalse);
+      expect(tileFor(tester, 'Adulto').value, isFalse);
+
+      // Fechar após limpar devolve lista vazia (remove os filtros).
+      await closeOutside(tester);
+
+      expect(result, isNotNull);
+      expect(result, isEmpty);
     });
   });
 

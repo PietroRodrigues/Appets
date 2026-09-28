@@ -84,10 +84,10 @@ void main() {
       var pressed = 0;
 
       await tester.pumpWidget(
-        wrap(WGSearchBar(onFilterPressed: () => pressed++)),
+        wrap(WGSearchBar(onFilterPressed: (ctx) => pressed++)),
       );
 
-      await tester.tap(find.byIcon(Icons.tune));
+      await tester.tap(find.byIcon(Icons.filter_alt));
       await tester.pump();
 
       expect(pressed, 1);
