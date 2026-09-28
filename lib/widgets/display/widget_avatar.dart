@@ -107,7 +107,7 @@ class _WGAvatarState extends State<WGAvatar> {
         child: showFallback
             ? Icon(
                 Icons.person,
-                color: ThemeColors.white,
+                color: ThemeColors.onPrimary,
                 size: widget.radius * 0.9,
               )
             : null,

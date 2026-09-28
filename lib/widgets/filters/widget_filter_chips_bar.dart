@@ -53,7 +53,7 @@ class _FilterChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x33000000),
+            color: ThemeColors.shadowChips,
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -65,7 +65,7 @@ class _FilterChip extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             option.label,
-            style: ThemeTextStyles.caption.copyWith(color: ThemeColors.white),
+            style: ThemeTextStyles.caption.copyWith(color: ThemeColors.onPrimary),
           ),
           const SizedBox(width: 2),
           IconButton(
@@ -78,7 +78,7 @@ class _FilterChip extends StatelessWidget {
             icon: const Icon(
               Icons.close,
               size: 16,
-              color: ThemeColors.white,
+              color: ThemeColors.onPrimary,
             ),
             tooltip: HomeStrings.FILTER_REMOVE,
           ),

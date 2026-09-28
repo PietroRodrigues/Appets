@@ -82,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen> {
         Text(
           SharedStrings.APP_START_ERROR_TITLE,
           textAlign: TextAlign.center,
-          style: ThemeTextStyles.heading.copyWith(color: ThemeColors.white),
+          style: ThemeTextStyles.heading.copyWith(color: ThemeColors.onPrimary),
         ),
         const SizedBox(height: 8),
         Text(

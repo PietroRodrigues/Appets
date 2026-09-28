@@ -228,7 +228,7 @@ class _WGSearchBarState extends State<WGSearchBar> {
 
                     child: const Icon(
                       Icons.filter_alt,
-                      color: ThemeColors.white,
+                      color: ThemeColors.onPrimary,
                     ),
                   ),
                 ),

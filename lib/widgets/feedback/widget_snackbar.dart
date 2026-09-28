@@ -35,7 +35,7 @@ class WGSnackBar {
           content: Text(
             message,
             style: ThemeTextStyles.body.copyWith(
-              color: ThemeColors.white,
+              color: ThemeColors.onColor(color),
             ),
           ),
         ),

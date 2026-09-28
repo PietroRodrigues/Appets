@@ -95,7 +95,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       appBar: AppBar(
         backgroundColor: ThemeColors.primary,
 
-        foregroundColor: ThemeColors.white,
+        foregroundColor: ThemeColors.onPrimary,
 
         elevation: 0,
 
@@ -109,7 +109,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 : PetDetailsStrings.ADD_TO_FAVORITES,
             icon: Icon(
               _isFavorited ? Icons.star_rounded : Icons.star_border_rounded,
-              color: ThemeColors.white,
+              color: ThemeColors.onPrimary,
               size: 28,
             ),
           ),
@@ -118,7 +118,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             tooltip: PetDetailsStrings.SHARE_TOOLTIP,
             icon: const Icon(
               Icons.share_outlined,
-              color: ThemeColors.white,
+              color: ThemeColors.onPrimary,
               size: 24,
             ),
           ),
@@ -133,10 +133,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
             children: [
               // ÁREA DAS FOTOS
-              WGPetGallery(
-                images: widget.pet.images,
-                heroTag: 'pet-image-${widget.pet.id}',
-              ),
+              WGPetGallery(images: widget.pet.images),
 
               // INFORMAÇÕES DO PET
               WGPetDetailsInfo(pet: widget.pet),

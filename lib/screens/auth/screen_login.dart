@@ -253,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
               onPressed: _goToForgotPassword,
               child: Text(
                 AuthStrings.FORGOT_PASSWORD,
-                style: ThemeTextStyles.body.copyWith(color: ThemeColors.white),
+                style: ThemeTextStyles.body.copyWith(color: ThemeColors.onPrimary),
               ),
             ),
           ),
@@ -277,19 +277,19 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
           Row(
             children: [
               const Expanded(
-                child: Divider(color: ThemeColors.white, thickness: 0.5),
+                child: Divider(color: ThemeColors.onPrimary, thickness: 0.5),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   AuthStrings.OR,
                   style: ThemeTextStyles.body.copyWith(
-                    color: ThemeColors.white,
+                    color: ThemeColors.onPrimary,
                   ),
                 ),
               ),
               const Expanded(
-                child: Divider(color: ThemeColors.white, thickness: 0.5),
+                child: Divider(color: ThemeColors.onPrimary, thickness: 0.5),
               ),
             ],
           ),

@@ -128,6 +128,7 @@ class _BannerBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOffline = message == SharedStrings.NO_CONNECTION;
     final background = isOffline ? ThemeColors.error : ThemeColors.success;
+    final foreground = ThemeColors.onColor(background);
     final icon = isOffline ? Icons.wifi_off : Icons.wifi;
 
     return Container(
@@ -139,12 +140,12 @@ class _BannerBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 14, color: ThemeColors.white),
+          Icon(icon, size: 14, color: foreground),
           const SizedBox(width: 6),
           Text(
             message,
             style: ThemeTextStyles.body.copyWith(
-              color: ThemeColors.white,
+              color: foreground,
               fontSize: 12,
               fontWeight: FontWeight.w500,
               decoration: TextDecoration.none,

@@ -34,7 +34,8 @@ class WGButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonForeground = foregroundColor ?? Colors.white;
+    final buttonForeground =
+        foregroundColor ?? ThemeColors.onColor(backgroundColor ?? ThemeColors.secondary);
 
     return SizedBox(
       width: width,
@@ -97,7 +98,7 @@ class WGOutlinedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveBackground = backgroundColor ?? Colors.transparent;
+    final effectiveBackground = backgroundColor ?? ThemeColors.transparent;
     final effectiveBorder = borderColor ?? ThemeColors.primary;
     final effectiveText = textColor ?? ThemeColors.primary;
     final effectiveIcon = iconColor ?? ThemeColors.primary;
@@ -166,7 +167,7 @@ class WGGoogleButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
           ),
           elevation: 4,
-          shadowColor: Colors.black.withValues(alpha: 0.25),
+          shadowColor: ThemeColors.shadowButton,
           padding: const EdgeInsets.symmetric(horizontal: 24),
         ),
       ),

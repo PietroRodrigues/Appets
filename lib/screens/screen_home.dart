@@ -20,6 +20,7 @@ import 'package:appets/widgets/feed/widget_responsive_pet_grid.dart';
 import 'package:appets/widgets/feedback/widget_page_states.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:appets/widgets/layout/widget_layout.dart';
+import 'package:appets/widgets/layout/widget_root_back_exit.dart';
 import 'package:appets/widgets/navigation/widget_bottom_navigation.dart';
 import 'package:flutter/material.dart';
 
@@ -150,7 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (context, pet) {
                   return WGPetCard(
                     pet: pet,
-                    heroTag: 'pet-image-${pet.id}',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -232,22 +232,24 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, currentPage, _) {
         final showFab = currentPage == AppPage.myPublications;
 
-        return WGScaffold(
-          resizeToAvoidBottomInset: false,
-          bottomNavigationBar: WGBottomNavigation(
-            currentPage: currentPage,
-            onTap: _onNavigation,
+        return WGRootBackExit(
+          child: WGScaffold(
+            resizeToAvoidBottomInset: false,
+            bottomNavigationBar: WGBottomNavigation(
+              currentPage: currentPage,
+              onTap: _onNavigation,
+            ),
+            floatingActionButton: showFab
+                ? FloatingActionButton(
+                    onPressed: _openPublishPet,
+                    backgroundColor: ThemeColors.primary,
+                    foregroundColor: ThemeColors.onPrimary,
+                    elevation: 8,
+                    child: const Icon(Icons.add, size: 32),
+                  )
+                : null,
+            child: _buildBody(currentPage),
           ),
-          floatingActionButton: showFab
-              ? FloatingActionButton(
-                  onPressed: _openPublishPet,
-                  backgroundColor: ThemeColors.primary,
-                  foregroundColor: ThemeColors.white,
-                  elevation: 8,
-                  child: const Icon(Icons.add, size: 32),
-                )
-              : null,
-          child: _buildBody(currentPage),
         );
       },
     );

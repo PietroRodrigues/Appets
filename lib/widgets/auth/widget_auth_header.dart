@@ -15,12 +15,12 @@ class WGAuthHeader extends StatelessWidget {
     this.textColor,
   });
 
-  /// Cabeçalho padrão das telas de autenticação (logo 240, texto branco
-  /// e sem slogan).
+  /// Cabeçalho padrão das telas de autenticação (logo 240, texto escuro
+  /// sobre o laranja e sem slogan).
   const WGAuthHeader.auth({super.key, this.headline, this.spacing = 24})
     : logoWidth = 240,
       description = '',
-      textColor = ThemeColors.white;
+      textColor = ThemeColors.onPrimary;
 
   final double logoWidth;
   final String? headline;

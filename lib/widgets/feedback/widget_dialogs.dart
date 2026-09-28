@@ -308,6 +308,7 @@ class _WGDialogState extends State<WGDialog> {
   /// Linha com dois botões iguais, lado a lado: cancelar (contorno) e
   /// confirmar (preenchido).
   Widget _buildButtonsRow() {
+    final onConfirm = ThemeColors.onColor(widget.confirmColor);
     return Row(
       children: [
         Expanded(
@@ -350,7 +351,7 @@ class _WGDialogState extends State<WGDialog> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: ThemeTextStyles.button.copyWith(color: ThemeColors.white),
+              style: ThemeTextStyles.button.copyWith(color: onConfirm),
             ),
           ),
         ),
@@ -360,6 +361,7 @@ class _WGDialogState extends State<WGDialog> {
 
   /// Botão único de ação, com texto (e ícone opcional) centralizado.
   Widget _buildSingleAction() {
+    final onConfirm = ThemeColors.onColor(widget.confirmColor);
     return FilledButton(
       onPressed: () => Navigator.pop(context, true),
       style: FilledButton.styleFrom(
@@ -374,7 +376,7 @@ class _WGDialogState extends State<WGDialog> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (widget.actionIcon != null) ...[
-            Icon(widget.actionIcon, color: ThemeColors.white, size: 20),
+            Icon(widget.actionIcon, color: onConfirm, size: 20),
             const SizedBox(width: 8),
           ],
           Flexible(
@@ -383,7 +385,7 @@ class _WGDialogState extends State<WGDialog> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: ThemeTextStyles.button.copyWith(color: ThemeColors.white),
+              style: ThemeTextStyles.button.copyWith(color: onConfirm),
             ),
           ),
         ],

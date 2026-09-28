@@ -18,16 +18,12 @@ class WGPetImage extends StatelessWidget {
     super.key,
     required this.url,
     this.fit = BoxFit.contain,
-    this.heroTag,
     this.memCacheWidth,
   });
 
   // PROPERTIES
   final String url;
   final BoxFit fit;
-
-  /// Tag opcional para a animação [Hero].
-  final String? heroTag;
 
   /// Largura usada para decodificar a rede em memória.
   /// Cards usam ~480; galeria/detalhe usam ~1080.
@@ -40,12 +36,7 @@ class WGPetImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = _buildImage();
-
-    final tag = heroTag;
-    if (tag == null) return image;
-
-    return Hero(tag: tag, child: image);
+    return _buildImage();
   }
 
   Widget _buildImage() {

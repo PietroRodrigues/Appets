@@ -188,7 +188,7 @@ class _WGPageHeaderState extends State<WGPageHeader> {
                             ? HomeStrings.helloUser(widget.userName!)
                             : widget.title!,
                         style: ThemeTextStyles.heading.copyWith(
-                          color: ThemeColors.white,
+                          color: ThemeColors.onPrimary,
                           fontSize: 24,
                         ),
                       ),
@@ -197,7 +197,7 @@ class _WGPageHeaderState extends State<WGPageHeader> {
                         Text(
                           widget.description!,
                           style: ThemeTextStyles.caption.copyWith(
-                            color: ThemeColors.white,
+                            color: ThemeColors.onPrimary,
                           ),
                         ),
                       ],

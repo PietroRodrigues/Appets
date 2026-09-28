@@ -115,7 +115,7 @@ class WGEmptyState extends StatelessWidget {
               width: 96,
               height: 96,
               decoration: BoxDecoration(
-                color: ThemeColors.primary.withValues(alpha: 0.12),
+                color: ThemeColors.primarySoft,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 48, color: ThemeColors.primary),

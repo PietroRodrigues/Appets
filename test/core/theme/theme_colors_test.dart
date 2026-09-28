@@ -27,7 +27,59 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  test('primary NÃO alcança AA com branco (pendência do item 28)', () {
-    expect(_contrast(ThemeColors.primary, ThemeColors.white), lessThan(4.5));
+  test('texto principal é legível (AAA ≥7) sobre o fundo', () {
+    expect(
+      _contrast(ThemeColors.background, ThemeColors.textPrimary),
+      greaterThanOrEqualTo(7),
+    );
+  });
+
+  test('texto secundário é legível (AA ≥4.5) sobre o branco (surface)', () {
+    expect(
+      _contrast(ThemeColors.white, ThemeColors.textSecondary),
+      greaterThanOrEqualTo(4.5),
+    );
+  });
+
+  test('onPrimary (creme) é mais claro que primary (destaque estético)', () {
+    expect(
+      _luminance(ThemeColors.onPrimary),
+      greaterThan(_luminance(ThemeColors.primary)),
+    );
+  });
+
+  test('navigationInactive alcança AA (≥4.5) sobre primary', () {
+    expect(
+      _contrast(ThemeColors.primary, ThemeColors.navigationInactive),
+      greaterThanOrEqualTo(4.5),
+    );
+  });
+
+  test('navigationActive é mais claro que a barra (item ativo distinto)', () {
+    expect(
+      _luminance(ThemeColors.navigationActive),
+      greaterThan(_luminance(ThemeColors.primary)),
+    );
+  });
+
+  test('onColor escolhe escuro em fundo claro e branco em fundo escuro', () {
+    // Sobre a primária, onColor devolve o creme (destaque estético).
+    expect(ThemeColors.onColor(ThemeColors.primary), ThemeColors.onPrimary);
+    expect(
+      _luminance(ThemeColors.onColor(ThemeColors.primary)),
+      greaterThan(_luminance(ThemeColors.primary)),
+    );
+    expect(ThemeColors.onColor(ThemeColors.secondary), Colors.white);
+    expect(ThemeColors.onColor(ThemeColors.background), ThemeColors.textPrimary);
+
+    final onSuccess = ThemeColors.onColor(ThemeColors.success);
+    expect(_contrast(ThemeColors.success, onSuccess), greaterThanOrEqualTo(4.5));
+    expect(onSuccess, isNot(Colors.white));
+
+    expect(
+      onSuccess,
+      ThemeColors.textPrimary,
+      reason: 'O verde do success é claro o suficiente para o texto escuro (azul-marinho) passar em AA.',
+    );
   });
 }

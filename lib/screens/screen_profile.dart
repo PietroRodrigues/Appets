@@ -149,9 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             imageUrl: _user?.photoUrl,
                             borderColor: ThemeColors.primary,
                             borderWidth: 3,
-                            shadowColor: ThemeColors.black.withValues(
-                              alpha: 0.25,
-                            ),
+                            shadowColor: ThemeColors.shadowButton,
                             shadowBlurRadius: 8,
                           ),
 
@@ -235,13 +233,13 @@ class _ProfileEditBadge extends StatelessWidget {
           border: Border.all(color: ThemeColors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: ThemeColors.black.withValues(alpha: 0.25),
+              color: ThemeColors.shadowButton,
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: const Icon(Icons.edit, color: ThemeColors.white, size: 16),
+        child: const Icon(Icons.edit, color: ThemeColors.onPrimary, size: 16),
       ),
     );
   }

@@ -1,5 +1,4 @@
 import 'package:appets/core/services/app_image_cache.dart';
-import 'package:appets/widgets/display/widget_pet_image.dart';
 import 'package:appets/widgets/pet/widget_pet_gallery.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -40,25 +39,12 @@ void main() {
 
   Widget wrap({
     required List<String> images,
-    String? heroTag,
   }) {
     return MaterialApp(
       home: Scaffold(
-        body: WGPetGallery(images: images, heroTag: heroTag),
+        body: WGPetGallery(images: images),
       ),
     );
-  }
-
-  String? heroImageUrl(WidgetTester tester) {
-    // WGPetImage é o ancestral do Hero (o child é a imagem em si).
-    return tester
-        .widget<WGPetImage>(
-          find.ancestor(
-            of: find.byType(Hero),
-            matching: find.byType(WGPetImage),
-          ),
-        )
-        .url;
   }
 
   group('WGPetGallery → sem fotos', () {
@@ -115,23 +101,6 @@ void main() {
 
       expect(find.text('2/2'), findsOneWidget);
       expect(find.text('3/2'), findsNothing);
-    });
-  });
-
-  group('WGPetGallery → hero', () {
-    testWidgets('parte da foto atualmente visível, não da fixa 0',
-        (tester) async {
-      await tester.pumpWidget(wrap(images: urls, heroTag: 'hero-pet-1'));
-
-      expect(heroImageUrl(tester), urls[0]);
-
-      await tester.drag(find.byType(PageView), const Offset(-400, 0));
-      await tester.pumpAndSettle();
-
-      expect(heroImageUrl(tester), urls[1]);
-
-      // Só uma tag por vez (sem duplicatas na rota).
-      expect(find.byType(Hero), findsOneWidget);
     });
   });
 }

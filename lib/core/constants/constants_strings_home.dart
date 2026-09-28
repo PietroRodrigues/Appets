@@ -17,6 +17,11 @@ class HomeStrings {
 
   static const NAV_PROFILE = 'Perfil';
 
+  // Confirmação antes de fechar o app com o voltar do sistema numa aba raiz.
+  static const EXIT_CONFIRM_TITLE = 'Sair';
+
+  static const EXIT_CONFIRM_MESSAGE = 'Deseja sair do aplicativo?';
+
   // ── Cabeçalho / Busca ──────────────────────────────────
 
   static String helloUser(String name) => 'Olá, $name';

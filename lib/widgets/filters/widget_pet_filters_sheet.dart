@@ -124,7 +124,7 @@ class WGFilterOptionTile extends StatelessWidget {
                       ? const Icon(
                           Icons.check,
                           size: 16,
-                          color: ThemeColors.white,
+                          color: ThemeColors.onPrimary,
                         )
                       : null,
                 ),
@@ -189,7 +189,7 @@ class WGPetFiltersDialog extends StatefulWidget {
       barrierDismissible: false,
       barrierLabel:
           MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      barrierColor: Colors.black54,
+      barrierColor: ThemeColors.scrimDark,
       transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (_, _, _) =>
           WGPetFiltersDialog(initialOptions: initialOptions, anchorRect: anchorRect),
@@ -417,7 +417,7 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
                                   child: Text(
                                     HomeStrings.FILTER_CLEAR_ALL,
                                     style: ThemeTextStyles.caption.copyWith(
-                                      color: ThemeColors.white,
+                                      color: ThemeColors.onPrimary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -430,7 +430,7 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
                               tooltip: HomeStrings.FILTER_CLOSE,
                               icon: const Icon(
                                 Icons.close,
-                                color: ThemeColors.white,
+                                color: ThemeColors.onPrimary,
                                 size: 20,
                               ),
                               padding: EdgeInsets.zero,

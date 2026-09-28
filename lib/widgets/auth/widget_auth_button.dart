@@ -42,8 +42,8 @@ class WGAuthSecondaryButton extends StatelessWidget {
       text: text,
       onPressed: onPressed,
       height: 48,
-      borderColor: ThemeColors.white,
-      textColor: ThemeColors.white,
+      borderColor: ThemeColors.onPrimary,
+      textColor: ThemeColors.onPrimary,
     );
   }
 }

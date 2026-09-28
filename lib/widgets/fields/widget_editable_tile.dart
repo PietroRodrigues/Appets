@@ -145,7 +145,7 @@ class _WGEditableTileState extends State<WGEditableTile> {
                 width: widget.primary ? 52 : 44,
                 height: widget.primary ? 52 : 44,
                 decoration: BoxDecoration(
-                  color: ThemeColors.primary.withValues(alpha: 0.12),
+                  color: ThemeColors.primarySoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(

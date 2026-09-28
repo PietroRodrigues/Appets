@@ -6,18 +6,14 @@ import 'package:appets/widgets/display/widget_pet_image.dart';
 
 /// Galeria de fotos reutilizável do pet.
 ///
-/// Exibe as imagens em um [PageView] com indicadores (dots),
-/// contador de fotos e suporte a [Hero]. Sem imagens, mostra o
-/// placeholder padrão de pet (ícone em vez de caixa em branco).
+/// Exibe as imagens em um [PageView] com indicadores (dots) e
+/// contador de fotos. Sem imagens, mostra o placeholder padrão de
+/// pet (ícone em vez de caixa em branco).
 class WGPetGallery extends StatefulWidget {
-  const WGPetGallery({super.key, required this.images, this.heroTag});
+  const WGPetGallery({super.key, required this.images});
 
   // PROPERTIES
   final List<String> images;
-
-  /// Tag do [Hero], aplicada à imagem atualmente visível
-  /// (não à fixa do índice 0) para evitar tags duplicadas na rota.
-  final String? heroTag;
 
   @override
   State<WGPetGallery> createState() => _WGPetGalleryState();
@@ -92,17 +88,9 @@ class _WGPetGalleryState extends State<WGPetGallery> {
                             });
                           },
                           itemBuilder: (context, index) {
-                            // Somente a imagem visível participa do Hero
-                            // para evitar tags duplicadas, e o voo parte da
-                            // foto que o usuário está vendo (não preso ao 0).
                             return WGPetImage(
                               url: widget.images[index],
                               memCacheWidth: 1080,
-                              heroTag:
-                                  widget.heroTag != null &&
-                                      index == _currentImage
-                                  ? widget.heroTag
-                                  : null,
                             );
                           },
                         ),
@@ -123,7 +111,7 @@ class _WGPetGalleryState extends State<WGPetGallery> {
                         decoration: BoxDecoration(
                           color: isActive
                               ? ThemeColors.primary
-                              : ThemeColors.secondary.withValues(alpha: 0.4),
+                              : ThemeColors.secondarySoft,
                           shape: BoxShape.circle,
                         ),
                       );
@@ -143,7 +131,7 @@ class _WGPetGalleryState extends State<WGPetGallery> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black38,
+                    color: ThemeColors.overlayCounter,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

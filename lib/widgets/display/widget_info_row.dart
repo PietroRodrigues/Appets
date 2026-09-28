@@ -12,7 +12,7 @@ class WGInfoRow extends StatelessWidget {
     super.key,
     required this.icon,
     required this.text,
-    this.iconColor = ThemeColors.secondary,
+    this.iconColor = ThemeColors.primary,
     this.textStyle,
   });
 

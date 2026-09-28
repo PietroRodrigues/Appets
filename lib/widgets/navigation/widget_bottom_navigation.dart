@@ -26,7 +26,7 @@ class WGBottomNavigation extends StatelessWidget {
           color: ThemeColors.primary,
           borderRadius: BorderRadius.circular(28),
           elevation: 12,
-          shadowColor: Colors.black12,
+          shadowColor: ThemeColors.shadowNav,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
@@ -91,29 +91,35 @@ class _NavIconButton extends StatelessWidget {
         ? ThemeColors.navigationActive
         : ThemeColors.navigationInactive;
 
+    final Widget item = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isActive ? activeIcon : icon,
+            size: isActive ? 30.8 : 28,
+            color: itemColor,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: ThemeTextStyles.caption.copyWith(
+              fontSize: isActive ? 13.2 : 12,
+              color: itemColor,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Tooltip(
       message: label,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(isActive ? activeIcon : icon, size: 28, color: itemColor),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: ThemeTextStyles.caption.copyWith(
-                  fontSize: 12,
-                  color: itemColor,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
-            ],
-          ),
-        ),
+        child: item,
       ),
     );
   }

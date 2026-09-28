@@ -69,7 +69,7 @@ class WGPetDetailsInfo extends StatelessWidget {
         child: const Text(
           PetDetailsStrings.CONTACT_BUTTON,
 
-          style: TextStyle(color: ThemeColors.white),
+          style: TextStyle(color: ThemeColors.onPrimary),
         ),
       ),
     );
@@ -94,11 +94,16 @@ class WGPetDetailsInfo extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          WGInfoRow(icon: Icons.pets, text: pet.genderLabel),
+          WGInfoRow(icon: Icons.pets_outlined, text: pet.species.label),
 
           const SizedBox(height: 14),
 
-          WGInfoRow(icon: Icons.pets_outlined, text: pet.species.label),
+          // Gênero com ícone e cor coerentes ao gênero do pet.
+          WGInfoRow(
+            icon: pet.genderIcon,
+            iconColor: pet.genderColor,
+            text: pet.genderLabel,
+          ),
 
           if (pet.race.trim().isNotEmpty) ...[
             const SizedBox(height: 14),

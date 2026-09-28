@@ -762,7 +762,6 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                       onPressed: _isSaving ? () {} : _saveChanges,
                       height: 50,
                       backgroundColor: ThemeColors.success,
-                      foregroundColor: ThemeColors.white,
                     ),
 
                     const SizedBox(height: 24),

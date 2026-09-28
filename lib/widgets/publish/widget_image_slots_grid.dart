@@ -265,7 +265,7 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
                 child: const Text(
                   PublishStrings.MAIN_PHOTO_BADGE,
                   style: TextStyle(
-                    color: ThemeColors.white,
+                    color: ThemeColors.onPrimary,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
@@ -280,7 +280,7 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: ThemeColors.scrimDark,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

@@ -30,7 +30,6 @@ class WGPetCard extends StatefulWidget {
     this.onEdit,
     this.onDelete,
     this.isMyPublication = false,
-    this.heroTag,
   });
 
   final Pet pet;
@@ -41,12 +40,6 @@ class WGPetCard extends StatefulWidget {
   /// Indica se este card é uma publicação do usuário atual.
   /// Quando `true`, exibe os botões de edição e excluir flutuantes.
   final bool isMyPublication;
-
-  /// Tag opcional para a animação Hero da imagem.
-  ///
-  /// Forneça apenas na origem principal da navegação (aba inicial)
-  /// para evitar tags duplicadas com as abas do IndexedStack.
-  final String? heroTag;
 
   @override
   State<WGPetCard> createState() => _WGPetCardState();
@@ -172,7 +165,6 @@ class _WGPetCardState extends State<WGPetCard>
                             url: widget.pet.images.isNotEmpty
                                 ? widget.pet.images.first
                                 : '',
-                            heroTag: widget.heroTag,
                             scale: _starScaleAnimation,
                             favorited: favorited,
                             onFavoritePressed: _toggleFavorite,
@@ -204,14 +196,12 @@ class _WGPetCardState extends State<WGPetCard>
 class _PetCardImage extends StatelessWidget {
   const _PetCardImage({
     required this.url,
-    required this.heroTag,
     required this.scale,
     required this.favorited,
     required this.onFavoritePressed,
   });
 
   final String url;
-  final String? heroTag;
   final Animation<double> scale;
   final bool favorited;
   final VoidCallback onFavoritePressed;
@@ -220,18 +210,12 @@ class _PetCardImage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Imagem do pet.
+        // Imagem do pet (cobre toda a área do card, sem molduras brancas).
         Positioned.fill(
-          child: Container(
-            color: ThemeColors.surface,
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: WGPetImage(
-                url: url,
-                heroTag: heroTag,
-                memCacheWidth: 480,
-              ),
-            ),
+          child: WGPetImage(
+            url: url,
+            memCacheWidth: 480,
+            fit: BoxFit.cover,
           ),
         ),
 
@@ -250,7 +234,7 @@ class _PetCardImage extends StatelessWidget {
                 favorited ? Icons.star_rounded : Icons.star_border_rounded,
                 color: favorited ? ThemeColors.warning : ThemeColors.hint,
                 size: 30,
-                shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
+                shadows: const [Shadow(color: ThemeColors.shadowCard, blurRadius: 4)],
               ),
             ),
           ),
@@ -368,7 +352,7 @@ class _PetCardEditButton extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: const [
               BoxShadow(
-                color: Colors.black26,
+                color: ThemeColors.shadowCard,
                 blurRadius: 6,
                 offset: Offset(0, 3),
               ),
@@ -376,7 +360,7 @@ class _PetCardEditButton extends StatelessWidget {
           ),
           child: const Icon(
             Icons.edit_outlined,
-            color: ThemeColors.white,
+            color: ThemeColors.onPrimary,
             size: 22,
           ),
         ),
@@ -408,7 +392,7 @@ class _PetCardDeleteButton extends StatelessWidget {
             shape: BoxShape.circle,
             boxShadow: const [
               BoxShadow(
-                color: Colors.black26,
+                color: ThemeColors.shadowCard,
                 blurRadius: 6,
                 offset: Offset(0, 3),
               ),
@@ -418,7 +402,7 @@ class _PetCardDeleteButton extends StatelessWidget {
             message: HomeStrings.DELETE_PET,
             child: const Icon(
               Icons.close,
-              color: ThemeColors.white,
+              color: ThemeColors.onPrimary,
               size: 16,
             ),
           ),
