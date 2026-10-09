@@ -28,6 +28,16 @@ extension AppPetDisplayX on Pet {
   /// Gênero formatado ("Macho" ou "Fêmea").
   String get genderLabel => gender.label;
 
+  /// Peso formatado em kg ("12,5 kg", "12 kg"); `null` quando não informado.
+  String? get weightLabel {
+    final w = weight;
+    if (w == null) return null;
+    final value = w == w.roundToDouble()
+        ? w.round().toString()
+        : w.toString().replaceAll('.', ',');
+    return '$value kg';
+  }
+
   /// Ícone do gênero (♂ para macho, ♀ para fêmea).
   IconData get genderIcon {
     switch (gender) {
@@ -61,7 +71,12 @@ extension AppPetDisplayX on Pet {
   /// Pronta para ser enviada ao share sheet.
   String get shareText {
     final isAdoption = publicationType == AppPetPublicationType.adoption;
-    final identity = '$speciesRaceLabel · $ageLabel · $genderLabel';
+    final identity = [
+      speciesRaceLabel,
+      ageLabel,
+      genderLabel,
+      ?weightLabel,
+    ].join(' · ');
     final description = (this.description ?? '').trim();
     final location = address.trim();
     final phone = ownerPhone.trim();

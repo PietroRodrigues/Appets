@@ -29,6 +29,7 @@ class Pet {
     this.publicationType = AppPetPublicationType.adoption,
     this.species = AppPetSpecies.dog,
     this.race = '',
+    this.weight,
   });
 
   //══════════════════════════════════════════════════════════════
@@ -75,6 +76,9 @@ class Pet {
   /// Raça do pet, opcional (ex.: "Poodle", "SRD").
   final String race;
 
+  /// Peso do pet em kg, opcional (0 x ≤ 200). `null` quando não informado.
+  final double? weight;
+
   /// Tokens de filtro (1 por categoria, normalizados), gravados no
   /// documento e consultados pelo servidor com `arrayContainsAny`.
   ///
@@ -106,6 +110,7 @@ class Pet {
       'publicationType': publicationTypeStorageToken(publicationType),
       'species': speciesStorageToken(species),
       'race': race,
+      if (weight != null) 'weight': weight,
       'searchTokens': buildSearchTokens(name: name, description: description),
       'specifications': specifications,
       'images': images,
@@ -131,6 +136,7 @@ class Pet {
       'publicationType': publicationTypeStorageToken(publicationType),
       'species': speciesStorageToken(species),
       'race': race,
+      if (weight != null) 'weight': weight,
       'searchTokens': buildSearchTokens(name: name, description: description),
       'specifications': specifications,
     };
@@ -158,6 +164,7 @@ class Pet {
       publicationType: publicationTypeFromStored(data['publicationType']),
       species: speciesFromStored(data['species']),
       race: data['race'] ?? '',
+      weight: (data['weight'] as num?)?.toDouble(),
       images: _stringList(data['images']),
     );
   }

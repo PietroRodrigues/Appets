@@ -66,6 +66,7 @@ void main() {
       expect(find.text('Tipo de publicação'), findsOneWidget);
       expect(find.text('Nome do pet'), findsOneWidget);
       expect(find.text('Idade'), findsOneWidget);
+      expect(find.text('Peso (kg)'), findsOneWidget);
       expect(find.text('Gênero'), findsOneWidget);
       expect(find.text('Telefone'), findsOneWidget);
       expect(find.text('Endereço'), findsOneWidget);
@@ -328,6 +329,53 @@ void main() {
       );
     });
 
+    testWidgets('peso inválido mostra erro inline sem travar o formulário', (
+      tester,
+    ) async {
+      _signInUser();
+
+      await tester.pumpWidget(createTestWidget());
+
+      // Peso acima do limite permitido (0 < x ≤ 200).
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex.: 12,5'),
+        '300',
+      );
+      await tester.pump();
+
+      await tester.ensureVisible(find.text(PublishStrings.PUBLISH_BUTTON));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(PublishStrings.PUBLISH_BUTTON));
+      await tester.pumpAndSettle();
+
+      // O erro aparece no campo (inline), além do aviso de campos faltando.
+      expect(find.text(PublishStrings.WEIGHT_INVALID), findsOneWidget);
+    });
+
+    testWidgets('peso vazio é aceito (campo opcional)', (tester) async {
+      _signInUser();
+
+      await tester.pumpWidget(createTestWidget());
+
+      // Deixa o peso em branco e valida o formulário.
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex.: 12,5'),
+        '12,5',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex.: 12,5'),
+        '',
+      );
+      await tester.pump();
+
+      await tester.ensureVisible(find.text(PublishStrings.PUBLISH_BUTTON));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(PublishStrings.PUBLISH_BUTTON));
+      await tester.pumpAndSettle();
+
+      expect(find.text(PublishStrings.WEIGHT_INVALID), findsNothing);
+    });
+
     testWidgets('publicar lista nome e endereço faltando no aviso', (
       tester,
     ) async {
@@ -490,6 +538,101 @@ void main() {
         );
       },
     );
+
+    testWidgets('publica o pet gravando o peso informado', (tester) async {
+      _signInUser();
+      MyPublicationsService.instance.reset();
+      ConnectivityService.instance.debugOnline = true;
+      addTearDown(() => ConnectivityService.instance.debugOnline = null);
+
+      final db = FakeFirebaseFirestore();
+      FirestoreService.instance.debugDb = db;
+      PetService.instance.debugDb = db;
+      addTearDown(() {
+        FirestoreService.instance.debugDb = null;
+        PetService.instance.debugDb = null;
+      });
+
+      await FirestoreService.instance.createUser(UserModel(
+        id: 'user_test_001',
+        name: 'Usuária Teste',
+        email: 'teste@email.com',
+        phone: '(11) 98765-4321',
+        address: 'São Paulo',
+      ));
+
+      final tempDir = Directory.systemTemp.createTempSync('appets_photo');
+      final photoPath = '${tempDir.path}/photo_1.jpg';
+      File(photoPath).writeAsBytesSync(List<int>.filled(64, 1));
+      addTearDown(() {
+        if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
+      });
+
+      final storage = _PublishOrderStorage();
+      StorageService.instance.debugStorage = storage;
+      addTearDown(() => StorageService.instance.debugStorage = null);
+
+      final originalPicker = ImagePickerPlatform.instance;
+      ImagePickerPlatform.instance = _PickerReturnsFile(photoPath);
+      addTearDown(() => ImagePickerPlatform.instance = originalPicker);
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.push<void>(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => const Scaffold(
+                      body: WGPublishPetForm(),
+                    ),
+                  ),
+                ),
+                child: const Text('abrir'),
+              ),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('abrir'));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byIcon(Icons.add_a_photo_outlined));
+      await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+      });
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Digite o nome do pet'),
+        'Rex',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex.: 12,5'),
+        '12,5',
+      );
+      await tester.pump();
+
+      await tester.ensureVisible(find.text(PublishStrings.PUBLISH_BUTTON));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(PublishStrings.PUBLISH_BUTTON));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(PublishStrings.CONTINUE_BUTTON));
+      await tester.pumpAndSettle();
+
+      expect(find.text(PublishStrings.PET_PUBLISHED), findsOneWidget);
+      await tester.tap(find.text(SharedStrings.OK));
+      await tester.pumpAndSettle();
+
+      final petId = storage.uploadedPetId;
+      expect(petId, isNotNull);
+      final petDoc = await db.collection('pets').doc(petId!).get();
+      expect(petDoc.data()!['weight'], 12.5);
+    });
   });
 
   group('WGPublishPetForm em modo edição', () {
@@ -501,7 +644,7 @@ void main() {
       AppImageCache.instance.debugManager = null;
     });
 
-    Pet createEditPet({String description = 'Muito dócil.'}) {
+    Pet createEditPet({String description = 'Muito dócil.', double? weight}) {
       return Pet(
         id: 'pet_001',
         ownerId: 'user_001',
@@ -516,6 +659,7 @@ void main() {
         publicationType: AppPetPublicationType.lost,
         species: AppPetSpecies.dog,
         race: 'Poodle',
+        weight: weight,
         images: ['a.png'],
       );
     }
@@ -545,6 +689,16 @@ void main() {
       expect(find.text('Cachorro'), findsWidgets);
       // Telefone com a máscara aplicada.
       expect(find.text('(11) 98765-4321'), findsWidgets);
+    });
+
+    testWidgets('pré-preenche o peso na edição quando informado', (
+      tester,
+    ) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: WGPublishPetForm(pet: createEditPet(weight: 12.5))),
+      ));
+
+      expect(find.text('12,5'), findsOneWidget);
     });
 
     testWidgets('botão "Salvar Alterações" começa verde (formulário válido)', (

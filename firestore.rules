@@ -67,6 +67,8 @@ service cloud.firestore {
         && (!('publicationType' in doc) || isNonEmptyString(doc.publicationType))
         && (!('species' in doc) || isNonEmptyString(doc.species))
         && (!('race' in doc) || doc.race is string)
+        && (!('weight' in doc)
+          || (doc.weight is number && doc.weight > 0 && doc.weight <= 200))
         && (!('images' in doc) || doc.images is list)
         && (!('searchTokens' in doc) || isValidSearchTokens(doc.searchTokens))
         && (!('specifications' in doc) || doc.specifications is list)

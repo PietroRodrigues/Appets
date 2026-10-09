@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
+
 import 'package:appets/core/constants/constants_strings_profile.dart';
 import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
@@ -57,6 +59,8 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   final TextEditingController _raceController = TextEditingController();
 
+  final TextEditingController _weightController = TextEditingController();
+
   final TextEditingController _phoneController = TextEditingController();
 
   final TextEditingController _addressController = TextEditingController();
@@ -65,6 +69,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
 
   // Controla a navegação de foco entre os campos pelo teclado.
   final FocusNode _raceFocusNode = FocusNode();
+  final FocusNode _weightFocusNode = FocusNode();
   final FocusNode _phoneFocusNode = FocusNode();
   final FocusNode _addressFocusNode = FocusNode();
   final FocusNode _descriptionFocusNode = FocusNode();
@@ -107,6 +112,9 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
     final pet = widget.pet!;
     _nameController.text = pet.name;
     _raceController.text = pet.race;
+    _weightController.text = pet.weight != null
+        ? _formatWeightInput(pet.weight!)
+        : '';
     _phoneController.text = pet.ownerPhone;
     _addressController.text = pet.ownerAddress;
     _descriptionController.text = pet.description ?? '';
@@ -143,11 +151,13 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
   void dispose() {
     _nameController.dispose();
     _raceController.dispose();
+    _weightController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
     _descriptionController.dispose();
 
     _raceFocusNode.dispose();
+    _weightFocusNode.dispose();
     _phoneFocusNode.dispose();
     _addressFocusNode.dispose();
     _descriptionFocusNode.dispose();
@@ -236,8 +246,36 @@ class _WGPublishPetFormState extends State<WGPublishPetForm> {
       ownerAddress: _addressController.text.trim(),
       description: _descriptionController.text.trim(),
       publicationType: _selectedPublicationType,
+      weight: _parseWeight(_weightController.text.trim()),
       images: _isEditing ? widget.pet!.images : [],
     );
+  }
+
+  /// Formata o peso para o campo de texto (vírgula decimal, sem zeros).
+  String _formatWeightInput(double weight) {
+    final label = weight == weight.roundToDouble()
+        ? weight.round().toString()
+        : weight.toString().replaceAll('.', ',');
+    return label;
+  }
+
+  /// Converte o texto do campo de peso em doubles; texto inválido vira
+  /// `null` (a validação do formulário reporta o erro).
+  double? _parseWeight(String input) {
+    final cleaned = input.trim().replaceAll(',', '.');
+    if (cleaned.isEmpty) return null;
+    return double.tryParse(cleaned);
+  }
+
+  /// Valida o peso opcional: vazio passa; presente precisa ser `0 < x ≤ 200`.
+  String? _validateWeight(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return null;
+    final weight = _parseWeight(text);
+    if (weight == null || weight <= 0 || weight > 200) {
+      return PublishStrings.WEIGHT_INVALID;
+    }
+    return null;
   }
 
   /// Indica se o valor é uma URL remota (foto já existente) ou um
@@ -723,7 +761,7 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
                 focusNode: _raceFocusNode,
                 onChanged: _onFieldChanged,
                 onFieldSubmitted: (_) {
-                  _phoneFocusNode.requestFocus();
+                  _weightFocusNode.requestFocus();
                 },
               ),
 
@@ -736,6 +774,29 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
                 initialValue: _selectedAgeValue,
                 initialUnit: _selectedAgeUnit,
                 onChanged: _onAgeChanged,
+              ),
+
+              const SizedBox(height: 20),
+
+              // PESO (opcional, kg)
+              WGFieldLabel(text: PublishStrings.WEIGHT),
+
+              WGTextField(
+                controller: _weightController,
+                focusNode: _weightFocusNode,
+                hintText: PublishStrings.WEIGHT_HINT,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[\d.,]')),
+                ],
+                textInputAction: TextInputAction.next,
+                onChanged: _onFieldChanged,
+                onFieldSubmitted: (_) {
+                  _phoneFocusNode.requestFocus();
+                },
+                validator: _validateWeight,
               ),
 
               const SizedBox(height: 20),

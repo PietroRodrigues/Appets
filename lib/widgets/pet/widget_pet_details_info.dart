@@ -110,6 +110,14 @@ class WGPetDetailsInfo extends StatelessWidget {
             WGInfoRow(icon: Icons.label_outline, text: pet.race),
           ],
 
+          if (pet.weightLabel != null) ...[
+            const SizedBox(height: 14),
+            WGInfoRow(
+              icon: Icons.monitor_weight_outlined,
+              text: pet.weightLabel!,
+            ),
+          ],
+
           const SizedBox(height: 14),
 
           WGInfoRow(icon: Icons.location_on_outlined, text: pet.address),

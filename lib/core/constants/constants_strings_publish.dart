@@ -55,6 +55,13 @@ class PublishStrings {
 
   static const AGE_REQUIRED = 'Informe a idade';
 
+  static const WEIGHT = 'Peso (kg)';
+
+  static const WEIGHT_HINT = 'Ex.: 12,5';
+
+  static const WEIGHT_INVALID =
+      'Informe um peso válido entre 0 e 200 kg';
+
   static const GENDER = 'Gênero';
 
   static const ADDRESS = 'Endereço';

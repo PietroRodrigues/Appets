@@ -98,4 +98,41 @@ void main() {
       await tester.pumpAndSettle();
     });
   });
+
+  group('PetDetailsScreen → peso', () {
+    testWidgets('exibe o peso quando informado', (tester) async {
+      final base = _createTestPet();
+      final comPeso = Pet(
+        id: base.id,
+        ownerId: base.ownerId,
+        name: base.name,
+        age: base.age,
+        ageUnit: base.ageUnit,
+        gender: base.gender,
+        address: base.address,
+        description: base.description,
+        publicationType: base.publicationType,
+        species: base.species,
+        race: base.race,
+        weight: 12.5,
+        images: base.images,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: PetDetailsScreen(pet: comPeso)),
+      );
+
+      expect(find.text('12,5 kg'), findsOneWidget);
+      expect(find.byIcon(Icons.monitor_weight_outlined), findsOneWidget);
+    });
+
+    testWidgets('não exibe o peso quando não informado', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(home: PetDetailsScreen(pet: _createTestPet())),
+      );
+
+      expect(find.byIcon(Icons.monitor_weight_outlined), findsNothing);
+      expect(find.textContaining('kg'), findsNothing);
+    });
+  });
 }

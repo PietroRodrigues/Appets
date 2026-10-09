@@ -96,6 +96,26 @@ void main() {
       expect(map['createdAt'], isNotNull);
     });
 
+    test('toMap omite weight quando não informado', () {
+      expect(map.containsKey('weight'), isFalse);
+    });
+
+    test('toMap grava weight quando definido', () {
+      final comPeso = Pet(
+        id: 'pet_002',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        weight: 12.5,
+        images: [],
+      );
+
+      expect(comPeso.toMap()['weight'], 12.5);
+    });
+
     test('toMap persiste specifications (1 token por categoria, em PT)', () {
       expect(map['specifications'], ['cachorro', 'macho', 'adocao', 'jovem']);
     });
@@ -139,6 +159,24 @@ void main() {
       expect(pet.species, AppPetSpecies.dog);
       expect(pet.race, 'Poodle');
       expect(pet.images, ['a.png', 'b.png']);
+    });
+
+    test('fromMap restaura weight (double) e tolera int/ausência', () {
+      final fromDouble = Pet.fromMap('pet_001', {
+        ...map,
+        'weight': 12.5,
+      });
+      expect(fromDouble.weight, 12.5);
+
+      // Firestore pode devolver inteiros num campo numérico.
+      final fromInt = Pet.fromMap('pet_001', {
+        ...map,
+        'weight': 12,
+      });
+      expect(fromInt.weight, 12.0);
+
+      final semPeso = Pet.fromMap('pet_001', map);
+      expect(semPeso.weight, isNull);
     });
 
     test('fromMap usa padrões quando os campos de espécie/raça faltam', () {
@@ -414,6 +452,48 @@ void main() {
     });
   });
 
+  group('weightLabel extension', () {
+    test('formata peso decimal com vírgula e "kg"', () {
+      final pet = Pet(
+        id: 'pet_001',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 3,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        weight: 12.5,
+        images: [],
+      );
+
+      expect(pet.weightLabel, '12,5 kg');
+    });
+
+    test('peso inteiro sem ",0" e null quando não informado', () {
+      final inteiro = Pet(
+        id: 'pet_001',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 3,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        weight: 12,
+        images: [],
+      );
+      expect(inteiro.weightLabel, '12 kg');
+
+      final semPeso = Pet(
+        id: 'pet_001',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 3,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        images: [],
+      );
+      expect(semPeso.weightLabel, isNull);
+    });
+  });
+
   group('speciesRaceLabel extension', () {
     test('retorna apenas a espécie quando a raça não foi informada', () {
       final pet = Pet(
@@ -548,6 +628,24 @@ void main() {
 
       expect(pet.shareText, contains('Cachorro · 2 anos · Macho'));
       expect(pet.shareText, isNot(contains('· ·')));
+    });
+
+    test('inclui o peso na identidade quando informado', () {
+      const pet = Pet(
+        id: 'pet_005',
+        ownerId: 'user_001',
+        name: 'Rex',
+        age: 2,
+        ageUnit: AppPetAgeUnit.years,
+        gender: AppPetGender.male,
+        address: 'São Paulo',
+        publicationType: AppPetPublicationType.adoption,
+        species: AppPetSpecies.dog,
+        weight: 12.5,
+        images: [],
+      );
+
+      expect(pet.shareText, contains('Cachorro · 2 anos · Macho · 12,5 kg'));
     });
 
     test('sem descrição, sem endereço e sem telefone omite as linhas', () {
