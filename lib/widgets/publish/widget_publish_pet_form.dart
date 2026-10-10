@@ -362,8 +362,10 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
     final user = AuthService.instance.currentUser;
     if (user == null) return;
 
-    // Acende os erros inline dos campos antes de checar as barreiras.
-    _formKey.currentState?.validate();
+    // Acende os erros inline dos campos antes de checar as barreiras. O
+    // resultado é guardado para barrar validators de opcionais (ex.: peso
+    // inválido) sem mandar valor errado para o servidor.
+    final isValid = _formKey.currentState?.validate() ?? false;
 
     // Barreira única: junta as pendências dos campos obrigatórios (nome,
     // telefone e endereço) com a foto faltando num só aviso.
@@ -395,6 +397,11 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
         return;
       }
     }
+
+    // Só chegou aqui com obrigatórios e fotos ok; um validator de opcional
+    // (ex.: peso) falhou, os erros já estão visíveis inline e o save não
+    // segue para a rede.
+    if (!isValid) return;
 
     if (!mounted) return;
 

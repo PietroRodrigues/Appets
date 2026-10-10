@@ -15,6 +15,7 @@ import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/services/image_compressor.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
@@ -40,6 +41,23 @@ class _FailingCacheManager implements BaseCacheManager {
   // Métodos não usados pelo CachedNetworkImage nestes testes.
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+/// Aguarda [condition] virar verdadeira bombeando frames para renderizar.
+/// Usado após [WidgetTester.runAsync]: o resultado do I/O real de foto (ex.:
+/// badge "Principal") só aparece depois de um ou mais pumps, sem depender de
+/// delay fixo (que estourava a 150/200ms sob carga e tornava o teste flaky).
+Future<void> _pumpUntil(
+  WidgetTester tester,
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 5),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (DateTime.now().isBefore(deadline)) {
+    await tester.pump(const Duration(milliseconds: 20));
+    if (condition()) return;
+  }
+  fail('Condição não atingida dentro de ${timeout.inSeconds}s');
 }
 
 void main() {
@@ -467,6 +485,11 @@ void main() {
         ImagePickerPlatform.instance = _PickerReturnsFile(photoPath);
         addTearDown(() => ImagePickerPlatform.instance = originalPicker);
 
+        // Compressão sem o plugin (evita I/O FFI lento nos testes); o
+        // arquivo real continua sendo lido para medir o tamanho.
+        ImageCompressor.debugCompress = (_, _) async => null;
+        addTearDown(() => ImageCompressor.debugCompress = null);
+
         // Abre o formulário como rota empurrada (o sucesso faz pop).
         await tester.pumpWidget(MaterialApp(
           home: Scaffold(
@@ -497,9 +520,13 @@ void main() {
         await tester.pumpAndSettle();
         await tester.runAsync(() async {
           await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
-          await Future<void>.delayed(const Duration(milliseconds: 150));
+          await Future<void>.delayed(const Duration(milliseconds: 1000));
         });
-        await tester.pumpAndSettle();
+        await _pumpUntil(
+          tester,
+          () =>
+              find.text(PublishStrings.MAIN_PHOTO_BADGE).evaluate().isNotEmpty,
+        );
         expect(find.text(PublishStrings.MAIN_PHOTO_BADGE), findsOneWidget);
 
         // Nome (telefone e endereço já vêm pré-preenchidos da conta).
@@ -602,9 +629,12 @@ void main() {
       await tester.pumpAndSettle();
       await tester.runAsync(() async {
         await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
-        await Future<void>.delayed(const Duration(milliseconds: 150));
+        await Future<void>.delayed(const Duration(milliseconds: 1000));
       });
-      await tester.pumpAndSettle();
+      await _pumpUntil(
+        tester,
+        () => find.text(PublishStrings.MAIN_PHOTO_BADGE).evaluate().isNotEmpty,
+      );
 
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Digite o nome do pet'),
@@ -699,6 +729,84 @@ void main() {
       ));
 
       expect(find.text('12,5'), findsOneWidget);
+    });
+
+    testWidgets('edição grava o peso informado quando o pet não tinha', (
+      tester,
+    ) async {
+      _signInUser();
+      ConnectivityService.instance.debugOnline = true;
+      addTearDown(() => ConnectivityService.instance.debugOnline = null);
+
+      final db = FakeFirebaseFirestore();
+      FirestoreService.instance.debugDb = db;
+      PetService.instance.debugDb = db;
+      addTearDown(() {
+        FirestoreService.instance.debugDb = null;
+        PetService.instance.debugDb = null;
+      });
+
+      final pet = _editPetWithoutWeight();
+      await db.collection('pets').doc(pet.id).set(pet.toMap());
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: WGPublishPetForm(pet: pet)),
+      ));
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex.: 12,5'),
+        '12,5',
+      );
+      await tester.pump();
+
+      await tester.ensureVisible(find.text('Salvar Alterações'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Salvar Alterações'));
+      await tester.pumpAndSettle();
+
+      final snap = await db.collection('pets').doc(pet.id).get();
+      expect(snap.data()!['weight'], 12.5);
+    });
+
+    testWidgets('peso inválido na edição não atualiza o doc nem abre erro', (
+      tester,
+    ) async {
+      _signInUser();
+      ConnectivityService.instance.debugOnline = true;
+      addTearDown(() => ConnectivityService.instance.debugOnline = null);
+
+      final db = FakeFirebaseFirestore();
+      FirestoreService.instance.debugDb = db;
+      PetService.instance.debugDb = db;
+      addTearDown(() {
+        FirestoreService.instance.debugDb = null;
+        PetService.instance.debugDb = null;
+      });
+
+      final pet = _editPetWithoutWeight();
+      await db.collection('pets').doc(pet.id).set(pet.toMap());
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(body: WGPublishPetForm(pet: pet)),
+      ));
+
+      // Peso acima do limite permitido (0 < x ≤ 200).
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Ex.: 12,5'),
+        '300',
+      );
+      await tester.pump();
+
+      await tester.ensureVisible(find.text('Salvar Alterações'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Salvar Alterações'));
+      await tester.pumpAndSettle();
+
+      // Erro inline no campo; nada foi para a rede (sem janela/erro).
+      expect(find.text(PublishStrings.WEIGHT_INVALID), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+      final snap = await db.collection('pets').doc(pet.id).get();
+      expect(snap.data()!.containsKey('weight'), isFalse);
     });
 
     testWidgets('botão "Salvar Alterações" começa verde (formulário válido)', (
@@ -972,9 +1080,12 @@ void main() {
       await tester.pumpAndSettle();
       await tester.runAsync(() async {
         await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
-        await Future<void>.delayed(const Duration(milliseconds: 200));
+        await Future<void>.delayed(const Duration(milliseconds: 1000));
       });
-      await tester.pumpAndSettle();
+      await _pumpUntil(
+        tester,
+        () => find.text(PublishStrings.photoSlotLabel(2)).evaluate().isEmpty,
+      );
 
       // Salvar: o commit falha e o erro é informado.
       await tester.ensureVisible(find.text('Salvar Alterações'));
@@ -1003,6 +1114,26 @@ List<String> _networkImages(int count) {
   return [
     for (int i = 0; i < count; i++) 'https://exemplo.com/foto_$i.jpg',
   ];
+}
+
+/// Pet de edição com imagem remota e sem peso, para os testes de peso.
+Pet _editPetWithoutWeight() {
+  return Pet(
+    id: 'pet_001',
+    ownerId: 'user_test_001',
+    name: 'Rex',
+    age: 2,
+    ageUnit: AppPetAgeUnit.years,
+    gender: AppPetGender.male,
+    address: 'São Paulo',
+    ownerPhone: '(11) 98765-4321',
+    ownerAddress: 'São Paulo',
+    description: 'Muito dócil.',
+    publicationType: AppPetPublicationType.lost,
+    species: AppPetSpecies.dog,
+    race: 'Poodle',
+    images: _networkImages(1),
+  );
 }
 
 /// Loga um usuário de teste no AuthService (abortado no fim do teste).

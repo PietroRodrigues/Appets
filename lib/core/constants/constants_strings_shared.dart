@@ -28,6 +28,10 @@ class SharedStrings {
   static const NO_CONNECTION_DESCRIPTION =
       'Você está offline. Verifique sua conexão e tente novamente.';
 
+  // Sem permissão para a operação (regras do Firestore/Storage).
+  static const PERMISSION_DENIED_HINT =
+      'Você não tem permissão para executar esta operação.';
+
   static const CONNECTION_RESTORED = 'Conexão estabelecida';
 
   static const LOAD_DATA_ERROR_TITLE = 'Não foi possível carregar os dados';

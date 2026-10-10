@@ -43,22 +43,45 @@ class WGProcessResult {
   /// Stack trace da exceção original (se conhecido).
   final StackTrace? stackTrace;
 
-  /// Mensagem amigável acompanhada da causa técnica resumida, para que o
-  /// usuário saiba qual erro realmente ocorreu.
+  /// Mensagem amigável ao usuário final, sem detalhes técnicos da exceção.
+  /// Quando a causa é reconhecível (ex.: falha de rede), acrescenta uma
+  /// dica curta e compreensível para o usuário agir.
   String get userFacingMessage {
     final text = message ?? '';
-    final raw = cause;
-    if (raw == null) return text;
+    final hint = _friendlyCauseHint(cause);
+    if (hint == null || hint.isEmpty) return text;
+    return '$text\n\n$hint';
+  }
 
-    var detail = raw.toString().trim();
-    final firstLine = detail.indexOf('\n');
-    if (firstLine > 0) detail = detail.substring(0, firstLine);
-    const maxLength = 140;
-    if (detail.length > maxLength) {
-      detail = '${detail.substring(0, maxLength)}…';
+  /// Indicadores de falha de rede reconhecidos em [Object.toString].
+  static const List<String> _networkSigns = [
+    'SocketException',
+    '[cloud_firestore/unavailable]',
+    '[firebase_auth/network-request-failed]',
+    'Host not found',
+    'Connection failed',
+    'network error',
+  ];
+
+  /// Indicadores de erro de permissão reconhecidos em [Object.toString].
+  static const List<String> _permissionSigns = [
+    'permission-denied',
+    'permission denied',
+    '[firebase_storage/unauthorized]',
+  ];
+
+  /// Converte causas conhecidas em dicas curtas para o usuário final.
+  /// Causas não reconhecidas retornam `null` (mantém só [message]).
+  static String? _friendlyCauseHint(Object? raw) {
+    if (raw == null) return null;
+    final detail = raw.toString();
+    if (_networkSigns.any(detail.contains)) {
+      return SharedStrings.NO_CONNECTION_DESCRIPTION;
     }
-
-    return '$text\n\nErro: $detail';
+    if (_permissionSigns.any(detail.contains)) {
+      return SharedStrings.PERMISSION_DENIED_HINT;
+    }
+    return null;
   }
 }
 

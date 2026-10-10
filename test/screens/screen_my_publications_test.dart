@@ -215,7 +215,6 @@ void main() {
       find.textContaining(HomeStrings.DELETE_PET_ERROR),
       findsOneWidget,
     );
-    expect(find.textContaining('falha no servidor'), findsOneWidget);
     expect((await db.collection('pets').doc(pet.id).get()).data(), isNotNull);
     expect(MyPublicationsService.instance.current, contains(pet.id));
   });

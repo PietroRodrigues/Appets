@@ -142,31 +142,52 @@ class WGSkeletonPetCard extends StatelessWidget {
                 child: const WGSkeletonBox(borderRadius: 0),
               ),
               // INFORMAÇÕES
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Nome
-                    const WGSkeletonBox(width: 140, height: 16),
-                    const SizedBox(height: 8),
-                    // Espécie · raça
-                    const WGSkeletonBox(width: 92, height: 12),
-                    const SizedBox(height: 12),
-                    // Idade + gênero
-                    Row(
-                      children: const [
-                        WGSkeletonBox(width: 12, height: 12, borderRadius: 6),
-                        SizedBox(width: 8),
-                        WGSkeletonBox(width: 36, height: 12),
-                        SizedBox(width: 12),
-                        WGSkeletonBox(width: 16, height: 16, borderRadius: 8),
+              //
+              // O bloco de infos ocupa o espaço restante (`Expanded`) e o
+              // `FittedBox(scaleDown)` garante que os blocos de tamanho fixo
+              // caibam em qualquer altura de card (grade de 2 colunas produz
+              // cards mais baixos) sem estourar o layout. Com espaço de sobra
+              // a escala é 1:1 (visual inalterado).
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.topLeft,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Nome
+                        const WGSkeletonBox(width: 140, height: 16),
+                        const SizedBox(height: 8),
+                        // Espécie · raça
+                        const WGSkeletonBox(width: 92, height: 12),
+                        const SizedBox(height: 12),
+                        // Idade + gênero
+                        Row(
+                          children: const [
+                            WGSkeletonBox(
+                              width: 12,
+                              height: 12,
+                              borderRadius: 6,
+                            ),
+                            SizedBox(width: 8),
+                            WGSkeletonBox(width: 36, height: 12),
+                            SizedBox(width: 12),
+                            WGSkeletonBox(
+                              width: 16,
+                              height: 16,
+                              borderRadius: 8,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        // Chip do tipo de publicação
+                        const WGSkeletonBox(width: 64, height: 20),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    // Chip do tipo de publicação
-                    const WGSkeletonBox(width: 64, height: 20),
-                  ],
+                  ),
                 ),
               ),
             ],

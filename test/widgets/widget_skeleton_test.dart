@@ -113,4 +113,38 @@ void main() {
       },
     );
   });
+
+  group('WGSkeletonPetGrid · sem overflow em várias larguras (item 30)', () {
+    Future<void> expectNoOverflowAt(WidgetTester tester, Size size) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: WGSkeletonPetGrid())),
+      );
+      await tester.pump();
+
+      // Overflow do RenderFlex viraria exceção capturada aqui (e falharia a
+      // expect) — a regressão do "erro de pixel" é detectada automaticamente.
+      expect(tester.takeException(), isNull);
+      expect(find.byType(WGSkeletonPetCard), findsWidgets);
+    }
+
+    testWidgets('1 coluna em 320×480', (tester) async {
+      await expectNoOverflowAt(tester, const Size(320, 480));
+    });
+
+    testWidgets('2 colunas em 360×640 (cards baixos)', (tester) async {
+      await expectNoOverflowAt(tester, const Size(360, 640));
+    });
+
+    testWidgets('3 colunas em 800×600', (tester) async {
+      await expectNoOverflowAt(tester, const Size(800, 600));
+    });
+
+    testWidgets('1 coluna muito baixa em 200×600 (escala mínima)', (tester) async {
+      await expectNoOverflowAt(tester, const Size(200, 600));
+    });
+  });
 }

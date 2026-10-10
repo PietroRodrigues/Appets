@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -196,7 +197,7 @@ void main() {
       expect(result.userFacingMessage, 'Deu errado.');
     });
 
-    test('com causa anexa o erro em uma linha truncada', () {
+    test('causa desconhecida não vaza detalhe técnico', () {
       final result = WGProcessResult.failure(
         'Deu errado.',
         cause: StateError(
@@ -204,11 +205,33 @@ void main() {
         ),
       );
 
-      final text = result.userFacingMessage;
-      expect(text, startsWith('Deu errado.\n\nErro: '));
-      expect(text, contains('Linha um.'));
-      expect(text, endsWith('…'));
-      expect(text, isNot(contains('linha dois')));
+      expect(result.userFacingMessage, 'Deu errado.');
+    });
+
+    test('causa de rede acrescenta dica amigável', () {
+      final result = WGProcessResult.failure(
+        'Deu errado.',
+        cause: SocketException('Network is unreachable'),
+      );
+
+      expect(
+        result.userFacingMessage,
+        'Deu errado.\n\n${SharedStrings.NO_CONNECTION_DESCRIPTION}',
+      );
+    });
+
+    test('causa de permissão acrescenta dica amigável', () {
+      final result = WGProcessResult.failure(
+        'Deu errado.',
+        cause: Exception(
+          '[cloud_firestore/permission-denied] sem permissão para escrever',
+        ),
+      );
+
+      expect(
+        result.userFacingMessage,
+        'Deu errado.\n\n${SharedStrings.PERMISSION_DENIED_HINT}',
+      );
     });
   });
 }
