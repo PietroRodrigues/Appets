@@ -24,10 +24,10 @@ class WGFilterChipsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 40,
+      height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         itemCount: options.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
@@ -72,8 +72,8 @@ class _FilterChip extends StatelessWidget {
             onPressed: () => onRemove(option),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(
-              minWidth: 28,
-              minHeight: 28,
+              minWidth: 48,
+              minHeight: 48,
             ),
             icon: const Icon(
               Icons.close,

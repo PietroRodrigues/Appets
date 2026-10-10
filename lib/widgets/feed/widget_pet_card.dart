@@ -227,6 +227,10 @@ class _PetCardImage extends StatelessWidget {
             scale: scale,
             child: IconButton(
               onPressed: onFavoritePressed,
+              constraints: const BoxConstraints(
+                minWidth: 48,
+                minHeight: 48,
+              ),
               tooltip: favorited
                   ? PetDetailsStrings.REMOVE_FROM_FAVORITES
                   : PetDetailsStrings.ADD_TO_FAVORITES,
@@ -344,24 +348,27 @@ class _PetCardEditButton extends StatelessWidget {
       right: 10,
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: ThemeColors.primary,
-            shape: BoxShape.circle,
-            boxShadow: const [
-              BoxShadow(
-                color: ThemeColors.shadowCard,
-                blurRadius: 6,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.edit_outlined,
-            color: ThemeColors.onPrimary,
-            size: 22,
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: ThemeColors.primary,
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(
+                  color: ThemeColors.shadowCard,
+                  blurRadius: 6,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.edit_outlined,
+              color: ThemeColors.onPrimary,
+              size: 22,
+            ),
           ),
         ),
       ),
@@ -384,26 +391,29 @@ class _PetCardDeleteButton extends StatelessWidget {
       right: 10,
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: ThemeColors.primary,
-            shape: BoxShape.circle,
-            boxShadow: const [
-              BoxShadow(
-                color: ThemeColors.shadowCard,
-                blurRadius: 6,
-                offset: Offset(0, 3),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: ThemeColors.primary,
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(
+                  color: ThemeColors.shadowCard,
+                  blurRadius: 6,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Tooltip(
+              message: HomeStrings.DELETE_PET,
+              child: const Icon(
+                Icons.close,
+                color: ThemeColors.onPrimary,
+                size: 16,
               ),
-            ],
-          ),
-          child: Tooltip(
-            message: HomeStrings.DELETE_PET,
-            child: const Icon(
-              Icons.close,
-              color: ThemeColors.onPrimary,
-              size: 16,
             ),
           ),
         ),

@@ -349,5 +349,54 @@ void main() {
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
     });
+
+    testWidgets('alvo de toque de editar/excluir é ≥ 48px', (tester) async {
+      final pet = _createTestPet();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPetCard(pet: pet, isMyPublication: true)),
+        ),
+      );
+
+      final editSize = tester.getSize(
+        find.ancestor(
+          of: find.byIcon(Icons.edit_outlined),
+          matching: find.byType(GestureDetector),
+        ),
+      );
+      final deleteSize = tester.getSize(
+        find.ancestor(
+          of: find.byIcon(Icons.close),
+          matching: find.byType(GestureDetector),
+        ),
+      );
+
+      expect(editSize.width, greaterThanOrEqualTo(48));
+      expect(editSize.height, greaterThanOrEqualTo(48));
+      expect(deleteSize.width, greaterThanOrEqualTo(48));
+      expect(deleteSize.height, greaterThanOrEqualTo(48));
+    });
+
+    testWidgets('alvo de toque da estrela é ≥ 48px', (tester) async {
+      final pet = _createTestPet();
+      FavoritesService.instance.favoriteIds.value = {pet.id};
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPetCard(pet: pet)),
+        ),
+      );
+
+      final starSize = tester.getSize(
+        find.ancestor(
+          of: find.byIcon(Icons.star_rounded),
+          matching: find.byType(IconButton),
+        ),
+      );
+
+      expect(starSize.width, greaterThanOrEqualTo(48));
+      expect(starSize.height, greaterThanOrEqualTo(48));
+    });
   });
 }

@@ -3,8 +3,28 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_publish.dart';
+import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/widgets/publish/widget_image_slots_grid.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
+
+/// Cache que falha na hora: faz o CachedNetworkImage cair no placeholder
+/// imediatamente, sem rede e sem animação infinita nos testes.
+class _FailingCacheManager implements BaseCacheManager {
+  @override
+  Stream<FileResponse> getFileStream(
+    String url, {
+    String? key,
+    Map<String, String>? headers,
+    bool withProgress = false,
+  }) {
+    return Stream<FileResponse>.error(StateError('rede indisponível em testes'));
+  }
+
+  // Métodos não usados pelo CachedNetworkImage neste teste.
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
 
 /// Wraper básico para renderizar o grid isolado.
 Widget _host() {
@@ -62,6 +82,37 @@ void main() {
 
       expect(find.byType(AlertDialog), findsNothing);
       expect(find.text(PublishStrings.MAIN_PHOTO_BADGE), findsNothing);
+    });
+
+    testWidgets('alvo de toque do X de remover foto é ≥ 48px', (tester) async {
+      AppImageCache.instance.debugManager = _FailingCacheManager();
+      addTearDown(() => AppImageCache.instance.debugManager = null);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WGImageSlotsGrid(
+              initialImageUrls: [
+                'https://firebasestorage.googleapis.com/foto.jpg',
+              ],
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final size = tester.getSize(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.close),
+              matching: find.byType(GestureDetector),
+            )
+            .first,
+      );
+
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
     });
   });
 }

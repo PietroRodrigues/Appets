@@ -277,16 +277,19 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
             right: 4,
             child: GestureDetector(
               onTap: () => _confirmImageRemoval(index),
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: ThemeColors.scrimDark,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.close,
-                  color: ThemeColors.white,
-                  size: 16,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: ThemeColors.scrimDark,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: ThemeColors.white,
+                    size: 16,
+                  ),
                 ),
               ),
             ),

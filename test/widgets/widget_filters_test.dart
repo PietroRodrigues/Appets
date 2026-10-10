@@ -365,6 +365,29 @@ void main() {
 
       expect(removed, same(option));
     });
+
+    testWidgets('X do chip tem alvo de toque ≥ 48px', (tester) async {
+      final option = PetFilterOptions.ageOptions.first;
+
+      await tester.pumpWidget(
+        wrap(
+          WGFilterChipsBar(
+            options: [option],
+            onRemove: _noopRemove,
+          ),
+        ),
+      );
+
+      final size = tester.getSize(
+        find.ancestor(
+          of: find.byIcon(Icons.close),
+          matching: find.byType(IconButton),
+        ),
+      );
+
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
+    });
   });
 }
 
