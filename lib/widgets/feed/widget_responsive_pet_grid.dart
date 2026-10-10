@@ -623,7 +623,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     }
 
     if (_isLoading || (_items.isEmpty && _isLoadingMore)) {
-      return const Center(child: CircularProgressIndicator());
+      return const WGSkeletonPetGrid();
     }
 
     if (_hasError && _items.isEmpty) {
