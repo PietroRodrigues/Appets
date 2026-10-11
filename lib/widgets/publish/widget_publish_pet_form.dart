@@ -10,7 +10,7 @@ import 'package:appets/core/services/image_compressor.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/core/validators/validators.dart';
@@ -390,7 +390,7 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
         message: PublishStrings.EMPTY_DESCRIPTION_MESSAGE,
         confirmLabel: PublishStrings.CONTINUE_BUTTON,
         cancelLabel: PublishStrings.FILL_BUTTON,
-        confirmColor: ThemeColors.primary,
+        confirmColor: context.appColors.primary,
       );
       if (!shouldContinue) {
         if (mounted) _descriptionFocusNode.requestFocus();
@@ -564,7 +564,7 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
             context,
             title: SharedStrings.ERROR_TITLE,
             message: result!.userFacingMessage,
-            actionColor: ThemeColors.error,
+            actionColor: context.appColors.error,
           );
         }
       case WGProcessStatus.canceled:
@@ -732,9 +732,9 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
 
               DropdownButtonFormField<AppPetSpecies>(
                 initialValue: _selectedSpecies,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   filled: true,
-                  fillColor: ThemeColors.surface,
+                  fillColor: context.appColors.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(12)),
                     borderSide: BorderSide.none,
@@ -882,8 +882,8 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
                 onPressed: _savePet,
 
                 backgroundColor: _isFormComplete
-                    ? ThemeColors.success
-                    : ThemeColors.disabled,
+                    ? context.appColors.success
+                    : context.appColors.disabled,
               ),
 
               // Dica da barreira de fotos: só aparece quando a foto é o
@@ -892,8 +892,8 @@ Future<({List<String> finalImages, List<String> uploadedUrls, List<String> remov
                 const SizedBox(height: 8),
                 Text(
                   PublishStrings.PHOTO_REQUIRED_HINT,
-                  style: ThemeTextStyles.caption.copyWith(
-                    color: ThemeColors.textSecondary,
+                  style: ThemeTextStyles.caption(context.appColors).copyWith(
+                    color: context.appColors.textSecondary,
                   ),
                 ),
               ],

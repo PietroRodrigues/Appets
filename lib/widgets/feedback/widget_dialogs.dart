@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings_shared.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/fields/widget_text_field.dart';
 
@@ -48,7 +48,7 @@ class WGDialog extends StatefulWidget {
     required this.confirmLabel,
     this.cancelLabel = SharedStrings.NO,
     this.messageHighlight,
-    this.confirmColor = ThemeColors.error,
+    this.confirmColor,
     this.actionIcon,
     this.hintText,
     this.prefixIcon,
@@ -82,8 +82,9 @@ class WGDialog extends StatefulWidget {
   /// Rótulo do botão de cancelamento (apenas quando [isConfirmation]).
   final String cancelLabel;
 
-  /// Cor do botão de confirmação/ação.
-  final Color confirmColor;
+  /// Cor do botão de confirmação/ação. Quando nula, usa a cor padrão
+  /// (erro nos diálogos de confirmação, primária no modo de texto).
+  final Color? confirmColor;
 
   /// Ícone opcional no botão de ação única.
   final IconData? actionIcon;
@@ -113,7 +114,7 @@ class WGDialog extends StatefulWidget {
     String confirmLabel = SharedStrings.YES,
     String cancelLabel = SharedStrings.NO,
     String? messageHighlight,
-    Color confirmColor = ThemeColors.error,
+    Color? confirmColor,
   }) async {
     final result = await showDialog<bool>(
       context: context,
@@ -124,7 +125,7 @@ class WGDialog extends StatefulWidget {
         confirmLabel: confirmLabel,
         cancelLabel: cancelLabel,
         isConfirmation: true,
-        confirmColor: confirmColor,
+        confirmColor: confirmColor ?? context.appColors.error,
       ),
     );
     return result == true;
@@ -138,7 +139,7 @@ class WGDialog extends StatefulWidget {
     required String message,
     String actionLabel = SharedStrings.OK,
     IconData? actionIcon,
-    Color actionColor = ThemeColors.success,
+    Color? actionColor,
   }) async {
     final result = await showDialog<bool>(
       context: context,
@@ -148,7 +149,7 @@ class WGDialog extends StatefulWidget {
         confirmLabel: actionLabel,
         actionIcon: actionIcon,
         isConfirmation: false,
-        confirmColor: actionColor,
+        confirmColor: actionColor ?? context.appColors.success,
       ),
     );
     return result ?? false;
@@ -167,7 +168,7 @@ class WGDialog extends StatefulWidget {
     bool obscureText = false,
     FormFieldValidator<String>? validator,
     String? errorMessage,
-    Color confirmColor = ThemeColors.primary,
+    Color? confirmColor,
   }) {
     return showDialog<String>(
       context: context,
@@ -177,7 +178,7 @@ class WGDialog extends StatefulWidget {
         confirmLabel: confirmLabel,
         cancelLabel: cancelLabel,
         isConfirmation: true,
-        confirmColor: confirmColor,
+        confirmColor: confirmColor ?? context.appColors.primary,
         hintText: hintText,
         prefixIcon: prefixIcon,
         obscureText: obscureText,
@@ -219,15 +220,16 @@ class _WGDialogState extends State<WGDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final confirmColor = widget.confirmColor ?? context.appColors.error;
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(widget.title, style: ThemeTextStyles.heading),
+      title: Text(widget.title, style: ThemeTextStyles.heading(context.appColors)),
       content: _buildContent(),
       actions: [
         if (widget.isConfirmation)
-          _buildButtonsRow()
+          _buildButtonsRow(confirmColor)
         else
-          _buildSingleAction(),
+          _buildSingleAction(confirmColor),
       ],
     );
   }
@@ -260,8 +262,8 @@ class _WGDialogState extends State<WGDialog> {
             const SizedBox(height: 8),
             Text(
               widget.errorMessage!,
-              style: ThemeTextStyles.caption.copyWith(
-                color: ThemeColors.error,
+              style: ThemeTextStyles.caption(context.appColors).copyWith(
+                color: context.appColors.error,
               ),
             ),
           ],
@@ -279,12 +281,12 @@ class _WGDialogState extends State<WGDialog> {
         : widget.message.toLowerCase().indexOf(highlight.toLowerCase());
 
     if (highlightIndex < 0 || highlight!.isEmpty) {
-      return Text(widget.message, style: ThemeTextStyles.body);
+      return Text(widget.message, style: ThemeTextStyles.body(context.appColors));
     }
 
     return Text.rich(
       TextSpan(
-        style: ThemeTextStyles.body,
+        style: ThemeTextStyles.body(context.appColors),
         children: [
           TextSpan(text: widget.message.substring(0, highlightIndex)),
           TextSpan(
@@ -292,8 +294,8 @@ class _WGDialogState extends State<WGDialog> {
               highlightIndex,
               highlightIndex + highlight.length,
             ),
-            style: ThemeTextStyles.body.copyWith(
-              color: ThemeColors.error,
+            style: ThemeTextStyles.body(context.appColors).copyWith(
+              color: context.appColors.error,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -307,8 +309,8 @@ class _WGDialogState extends State<WGDialog> {
 
   /// Linha com dois botões iguais, lado a lado: cancelar (contorno) e
   /// confirmar (preenchido).
-  Widget _buildButtonsRow() {
-    final onConfirm = ThemeColors.onColor(widget.confirmColor);
+  Widget _buildButtonsRow(Color confirmColor) {
+    final onConfirm = context.appColors.onColor(confirmColor);
     return Row(
       children: [
         Expanded(
@@ -316,7 +318,7 @@ class _WGDialogState extends State<WGDialog> {
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               side: BorderSide(
-                color: ThemeColors.textSecondary,
+                color: context.appColors.textSecondary,
                 width: 1.5,
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -330,7 +332,7 @@ class _WGDialogState extends State<WGDialog> {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: ThemeTextStyles.button.copyWith(
-                color: ThemeColors.textSecondary,
+                color: context.appColors.textSecondary,
               ),
             ),
           ),
@@ -340,7 +342,7 @@ class _WGDialogState extends State<WGDialog> {
           child: FilledButton(
             onPressed: () => _hasField ? _submitField() : Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-              backgroundColor: widget.confirmColor,
+              backgroundColor: confirmColor,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -360,12 +362,12 @@ class _WGDialogState extends State<WGDialog> {
   }
 
   /// Botão único de ação, com texto (e ícone opcional) centralizado.
-  Widget _buildSingleAction() {
-    final onConfirm = ThemeColors.onColor(widget.confirmColor);
+  Widget _buildSingleAction(Color confirmColor) {
+    final onConfirm = context.appColors.onColor(confirmColor);
     return FilledButton(
       onPressed: () => Navigator.pop(context, true),
       style: FilledButton.styleFrom(
-        backgroundColor: widget.confirmColor,
+        backgroundColor: confirmColor,
         minimumSize: const Size(double.infinity, 48),
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(

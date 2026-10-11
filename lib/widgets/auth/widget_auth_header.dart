@@ -1,5 +1,5 @@
 import 'package:appets/core/constants/constants_strings_shared.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/display/widget_logo.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,15 @@ class WGAuthHeader extends StatelessWidget {
   const WGAuthHeader.auth({super.key, this.headline, this.spacing = 24})
     : logoWidth = 240,
       description = '',
-      textColor = ThemeColors.onPrimary;
+      textColor = _authTextColor;
+
+  /// Cor do texto padrão dos cabeçalhos `.auth` sobre o laranja: creme
+  /// [AppColors.onPrimary], idêntico nas paletas clara e escura.
+  ///
+  /// Declarada como literal porque um default de construtor `const` precisa
+  /// ser uma expressão constante e não pode acessar a propriedade de outra
+  /// constante (ex.: `AppColors.light.onPrimary`).
+  static const Color _authTextColor = Color(0xFFF5E2C7);
 
   final double logoWidth;
   final String? headline;
@@ -30,7 +38,7 @@ class WGAuthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = textColor ?? ThemeColors.textPrimary;
+    final effectiveColor = textColor ?? context.appColors.textPrimary;
 
     return Column(
       children: [
@@ -42,7 +50,9 @@ class WGAuthHeader extends StatelessWidget {
           Text(
             headline!,
             textAlign: TextAlign.center,
-            style: ThemeTextStyles.title.copyWith(color: effectiveColor),
+            style: ThemeTextStyles.title(
+              context.appColors,
+            ).copyWith(color: effectiveColor),
           ),
 
           const SizedBox(height: 12),
@@ -52,7 +62,9 @@ class WGAuthHeader extends StatelessWidget {
           Text(
             description,
             textAlign: TextAlign.center,
-            style: ThemeTextStyles.heading.copyWith(color: effectiveColor),
+            style: ThemeTextStyles.heading(
+              context.appColors,
+            ).copyWith(color: effectiveColor),
           ),
       ],
     );

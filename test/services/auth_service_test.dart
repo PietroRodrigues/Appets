@@ -2,7 +2,9 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:firebase_auth_mocks/src/mock_user_credential.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
@@ -22,6 +24,86 @@ class _ThrowingGoogleSignIn extends GoogleSignIn {
   @override
   Future<GoogleSignInAccount?> signOut() async =>
       throw StateError('google fora');
+}
+
+/// GoogleSignIn cujo seletor de conta é cancelado (devolve null).
+class _CancelGoogleSignIn extends GoogleSignIn {
+  @override
+  Future<GoogleSignInAccount?> signIn() async => null;
+}
+
+/// Plataforma Google falsa: simula o `signIn` e o `getTokens` nativos sem
+/// MethodChannel. Usada com um [GoogleSignIn] real, que monta a
+/// [GoogleSignInAccount] a partir do [GoogleSignInUserData].
+class _FakeGooglePlatform extends GoogleSignInPlatform {
+  _FakeGooglePlatform({
+    this.userData,
+    this.tokenData,
+    this.failSignIn = false,
+    this.failTokens = false,
+  });
+
+  /// Dados do usuário devolvidos pelo `signIn` (null = sem conta).
+  final GoogleSignInUserData? userData;
+
+  /// Tokens devolvidos pelo `getTokens`.
+  final GoogleSignInTokenData? tokenData;
+
+  /// Quando `true`, o `signIn` lança (ex.: erro de rede do Google).
+  final bool failSignIn;
+
+  /// Quando `true`, o `getTokens` lança (ex.: sessão do Google expirada).
+  final bool failTokens;
+
+  @override
+  Future<void> initWithParams(SignInInitParameters params) async {}
+
+  @override
+  Future<GoogleSignInUserData?> signIn() async {
+    if (failSignIn) throw StateError('google fora do ar');
+    return userData;
+  }
+
+  @override
+  Future<GoogleSignInTokenData> getTokens({
+    required String email,
+    bool? shouldRecoverAuth,
+  }) async {
+    if (failTokens) throw StateError('tokens indisponíveis');
+    return tokenData ?? GoogleSignInTokenData();
+  }
+
+  @override
+  Future<void> signOut() async {}
+}
+
+/// MockUser que conta a reautenticação e guarda a credencial recebida.
+class _TrackingReauthUser extends MockUser {
+  _TrackingReauthUser({super.uid, super.email});
+
+  int reauthCalls = 0;
+  AuthCredential? lastCredential;
+
+  @override
+  Future<UserCredential> reauthenticateWithCredential(
+    AuthCredential? credential,
+  ) {
+    reauthCalls++;
+    lastCredential = credential;
+    return Future.value(MockUserCredential(false, mockUser: this));
+  }
+}
+
+/// MockUser cuja reautenticação falha: conta Google diferente da logada.
+class _MismatchReauthUser extends MockUser {
+  _MismatchReauthUser({super.uid, super.email});
+
+  @override
+  Future<UserCredential> reauthenticateWithCredential(
+    AuthCredential? credential,
+  ) async {
+    throw FirebaseAuthException(code: 'user-mismatch');
+  }
 }
 
 /// MockUser que conta as chamadas de updateEmail.
@@ -118,6 +200,144 @@ void main() {
 
     test('sendPasswordResetEmail conclui sem erro', () async {
       await service.sendPasswordResetEmail('a@test.com');
+    });
+
+    test('loginWithGoogle devolve null quando o usuário cancela', () async {
+      service.debugGoogle = _CancelGoogleSignIn();
+
+      expect(await service.loginWithGoogle(), isNull);
+    });
+  });
+
+  group('AuthService · login com Google (fluxo completo)', () {
+    GoogleSignInUserData googleUserData() => GoogleSignInUserData(
+          email: 'ana@gmail.com',
+          id: 'google_1',
+          displayName: 'Ana Google',
+          idToken: 'id-token-1',
+        );
+
+    GoogleSignInTokenData googleTokenData() => GoogleSignInTokenData(
+          idToken: 'id-token-1',
+          accessToken: 'access-token-1',
+        );
+
+    void useFakePlatform({
+      GoogleSignInUserData? userData,
+      GoogleSignInTokenData? tokenData,
+      bool failSignIn = false,
+      bool failTokens = false,
+    }) {
+      final original = GoogleSignInPlatform.instance;
+      GoogleSignInPlatform.instance = _FakeGooglePlatform(
+        userData: userData,
+        tokenData: tokenData,
+        failSignIn: failSignIn,
+        failTokens: failTokens,
+      );
+      addTearDown(() => GoogleSignInPlatform.instance = original);
+    }
+
+    test('loginWithGoogle autentica com tokens e credencial do Google',
+        () async {
+      useFakePlatform(userData: googleUserData(), tokenData: googleTokenData());
+      service.debugGoogle = GoogleSignIn();
+
+      final credential = await service.loginWithGoogle();
+
+      expect(credential, isNotNull);
+      expect(credential!.user, isNotNull);
+      expect(service.currentUser, isNotNull);
+    });
+
+    test('loginWithGoogle propaga erro do signIn do Google', () async {
+      useFakePlatform(userData: googleUserData(), failSignIn: true);
+      service.debugGoogle = GoogleSignIn();
+
+      await expectLater(
+        service.loginWithGoogle(),
+        throwsA(isA<StateError>()),
+      );
+      expect(service.currentUser, isNull);
+    });
+
+    test('loginWithGoogle propaga erro ao obter os tokens', () async {
+      useFakePlatform(userData: googleUserData(), failTokens: true);
+      service.debugGoogle = GoogleSignIn();
+
+      await expectLater(
+        service.loginWithGoogle(),
+        throwsA(isA<StateError>()),
+      );
+      expect(service.currentUser, isNull);
+    });
+
+    test('reauthenticateWithGoogle cancelado devolve false', () async {
+      service.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'uid_1', email: 'ana@test.com'),
+      );
+      service.debugGoogle = _CancelGoogleSignIn();
+
+      expect(await service.reauthenticateWithGoogle(), isFalse);
+    });
+
+    test('reauthenticateWithGoogle reautentica com a credencial do Google',
+        () async {
+      useFakePlatform(userData: googleUserData(), tokenData: googleTokenData());
+      final user = _TrackingReauthUser(uid: 'uid_1', email: 'ana@gmail.com');
+      service.debugAuth = MockFirebaseAuth(signedIn: true, mockUser: user);
+      service.debugGoogle = GoogleSignIn();
+
+      expect(await service.reauthenticateWithGoogle(), isTrue);
+      expect(user.reauthCalls, 1);
+      expect(user.lastCredential, isA<AuthCredential>());
+      expect(
+        user.lastCredential!.providerId,
+        'google.com',
+        reason: 'A reautenticação deve usar o provedor Google.',
+      );
+    });
+
+    test('reauthenticateWithGoogle com conta diferente lança user-mismatch',
+        () async {
+      useFakePlatform(userData: googleUserData(), tokenData: googleTokenData());
+      final user = _MismatchReauthUser(uid: 'uid_1', email: 'ana@gmail.com');
+      service.debugAuth = MockFirebaseAuth(signedIn: true, mockUser: user);
+      service.debugGoogle = GoogleSignIn();
+
+      await expectLater(
+        service.reauthenticateWithGoogle(),
+        throwsA(
+          isA<FirebaseAuthException>().having(
+            (e) => e.code,
+            'code',
+            'user-mismatch',
+          ),
+        ),
+      );
+    });
+  });
+
+  group('AuthService · authStateChanges', () {
+    test('emite o usuário logado no stream', () async {
+      service.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'uid_1', email: 'a@test.com'),
+      );
+
+      final user = await service.authStateChanges.first;
+
+      expect(user, isNotNull);
+      expect(user!.uid, 'uid_1');
+    });
+
+    test('emite null sem usuário logado', () async {
+      service.debugAuth = MockFirebaseAuth();
+
+      final user = await service.authStateChanges.first;
+
+      expect(user, isNull);
     });
   });
 

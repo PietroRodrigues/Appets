@@ -49,7 +49,7 @@ void main() {
     };
   }
 
-  group('WGSkeletonPetGrid · esqueleto de carregamento (item 30)', () {
+  group('WGSkeletonPetGrid · esqueleto de carregamento', () {
     testWidgets('renderiza cards placeholder em grade com pulso', (
       tester,
     ) async {
@@ -80,9 +80,30 @@ void main() {
       expect(find.byType(WGSkeletonPetCard), findsNWidgets(6));
       expect(tester.hasRunningAnimations, isFalse);
     });
+
+    testWidgets('esqueleto é excluído da árvore semântica (a11y)', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: WGSkeletonPetGrid())),
+      );
+      await tester.pump();
+
+      // O esqueleto é ruído visual para leitores de tela: a grade fica
+      // dentro de um ExcludeSemantics e não expõe nenhum nó com rótulo.
+      final excludeFinder = find.ancestor(
+        of: find.byType(GridView),
+        matching: find.byType(ExcludeSemantics),
+      );
+      expect(excludeFinder, findsOneWidget);
+      expect(tester.getSemantics(excludeFinder).label, isEmpty);
+
+      handle.dispose();
+    });
   });
 
-  group('WGResponsivePetGrid · loading inicial usa skeleton (item 30)', () {
+  group('WGResponsivePetGrid · loading inicial usa skeleton', () {
     testWidgets(
       'mostra o esqueleto durante o loading e some quando os pets chegam',
       (tester) async {
@@ -114,7 +135,7 @@ void main() {
     );
   });
 
-  group('WGSkeletonPetGrid · sem overflow em várias larguras (item 30)', () {
+  group('WGSkeletonPetGrid · sem overflow em várias larguras', () {
     Future<void> expectNoOverflowAt(WidgetTester tester, Size size) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1.0;

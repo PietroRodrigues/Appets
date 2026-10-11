@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/connectivity_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// Chave da faixa colorida (usada nos testes).
@@ -126,9 +126,10 @@ class _BannerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final isOffline = message == SharedStrings.NO_CONNECTION;
-    final background = isOffline ? ThemeColors.error : ThemeColors.success;
-    final foreground = ThemeColors.onColor(background);
+    final background = isOffline ? colors.error : colors.success;
+    final foreground = colors.onColor(background);
     final icon = isOffline ? Icons.wifi_off : Icons.wifi;
 
     return Container(
@@ -144,7 +145,7 @@ class _BannerBar extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             message,
-            style: ThemeTextStyles.body.copyWith(
+            style: ThemeTextStyles.body(colors).copyWith(
               color: foreground,
               fontSize: 12,
               fontWeight: FontWeight.w500,

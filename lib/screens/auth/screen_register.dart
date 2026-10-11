@@ -2,7 +2,7 @@ import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/user_model.dart';
@@ -133,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
             context,
             title: SharedStrings.ERROR_TITLE,
             message: result!.message!,
-            actionColor: ThemeColors.error,
+            actionColor: context.appColors.error,
           );
         }
       case WGProcessStatus.canceled:
@@ -192,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
           WGTextField(
             controller: _nameController,
             label: AuthStrings.REGISTER_NAME_LABEL,
-            labelStyle: ThemeTextStyles.authBody,
+            labelStyle: ThemeTextStyles.authBody(),
             hintText: AuthStrings.REGISTER_NAME_HINT,
             textInputAction: TextInputAction.next,
             prefixIcon: Icons.person_outline,
@@ -216,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
           WGPasswordField(
             controller: _passwordController,
             label: AuthStrings.PASSWORD,
-            labelStyle: ThemeTextStyles.authBody,
+            labelStyle: ThemeTextStyles.authBody(),
             hintText: AuthStrings.PASSWORD_HINT,
             textInputAction: TextInputAction.next,
             validator: (value) {
@@ -236,7 +236,7 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
           WGPasswordField(
             controller: _confirmPasswordController,
             label: AuthStrings.CONFIRM_PASSWORD,
-            labelStyle: ThemeTextStyles.authBody,
+            labelStyle: ThemeTextStyles.authBody(),
             hintText: AuthStrings.CONFIRM_PASSWORD_HINT,
             textInputAction: TextInputAction.done,
             validator: (value) {

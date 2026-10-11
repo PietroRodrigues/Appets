@@ -1,7 +1,7 @@
 import 'package:appets/core/constants/constants_assets.dart';
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/utils/pet_filters_controller.dart';
 import 'package:appets/widgets/filters/widget_filter_chips_bar.dart';
@@ -169,8 +169,8 @@ class _WGPageHeaderState extends State<WGPageHeader> {
       children: [
         Container(
           width: double.infinity,
-          decoration: const BoxDecoration(
-            color: ThemeColors.primary,
+          decoration: BoxDecoration(
+            color: context.appColors.primary,
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
           ),
           child: SafeArea(
@@ -187,18 +187,19 @@ class _WGPageHeaderState extends State<WGPageHeader> {
                         widget.userName != null
                             ? HomeStrings.helloUser(widget.userName!)
                             : widget.title!,
-                        style: ThemeTextStyles.heading.copyWith(
-                          color: ThemeColors.onPrimary,
-                          fontSize: 24,
-                        ),
+                        style: ThemeTextStyles.heading(context.appColors)
+                            .copyWith(
+                              color: context.appColors.onPrimary,
+                              fontSize: 24,
+                            ),
                       ),
                       if (widget.description != null) ...[
                         const SizedBox(height: 4),
                         Text(
                           widget.description!,
-                          style: ThemeTextStyles.caption.copyWith(
-                            color: ThemeColors.onPrimary,
-                          ),
+                          style: ThemeTextStyles.caption(
+                            context.appColors,
+                          ).copyWith(color: context.appColors.onPrimary),
                         ),
                       ],
                       if (widget.showSearchBar) ...[

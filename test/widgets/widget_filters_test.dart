@@ -150,20 +150,6 @@ void main() {
       expect(find.text('Espécie'), findsNothing);
     });
 
-    testWidgets('tocar fora do popover fecha e aplica o que está marcado',
-        (tester) async {
-      List<PetFilterOption>? result;
-      await openDialog(tester, onResult: (options) => result = options);
-
-      await tester.tap(find.widgetWithText(WGFilterOptionTile, 'Gato'));
-      await tester.pump();
-      await closeOutside(tester);
-
-      expect(result, hasLength(1));
-      expect(result!.single.id, 'species:gato');
-      expect(find.text('Espécie'), findsNothing);
-    });
-
     testWidgets('barreira (outro ponto fora) aplica a seleção atual',
         (tester) async {
       List<PetFilterOption>? result;

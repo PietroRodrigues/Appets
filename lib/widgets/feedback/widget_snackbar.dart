@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// SnackBar padrão do app (feedback leve), no formato tipado do [WGDialog].
@@ -12,15 +12,15 @@ class WGSnackBar {
 
   /// Aviso de erro (fundo vermelho).
   static void showError(BuildContext context, String message) =>
-      _show(context, message, ThemeColors.error);
+      _show(context, message, context.appColors.error);
 
   /// Confirmação de sucesso (fundo verde).
   static void showSuccess(BuildContext context, String message) =>
-      _show(context, message, ThemeColors.success);
+      _show(context, message, context.appColors.success);
 
   /// Informativo neutro (fundo azul).
   static void showInfo(BuildContext context, String message) =>
-      _show(context, message, ThemeColors.info);
+      _show(context, message, context.appColors.info);
 
   static void _show(BuildContext context, String message, Color color) {
     ScaffoldMessenger.of(context)
@@ -34,8 +34,8 @@ class WGSnackBar {
           ),
           content: Text(
             message,
-            style: ThemeTextStyles.body.copyWith(
-              color: ThemeColors.onColor(color),
+            style: ThemeTextStyles.body(context.appColors).copyWith(
+              color: context.appColors.onColor(color),
             ),
           ),
         ),

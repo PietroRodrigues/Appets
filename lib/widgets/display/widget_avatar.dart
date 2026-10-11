@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 
 /// Avatar circular do usuário, com imagem opcional e ação ao tocar.
 ///
@@ -89,7 +89,7 @@ class _WGAvatarState extends State<WGAvatar> {
       ),
       child: CircleAvatar(
         radius: widget.radius,
-        backgroundColor: ThemeColors.primary,
+        backgroundColor: context.appColors.primary,
         backgroundImage: showFallback ? null : _imageProvider(),
         onBackgroundImageError: showFallback
             ? null
@@ -107,7 +107,7 @@ class _WGAvatarState extends State<WGAvatar> {
         child: showFallback
             ? Icon(
                 Icons.person,
-                color: ThemeColors.onPrimary,
+                color: context.appColors.onPrimary,
                 size: widget.radius * 0.9,
               )
             : null,

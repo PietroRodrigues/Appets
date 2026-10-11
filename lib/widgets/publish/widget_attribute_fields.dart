@@ -1,5 +1,5 @@
 import 'package:appets/core/constants/constants_strings_publish.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:flutter/material.dart';
 
@@ -66,10 +66,10 @@ class _WGAgeFieldsState extends State<WGAgeFields> {
   // UI
 
   /// Decoração padronizada dos dropdowns.
-  InputDecoration get _decoration {
+  InputDecoration _decoration(AppColors colors) {
     return InputDecoration(
       filled: true,
-      fillColor: ThemeColors.surface,
+      fillColor: colors.surface,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -86,7 +86,7 @@ class _WGAgeFieldsState extends State<WGAgeFields> {
           flex: 1,
           child: DropdownButtonFormField<int>(
             initialValue: _selectedValue,
-            decoration: _decoration,
+            decoration: _decoration(context.appColors),
             onChanged: (value) {
               setState(() {
                 _selectedValue = value;
@@ -112,7 +112,7 @@ class _WGAgeFieldsState extends State<WGAgeFields> {
           flex: 1,
           child: DropdownButtonFormField<AppPetAgeUnit>(
             initialValue: _selectedUnit,
-            decoration: _decoration,
+            decoration: _decoration(context.appColors),
             onChanged: (unit) {
               setState(() {
                 _selectedUnit = unit ?? AppPetAgeUnit.years;
@@ -162,7 +162,7 @@ class WGGenderFields extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               title: Text(AppPetGender.male.label),
               value: AppPetGender.male,
-              activeColor: ThemeColors.primary,
+              activeColor: context.appColors.primary,
             ),
           ),
 
@@ -171,7 +171,7 @@ class WGGenderFields extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               title: Text(AppPetGender.female.label),
               value: AppPetGender.female,
-              activeColor: ThemeColors.primary,
+              activeColor: context.appColors.primary,
             ),
           ),
         ],

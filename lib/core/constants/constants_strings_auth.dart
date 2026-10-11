@@ -21,6 +21,10 @@ class AuthStrings {
 
   static const PASSWORD_MIN_LENGTH = 'A senha deve ter no mínimo 6 caracteres';
 
+  static const SHOW_PASSWORD = 'Mostrar senha';
+
+  static const HIDE_PASSWORD = 'Ocultar senha';
+
   static const FORGOT_PASSWORD = 'Esqueci minha senha';
 
   static const LOGIN_BUTTON = 'Entrar';

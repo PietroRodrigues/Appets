@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/constants/constants_assets.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/widgets/feedback/widget_loading.dart';
@@ -177,7 +177,7 @@ class _WGProcessLoadingScreenState extends State<WGProcessLoadingScreen> {
     return PopScope<Object?>(
       canPop: false,
       child: Scaffold(
-        backgroundColor: ThemeColors.primary,
+        backgroundColor: context.appColors.primary,
         body: SafeArea(
           child: Center(
             child: Column(
@@ -192,7 +192,7 @@ class _WGProcessLoadingScreenState extends State<WGProcessLoadingScreen> {
                 Text(
                   widget.message,
                   textAlign: TextAlign.center,
-                  style: ThemeTextStyles.authBody,
+                  style: ThemeTextStyles.authBody(context.appColors),
                 ),
                 const SizedBox(height: 24),
                 const WGLoading(),

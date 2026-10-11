@@ -19,7 +19,7 @@ import 'package:appets/core/services/image_compressor.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/core/services/storage_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/models/user_model.dart';
@@ -142,7 +142,7 @@ void main() {
     ) async {
       await tester.pumpWidget(createTestWidget());
 
-      expect(publishButtonColor(tester), ThemeColors.disabled);
+      expect(publishButtonColor(tester), AppColors.light.disabled);
     });
 
     testWidgets('botão fica cinza sem foto mesmo com formulário preenchido', (
@@ -168,7 +168,7 @@ void main() {
       await tester.pump();
 
       // Sem fotos, o botão permanece cinza (barreira de fotos).
-      expect(publishButtonColor(tester), ThemeColors.disabled);
+      expect(publishButtonColor(tester), AppColors.light.disabled);
     });
 
     testWidgets('exibe dica de foto obrigatória quando falta apenas a foto', (
@@ -216,7 +216,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(publishButtonColor(tester), ThemeColors.disabled);
+      expect(publishButtonColor(tester), AppColors.light.disabled);
     });
 
     testWidgets('publicar sem foto mostra aviso em vez de falhar em silêncio', (
@@ -821,7 +821,7 @@ void main() {
         ),
       );
       final color = button.style?.backgroundColor?.resolve(<WidgetState>{});
-      expect(color, ThemeColors.success);
+      expect(color, AppColors.light.success);
     });
 
     testWidgets('carrega as fotos existentes do pet nos slots', (tester) async {
@@ -896,7 +896,7 @@ void main() {
       // Começa verde (formulário completo com foto).
       expect(
         saveButton().style?.backgroundColor?.resolve(<WidgetState>{}),
-        ThemeColors.success,
+        AppColors.light.success,
       );
 
       // Remove a foto: X -> confirmar "Sim".
@@ -908,7 +908,7 @@ void main() {
       // Sem fotos, o botão fica cinza e a dica da foto aparece.
       expect(
         saveButton().style?.backgroundColor?.resolve(<WidgetState>{}),
-        ThemeColors.disabled,
+        AppColors.light.disabled,
       );
       expect(find.text(PublishStrings.PHOTO_REQUIRED_HINT), findsOneWidget);
     });

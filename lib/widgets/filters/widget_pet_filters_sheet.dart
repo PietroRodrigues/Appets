@@ -1,5 +1,5 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/utils/storage_tokens.dart';
 import 'package:appets/models/enums/enums_app.dart';
@@ -113,24 +113,27 @@ class WGFilterOptionTile extends StatelessWidget {
                   width: 20,
                   height: 20,
                   decoration: BoxDecoration(
-                    color: value ? ThemeColors.primary : null,
+                    color: value ? context.appColors.primary : null,
                     border: Border.all(
-                      color: ThemeColors.primary,
+                      color: context.appColors.primary,
                       width: 1.6,
                     ),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: value
-                      ? const Icon(
+                      ? Icon(
                           Icons.check,
                           size: 16,
-                          color: ThemeColors.onPrimary,
+                          color: context.appColors.onPrimary,
                         )
                       : null,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(label, style: ThemeTextStyles.body),
+                  child: Text(
+                    label,
+                    style: ThemeTextStyles.body(context.appColors),
+                  ),
                 ),
               ],
             ),
@@ -189,7 +192,7 @@ class WGPetFiltersDialog extends StatefulWidget {
       barrierDismissible: false,
       barrierLabel:
           MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      barrierColor: ThemeColors.scrimDark,
+      barrierColor: context.appColors.scrimDark,
       transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (_, _, _) =>
           WGPetFiltersDialog(initialOptions: initialOptions, anchorRect: anchorRect),
@@ -316,16 +319,16 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 2),
           child: Text(
             _categoryLabel(category),
-            style: ThemeTextStyles.caption.copyWith(
+            style: ThemeTextStyles.caption(context.appColors).copyWith(
               fontWeight: FontWeight.w600,
-              color: ThemeColors.textSecondary,
+              color: context.appColors.textSecondary,
             ),
           ),
         ),
-        const Divider(
+        Divider(
           height: 1,
           thickness: 1,
-          color: ThemeColors.divider,
+          color: context.appColors.divider,
           indent: 16,
           endIndent: 16,
         ),
@@ -392,7 +395,7 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
                     end: Offset.zero,
                   ).animate(_entranceCurved),
                   child: Material(
-                    color: ThemeColors.background,
+                    color: context.appColors.background,
                     elevation: 6,
                     borderRadius: BorderRadius.circular(18),
                     clipBehavior: Clip.antiAlias,
@@ -401,7 +404,7 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
                     children: [
                       // ── "Limpar tudo" (à esquerda) + Fechar X (à direita) ────
                       Material(
-                        color: ThemeColors.primary,
+                        color: context.appColors.primary,
                         child: Row(
                           children: [
                             // "Limpar tudo": tocar limpa tudo.
@@ -416,8 +419,8 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
                                   ),
                                   child: Text(
                                     HomeStrings.FILTER_CLEAR_ALL,
-                                    style: ThemeTextStyles.caption.copyWith(
-                                      color: ThemeColors.onPrimary,
+                                    style: ThemeTextStyles.caption(context.appColors).copyWith(
+                                      color: context.appColors.onPrimary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -428,9 +431,9 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
                             IconButton(
                               onPressed: _closeApplying,
                               tooltip: HomeStrings.FILTER_CLOSE,
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.close,
-                                color: ThemeColors.onPrimary,
+                                color: context.appColors.onPrimary,
                                 size: 20,
                               ),
                               padding: EdgeInsets.zero,

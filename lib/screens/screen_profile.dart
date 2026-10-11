@@ -8,7 +8,7 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/user_model.dart';
@@ -147,9 +147,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           WGAvatar(
                             radius: 45,
                             imageUrl: _user?.photoUrl,
-                            borderColor: ThemeColors.primary,
+                            borderColor: context.appColors.primary,
                             borderWidth: 3,
-                            shadowColor: ThemeColors.shadowButton,
+                            shadowColor: context.appColors.shadowButton,
                             shadowBlurRadius: 8,
                           ),
 
@@ -171,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _user?.name ??
                             AuthService.instance.currentUser?.displayName ??
                             HomeStrings.DEFAULT_USER_NAME,
-                        style: ThemeTextStyles.heading,
+                        style: ThemeTextStyles.heading(context.appColors),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -228,18 +228,22 @@ class _ProfileEditBadge extends StatelessWidget {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: ThemeColors.primary,
+          color: context.appColors.primary,
           shape: BoxShape.circle,
-          border: Border.all(color: ThemeColors.white, width: 2),
+          border: Border.all(color: context.appColors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: ThemeColors.shadowButton,
+              color: context.appColors.shadowButton,
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: const Icon(Icons.edit, color: ThemeColors.onPrimary, size: 16),
+        child: Icon(
+          Icons.edit,
+          color: context.appColors.onPrimary,
+          size: 16,
+        ),
       ),
     );
   }

@@ -1,14 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:appets/core/constants/constants_strings_auth.dart';
+import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/screens/auth/screen_login.dart';
+import 'package:appets/widgets/feedback/widget_process.dart';
 
 // Os mocks do firebase_auth_mocks já declaram campos não-finais.
 // ignore_for_file: must_be_immutable
@@ -21,6 +25,27 @@ class _CreateFailDb extends FakeFirebaseFirestore {
   CollectionReference<Map<String, dynamic>> collection(String path) {
     throw StateError('firestore-write-failed');
   }
+}
+
+/// Auth cujo login com e-mail/senha sempre falha com [code].
+class _FailingLoginAuth extends MockFirebaseAuth {
+  _FailingLoginAuth(this.code);
+
+  final String code;
+
+  @override
+  Future<UserCredential> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    throw FirebaseAuthException(code: code);
+  }
+}
+
+/// GoogleSignIn cujo seletor de conta é cancelado (devolve null).
+class _CancelGoogleSignIn extends GoogleSignIn {
+  @override
+  Future<GoogleSignInAccount?> signIn() async => null;
 }
 
 /// Auth já com um usuário conhecido: o sign-in devolve o mesmo `uid_1`.
@@ -37,6 +62,9 @@ Widget _buildApp() {
     routes: {
       AppRoutes.login: (_) => const LoginScreen(),
       AppRoutes.home: (_) => const Scaffold(body: Text('payload_home')),
+      AppRoutes.register: (_) => const Scaffold(body: Text('payload_register')),
+      AppRoutes.forgotPassword: (_) =>
+          const Scaffold(body: Text('payload_forgot')),
     },
   );
 }
@@ -143,5 +171,108 @@ void main() {
 
     // Continua na tela de login, pronto para nova tentativa.
     expect(find.text(AuthStrings.LOGIN_BUTTON), findsOneWidget);
+  });
+
+  group('validação do formulário', () {
+    testWidgets('formulário vazio mostra os erros sem chamar o Firebase',
+        (tester) async {
+      await _pumpLogin(tester);
+
+      await _tapLogin(tester);
+
+      expect(find.text(AuthStrings.EMAIL_REQUIRED), findsOneWidget);
+      expect(find.text(AuthStrings.PASSWORD_REQUIRED), findsOneWidget);
+      expect(find.byType(WGProcessLoadingScreen), findsNothing);
+      expect(find.text('payload_home'), findsNothing);
+    });
+
+    testWidgets('e-mail com formato inválido mostra o erro específico',
+        (tester) async {
+      await _pumpLogin(tester);
+
+      await _fillForm(tester, email: 'nao-e-email');
+      await _tapLogin(tester);
+
+      expect(find.text(AuthStrings.EMAIL_INVALID), findsOneWidget);
+      expect(find.text('payload_home'), findsNothing);
+    });
+
+    testWidgets('senha com menos de 6 caracteres mostra o erro de tamanho',
+        (tester) async {
+      await _pumpLogin(tester);
+
+      await _fillForm(tester, password: '123');
+      await _tapLogin(tester);
+
+      expect(find.text(AuthStrings.PASSWORD_MIN_LENGTH), findsOneWidget);
+      expect(find.text('payload_home'), findsNothing);
+    });
+  });
+
+  group('erros de autenticação', () {
+    testWidgets('usuário inexistente mostra a mensagem específica', (
+      tester,
+    ) async {
+      AuthService.instance.debugAuth = _FailingLoginAuth('user-not-found');
+
+      await _pumpLogin(tester);
+      await _fillForm(tester);
+      await _tapLogin(tester);
+
+      expect(find.text(SharedStrings.ERROR_TITLE), findsOneWidget);
+      expect(find.text(AuthStrings.USER_NOT_FOUND), findsOneWidget);
+      expect(find.text('payload_home'), findsNothing);
+    });
+
+    testWidgets('credencial inválida mostra a mensagem específica', (
+      tester,
+    ) async {
+      AuthService.instance.debugAuth = _FailingLoginAuth('invalid-credential');
+
+      await _pumpLogin(tester);
+      await _fillForm(tester);
+      await _tapLogin(tester);
+
+      expect(find.text(AuthStrings.INVALID_CREDENTIALS), findsOneWidget);
+      expect(find.text('payload_home'), findsNothing);
+    });
+
+    testWidgets('login com Google cancelado avisa e não navega', (
+      tester,
+    ) async {
+      AuthService.instance.debugGoogle = _CancelGoogleSignIn();
+
+      await _pumpLogin(tester);
+
+      await tester.ensureVisible(find.text(AuthStrings.GOOGLE_LOGIN));
+      await tester.tap(find.text(AuthStrings.GOOGLE_LOGIN));
+      await tester.pumpAndSettle();
+
+      expect(find.text(SharedStrings.NOTICE_TITLE), findsOneWidget);
+      expect(find.text(AuthStrings.GOOGLE_LOGIN_CANCELED), findsOneWidget);
+      expect(find.text('payload_home'), findsNothing);
+    });
+  });
+
+  group('navegação', () {
+    testWidgets('"Criar Conta" abre a tela de cadastro', (tester) async {
+      await _pumpLogin(tester);
+
+      await tester.ensureVisible(find.text(AuthStrings.CREATE_ACCOUNT));
+      await tester.tap(find.text(AuthStrings.CREATE_ACCOUNT));
+      await tester.pumpAndSettle();
+
+      expect(find.text('payload_register'), findsOneWidget);
+    });
+
+    testWidgets('"Esqueci minha senha" abre a recuperação', (tester) async {
+      await _pumpLogin(tester);
+
+      await tester.ensureVisible(find.text(AuthStrings.FORGOT_PASSWORD));
+      await tester.tap(find.text(AuthStrings.FORGOT_PASSWORD));
+      await tester.pumpAndSettle();
+
+      expect(find.text('payload_forgot'), findsOneWidget);
+    });
   });
 }

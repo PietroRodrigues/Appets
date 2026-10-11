@@ -1,4 +1,5 @@
 import 'package:appets/core/constants/constants_strings_auth.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/fields/widget_text_field.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +33,7 @@ class WGEmailField extends StatelessWidget {
       controller: controller,
       focusNode: focusNode,
       label: AuthStrings.EMAIL,
-      labelStyle: ThemeTextStyles.authBody,
+      labelStyle: ThemeTextStyles.authBody(context.appColors),
       hintText: AuthStrings.EMAIL_HINT,
       keyboardType: TextInputType.emailAddress,
       prefixIcon: Icons.email_outlined,

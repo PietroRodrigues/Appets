@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/image_compressor.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -183,17 +183,17 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
   }
 
   // UI
-  Widget _buildSlot(int index) {
+  Widget _buildSlot(int index, AppColors colors) {
     final isMainImage = index == 0;
     final hasImage = index < _imagePaths.length;
     final accentColor = hasImage
-        ? ThemeColors.success
+        ? colors.success
         : isMainImage
-        ? ThemeColors.primary
-        : ThemeColors.border;
+        ? colors.primary
+        : colors.border;
 
     return Material(
-      color: ThemeColors.surface,
+      color: colors.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: hasImage
@@ -209,15 +209,15 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
             ),
           ),
           child: hasImage
-              ? _buildImagePreview(index, isMainImage)
-              : _buildPlaceholder(isMainImage, index),
+              ? _buildImagePreview(index, isMainImage, colors)
+              : _buildPlaceholder(isMainImage, index, colors),
         ),
       ),
     );
   }
 
   /// Miniatura da imagem do slot (URL remota ou arquivo local).
-  Widget _buildImagePreview(int index, bool isMainImage) {
+  Widget _buildImagePreview(int index, bool isMainImage, AppColors colors) {
     final value = _imagePaths[index];
 
     final Widget image = _isNetworkUrl(value)
@@ -227,14 +227,14 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
             memCacheWidth: 480,
             fit: BoxFit.cover,
             errorWidget: (_, _, _) =>
-                _buildMissingImage(ThemeColors.border),
-            placeholder: (_, _) => const Center(
+                _buildMissingImage(colors.border, colors),
+            placeholder: (_, _) => Center(
               child: SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: ThemeColors.primary,
+                  color: colors.primary,
                 ),
               ),
             ),
@@ -243,7 +243,7 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
             File(value),
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) =>
-                _buildMissingImage(ThemeColors.border),
+                _buildMissingImage(colors.border, colors),
           );
 
     return ClipRRect(
@@ -259,13 +259,13 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: ThemeColors.primary,
+                  color: colors.primary,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
+                child: Text(
                   PublishStrings.MAIN_PHOTO_BADGE,
                   style: TextStyle(
-                    color: ThemeColors.onPrimary,
+                    color: colors.onPrimary,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
@@ -282,12 +282,12 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
                 child: Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
-                    color: ThemeColors.scrimDark,
+                    color: colors.scrimDark,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.close,
-                    color: ThemeColors.white,
+                    color: colors.white,
                     size: 16,
                   ),
                 ),
@@ -300,21 +300,21 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
   }
 
   /// Placeholder exibido quando uma imagem não consegue carregar.
-  Widget _buildMissingImage(Color color) {
+  Widget _buildMissingImage(Color color, AppColors colors) {
     return ColoredBox(
-      color: ThemeColors.surface,
+      color: colors.surface,
       child: Icon(Icons.pets, size: 32, color: color),
     );
   }
 
   /// Placeholder vazio com ícone e texto.
-  Widget _buildPlaceholder(bool isMainImage, int index) {
+  Widget _buildPlaceholder(bool isMainImage, int index, AppColors colors) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(
           Icons.add_a_photo_outlined,
-          color: isMainImage ? ThemeColors.primary : ThemeColors.hint,
+          color: isMainImage ? colors.primary : colors.hint,
           size: 28,
         ),
         const SizedBox(height: 8),
@@ -323,10 +323,10 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
               ? PublishStrings.MAIN_PHOTO_SLOT
               : PublishStrings.photoSlotLabel(index + 1),
           textAlign: TextAlign.center,
-          style: ThemeTextStyles.caption.copyWith(
+          style: ThemeTextStyles.caption(colors).copyWith(
             color: isMainImage
-                ? ThemeColors.primary
-                : ThemeColors.textSecondary,
+                ? colors.primary
+                : colors.textSecondary,
             fontWeight: isMainImage ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
@@ -350,7 +350,7 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
             mainAxisSpacing: 12,
             childAspectRatio: 1.25,
           ),
-          itemBuilder: (context, index) => _buildSlot(index),
+          itemBuilder: (context, index) => _buildSlot(index, context.appColors),
         );
       },
     );
@@ -367,12 +367,12 @@ class _WGImageSlotsGridState extends State<WGImageSlotsGrid> {
       children: [
         // TÍTULO
         if (widget.title != null)
-          Text(widget.title!, style: ThemeTextStyles.subtitle),
+          Text(widget.title!, style: ThemeTextStyles.subtitle(context.appColors)),
 
         // DESCRIÇÃO
         if (widget.description != null) ...[
           SizedBox(height: widget.title != null ? 4 : 0),
-          Text(widget.description!, style: ThemeTextStyles.caption),
+          Text(widget.description!, style: ThemeTextStyles.caption(context.appColors)),
         ],
 
         const SizedBox(height: 12),

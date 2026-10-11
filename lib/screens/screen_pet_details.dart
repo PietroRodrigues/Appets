@@ -3,7 +3,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
@@ -81,7 +81,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         context,
         title: SharedStrings.ERROR_TITLE,
         message: PetDetailsStrings.SHARE_ERROR,
-        actionColor: ThemeColors.error,
+        actionColor: context.appColors.error,
       );
     }
   }
@@ -90,12 +90,12 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ThemeColors.background,
+      backgroundColor: context.appColors.background,
 
       appBar: AppBar(
-        backgroundColor: ThemeColors.primary,
+        backgroundColor: context.appColors.primary,
 
-        foregroundColor: ThemeColors.onPrimary,
+        foregroundColor: context.appColors.onPrimary,
 
         elevation: 0,
 
@@ -109,16 +109,16 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 : PetDetailsStrings.ADD_TO_FAVORITES,
             icon: Icon(
               _isFavorited ? Icons.star_rounded : Icons.star_border_rounded,
-              color: ThemeColors.onPrimary,
+              color: context.appColors.onPrimary,
               size: 28,
             ),
           ),
           IconButton(
             onPressed: _sharePet,
             tooltip: PetDetailsStrings.SHARE_TOOLTIP,
-            icon: const Icon(
+            icon: Icon(
               Icons.share_outlined,
-              color: ThemeColors.onPrimary,
+              color: context.appColors.onPrimary,
               size: 24,
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:appets/core/constants/constants_assets.dart';
 import 'package:appets/core/constants/constants_strings_auth.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:flutter/material.dart';
 
@@ -35,7 +35,10 @@ class WGButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final buttonForeground =
-        foregroundColor ?? ThemeColors.onColor(backgroundColor ?? ThemeColors.secondary);
+        foregroundColor ??
+        context.appColors.onColor(
+          backgroundColor ?? context.appColors.secondary,
+        );
 
     return SizedBox(
       width: width,
@@ -43,7 +46,7 @@ class WGButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? ThemeColors.secondary,
+          backgroundColor: backgroundColor ?? context.appColors.secondary,
           foregroundColor: buttonForeground,
           elevation: 3,
           shape: RoundedRectangleBorder(
@@ -98,10 +101,10 @@ class WGOutlinedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveBackground = backgroundColor ?? ThemeColors.transparent;
-    final effectiveBorder = borderColor ?? ThemeColors.primary;
-    final effectiveText = textColor ?? ThemeColors.primary;
-    final effectiveIcon = iconColor ?? ThemeColors.primary;
+    final effectiveBackground = backgroundColor ?? context.appColors.transparent;
+    final effectiveBorder = borderColor ?? context.appColors.primary;
+    final effectiveText = textColor ?? context.appColors.primary;
+    final effectiveIcon = iconColor ?? context.appColors.primary;
 
     return SizedBox(
       width: width,
@@ -157,17 +160,17 @@ class WGGoogleButton extends StatelessWidget {
         ),
         label: Text(
           text,
-          style: ThemeTextStyles.button.copyWith(color: ThemeColors.secondary),
+          style: ThemeTextStyles.button.copyWith(color: context.appColors.secondary),
         ),
         style: OutlinedButton.styleFrom(
-          backgroundColor: ThemeColors.white,
-          foregroundColor: ThemeColors.secondary,
-          side: BorderSide(color: ThemeColors.secondary, width: 1.5),
+          backgroundColor: context.appColors.surface,
+          foregroundColor: context.appColors.secondary,
+          side: BorderSide(color: context.appColors.secondary, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(28),
           ),
           elevation: 4,
-          shadowColor: ThemeColors.shadowButton,
+          shadowColor: context.appColors.shadowButton,
           padding: const EdgeInsets.symmetric(horizontal: 24),
         ),
       ),

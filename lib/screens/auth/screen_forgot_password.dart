@@ -2,8 +2,9 @@ import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/services/auth_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/core/validators/validators.dart';
 import 'package:appets/widgets/auth/widget_auth_button.dart';
 import 'package:appets/widgets/auth/widget_auth_header.dart';
 import 'package:appets/widgets/auth/widget_auth_page_layout.dart';
@@ -86,7 +87,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             context,
             title: SharedStrings.ERROR_TITLE,
             message: result!.message!,
-            actionColor: ThemeColors.error,
+            actionColor: context.appColors.error,
           );
         }
       case WGProcessStatus.canceled:
@@ -117,7 +118,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           Text(
             AuthStrings.RECOVER_DESCRIPTION,
             textAlign: TextAlign.center,
-            style: ThemeTextStyles.authBody,
+            style: ThemeTextStyles.authBody(),
           ),
 
           const SizedBox(height: 16),
@@ -126,6 +127,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           WGEmailField(
             controller: _emailController,
             textInputAction: TextInputAction.done,
+            validator: AppValidators.validateEmail,
           ),
 
           const SizedBox(height: 12),

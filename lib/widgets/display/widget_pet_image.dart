@@ -1,5 +1,5 @@
 import 'package:appets/core/services/app_image_cache.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -69,11 +69,11 @@ class _WGPetImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: ThemeColors.surface,
+      color: context.appColors.surface,
       alignment: Alignment.center,
       child: showIndicator
-          ? const CircularProgressIndicator(color: ThemeColors.primary)
-          : const Icon(Icons.pets, size: 48, color: ThemeColors.hint),
+          ? CircularProgressIndicator(color: context.appColors.primary)
+          : Icon(Icons.pets, size: 48, color: context.appColors.hint),
     );
   }
 }

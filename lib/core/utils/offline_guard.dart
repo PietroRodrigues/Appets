@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/services/connectivity_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 
 /// Guarda de rede para operações que mutam dados no back-end.
@@ -17,7 +17,7 @@ Future<bool> ensureOnline(BuildContext context) async {
     context,
     title: SharedStrings.NO_CONNECTION,
     message: SharedStrings.NO_CONNECTION_DESCRIPTION,
-    actionColor: ThemeColors.error,
+    actionColor: context.appColors.error,
   );
   return false;
 }

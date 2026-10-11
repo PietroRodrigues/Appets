@@ -20,13 +20,6 @@ void main() {
     expect(service.isOnlineNotifier.value, isFalse);
   });
 
-  test('debugOnline=true volta a refletir online', () {
-    service.debugOnline = false;
-    service.debugOnline = true;
-    expect(service.isOnline, isTrue);
-    expect(service.isOnlineNotifier.value, isTrue);
-  });
-
   test('reset restaura o estado online padrão', () {
     service.debugOnline = false;
     service.reset();

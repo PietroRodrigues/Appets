@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/widgets/fields/widget_text_field.dart';
 
 /// Campo de senha reutilizável com alternância de visibilidade.
@@ -68,6 +69,9 @@ class _WGPasswordFieldState extends State<WGPasswordField> {
 
       suffixIcon: IconButton(
         onPressed: _toggleVisibility,
+        tooltip: _obscurePassword
+            ? AuthStrings.SHOW_PASSWORD
+            : AuthStrings.HIDE_PASSWORD,
         icon: Icon(
           _obscurePassword
               ? Icons.visibility_off_outlined

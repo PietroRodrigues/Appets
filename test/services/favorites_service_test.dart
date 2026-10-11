@@ -9,6 +9,9 @@ import 'package:appets/models/user_model.dart';
 void main() {
   final service = FavoritesService.instance;
 
+  // Não remover: sem esta instância criada antes dos testes, as chamadas de
+  // `add`/`remove` do grupo isFavoriteListenable passam a falhar (a escrita
+  // no fake via `debugDb` não é reconhecida).
   FakeFirebaseFirestore();
 
   setUp(() {
@@ -25,9 +28,10 @@ void main() {
       expect(service.isFavorite('pet_a'), isFalse);
     });
 
-    test('cria novos favoritos sem notificar a categoria', () {
+    test('isFavorite reflete o conjunto do notifier global', () {
       service.favoriteIds.value = {'pet_x'};
       expect(service.isFavorite('pet_x'), isTrue);
+      expect(service.isFavorite('pet_y'), isFalse);
     });
 
     test('removeLocal remove o pet e notifica ouvintes', () {
@@ -153,6 +157,61 @@ void main() {
 
         expect(ok, isFalse);
         expect(service.favoriteIds.value, {'pet_a', 'pet_b'});
+      });
+    });
+
+    group('add/remove com erros injetados', () {
+      late FakeFirebaseFirestore db;
+
+      setUp(() async {
+        db = FakeFirebaseFirestore();
+        FirestoreService.instance.debugDb = db;
+        await db.collection('users').doc('uid_1').set({
+          'name': 'Ana',
+          'favoritePetIds': <String>['pet_a'],
+          'myPublishedPetIds': <String>[],
+        });
+      });
+
+      tearDown(() {
+        FirestoreService.instance.debugDb = null;
+        FirestoreService.instance.debugAddFavoriteError = null;
+        FirestoreService.instance.debugRemoveFavoriteError = null;
+      });
+
+      test('add com erro injetado reverte o estado e não persiste', () async {
+        FirestoreService.instance.debugAddFavoriteError = StateError('falha');
+
+        final ok = await service.add('uid_1', 'pet_b');
+
+        expect(ok, isFalse);
+        expect(service.isFavorite('pet_b'), isFalse);
+        final doc = await db.collection('users').doc('uid_1').get();
+        expect(doc.get('favoritePetIds'), ['pet_a']);
+      });
+
+      test('remove com erro injetado restaura o favorito e não persiste',
+          () async {
+        service.favoriteIds.value = {'pet_a'};
+        FirestoreService.instance.debugRemoveFavoriteError = StateError('falha');
+
+        final ok = await service.remove('uid_1', 'pet_a');
+
+        expect(ok, isFalse);
+        expect(service.isFavorite('pet_a'), isTrue);
+        final doc = await db.collection('users').doc('uid_1').get();
+        expect(doc.get('favoritePetIds'), ['pet_a']);
+      });
+
+      test('remove com sucesso persiste a remoção no Firestore', () async {
+        service.favoriteIds.value = {'pet_a'};
+
+        final ok = await service.remove('uid_1', 'pet_a');
+
+        expect(ok, isTrue);
+        expect(service.isFavorite('pet_a'), isFalse);
+        final doc = await db.collection('users').doc('uid_1').get();
+        expect(doc.get('favoritePetIds'), isEmpty);
       });
     });
 

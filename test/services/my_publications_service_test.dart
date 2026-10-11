@@ -1,12 +1,19 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
+import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/models/user_model.dart';
 
 void main() {
   final service = MyPublicationsService.instance;
+
+  // Não remover: sem esta instância criada antes dos testes, o backfill que
+  // persiste via `FieldValue.arrayUnion` falha (o cloud_firestore cacheia a
+  // fábrica de FieldValue na primeira chamada; precisa ser a do fake).
+  FakeFirebaseFirestore();
 
   setUp(() {
     service.reset();
@@ -241,6 +248,92 @@ void main() {
         await service.applyUser(user);
 
         expect(service.myPetIds.value, contains('pet_a'));
+      });
+    });
+
+    group('applyUser · backfill por ownerId', () {
+      late FakeFirebaseFirestore db;
+
+      setUp(() {
+        db = FakeFirebaseFirestore();
+        FirestoreService.instance.debugDb = db;
+        PetService.instance.debugDb = db;
+      });
+
+      tearDown(() {
+        FirestoreService.instance.debugDb = null;
+        PetService.instance.debugDb = null;
+      });
+
+      Future<void> seedUser(List<String> publishedIds) =>
+          db.collection('users').doc('uid_1').set({
+            'name': 'Ana',
+            'email': 'ana@test.com',
+            'favoritePetIds': <String>[],
+            'myPublishedPetIds': publishedIds,
+          });
+
+      Future<void> seedOwnedPet() =>
+          db.collection('pets').doc('pet_owned').set({
+            'ownerId': 'uid_1',
+            'name': 'Rex',
+            'images': <String>[],
+          });
+
+      test('mescla as publicações do dono e persiste as que faltavam',
+          () async {
+        await seedUser(<String>['pet_old']);
+        await seedOwnedPet();
+        final user = UserModel(
+          id: 'uid_1',
+          name: 'Ana',
+          email: 'ana@test.com',
+          myPublishedPetIds: const ['pet_old'],
+        );
+
+        await service.applyUser(user);
+
+        expect(service.myPetIds.value, {'pet_old', 'pet_owned'});
+        final doc = await db.collection('users').doc('uid_1').get();
+        expect(
+          doc.get('myPublishedPetIds'),
+          containsAll(<String>['pet_old', 'pet_owned']),
+        );
+      });
+
+      test('não grava quando a lista já está sincronizada', () async {
+        await seedUser(<String>['pet_owned']);
+        await seedOwnedPet();
+        final user = UserModel(
+          id: 'uid_1',
+          name: 'Ana',
+          email: 'ana@test.com',
+          myPublishedPetIds: const ['pet_owned'],
+        );
+
+        await service.applyUser(user);
+
+        expect(service.myPetIds.value, {'pet_owned'});
+        final doc = await db.collection('users').doc('uid_1').get();
+        expect(doc.get('myPublishedPetIds'), ['pet_owned']);
+      });
+
+      test('falha ao persistir o backfill mantém o estado local mesclado',
+          () async {
+        await seedUser(<String>[]);
+        await seedOwnedPet();
+        // PetService segue no fake, mas o FirestoreService perde o fake:
+        // updateUser falha e o serviço deve engolir (melhor esforço).
+        FirestoreService.instance.debugDb = null;
+        final user = UserModel(
+          id: 'uid_1',
+          name: 'Ana',
+          email: 'ana@test.com',
+        );
+
+        await service.applyUser(user);
+
+        expect(service.myPetIds.value, {'pet_owned'});
       });
     });
   });

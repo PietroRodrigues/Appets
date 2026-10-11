@@ -1,5 +1,5 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:flutter/material.dart';
@@ -23,10 +23,10 @@ class WGBottomNavigation extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         child: Material(
-          color: ThemeColors.primary,
+          color: context.appColors.primary,
           borderRadius: BorderRadius.circular(28),
           elevation: 12,
-          shadowColor: ThemeColors.shadowNav,
+          shadowColor: context.appColors.shadowNav,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
@@ -88,8 +88,8 @@ class _NavIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color itemColor = isActive
-        ? ThemeColors.navigationActive
-        : ThemeColors.navigationInactive;
+        ? context.appColors.navigationActive
+        : context.appColors.navigationInactive;
 
     final Widget item = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -104,7 +104,7 @@ class _NavIconButton extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: ThemeTextStyles.caption.copyWith(
+            style: ThemeTextStyles.caption(context.appColors).copyWith(
               fontSize: isActive ? 13.2 : 12,
               color: itemColor,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,

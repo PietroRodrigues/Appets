@@ -1,5 +1,5 @@
 import 'package:appets/core/constants/constants_strings_profile.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/fields/widget_phone_field.dart';
 import 'package:appets/widgets/fields/widget_text_field.dart';
@@ -123,10 +123,12 @@ class _WGEditableTileState extends State<WGEditableTile> {
     final highlight = widget.primary || widget.isEditing;
     return Container(
       decoration: BoxDecoration(
-        color: highlight ? ThemeColors.cardHighlight : ThemeColors.surface,
+        color: highlight
+            ? context.appColors.cardHighlight
+            : context.appColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: highlight
-            ? Border.all(color: ThemeColors.primary, width: 1.5)
+            ? Border.all(color: context.appColors.primary, width: 1.5)
             : null,
       ),
       child: InkWell(
@@ -145,12 +147,13 @@ class _WGEditableTileState extends State<WGEditableTile> {
                 width: widget.primary ? 52 : 44,
                 height: widget.primary ? 52 : 44,
                 decoration: BoxDecoration(
-                  color: ThemeColors.primarySoft,
+                  color: context.appColors.primarySoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: widget.leading ??
-                      Icon(widget.icon, color: ThemeColors.primary),
+                  child:
+                      widget.leading ??
+                      Icon(widget.icon, color: context.appColors.primary),
                 ),
               ),
 
@@ -158,7 +161,9 @@ class _WGEditableTileState extends State<WGEditableTile> {
 
               // CONTEÚDO
               Expanded(
-                child: widget.isEditing ? _buildEditor() : _buildDisplay(),
+                child: widget.isEditing
+                    ? _buildEditor(context.appColors)
+                    : _buildDisplay(context.appColors),
               ),
 
               // CADEADO: campo bloqueado (não editável).
@@ -168,7 +173,7 @@ class _WGEditableTileState extends State<WGEditableTile> {
                   child: Icon(
                     Icons.lock_outline,
                     size: 34,
-                    color: ThemeColors.hint,
+                    color: context.appColors.hint,
                   ),
                 ),
             ],
@@ -179,16 +184,15 @@ class _WGEditableTileState extends State<WGEditableTile> {
   }
 
   // Estado de exibição: título + valor atual.
-  Widget _buildDisplay() {
+  Widget _buildDisplay(AppColors colors) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           widget.title,
-          style: ThemeTextStyles.subtitle.copyWith(
-            fontSize: 15,
-            color: ThemeColors.textPrimary,
-          ),
+          style: ThemeTextStyles.subtitle(
+            colors,
+          ).copyWith(fontSize: 15, color: colors.textPrimary),
         ),
         const SizedBox(height: 2),
         Text(
@@ -197,10 +201,10 @@ class _WGEditableTileState extends State<WGEditableTile> {
               : widget.committedValue,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: ThemeTextStyles.caption.copyWith(
+          style: ThemeTextStyles.caption(colors).copyWith(
             color: widget.committedValue.isEmpty
-                ? ThemeColors.hint
-                : ThemeColors.textSecondary,
+                ? colors.hint
+                : colors.textSecondary,
           ),
         ),
       ],
@@ -208,7 +212,7 @@ class _WGEditableTileState extends State<WGEditableTile> {
   }
 
   // Estado de edição: campo de texto com foco e teclado ativo.
-  Widget _buildEditor() {
+  Widget _buildEditor(AppColors colors) {
     final field = widget.phone
         ? WGPhoneField(
             controller: _controller,
@@ -247,9 +251,9 @@ class _WGEditableTileState extends State<WGEditableTile> {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     fieldState.errorText ?? '',
-                    style: ThemeTextStyles.caption.copyWith(
-                      color: ThemeColors.error,
-                    ),
+                    style: ThemeTextStyles.caption(
+                      colors,
+                    ).copyWith(color: colors.error),
                   ),
                 ),
             ],

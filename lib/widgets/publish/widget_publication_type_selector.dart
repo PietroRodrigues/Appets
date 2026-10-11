@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/enums/enums_app.dart';
 
@@ -30,7 +30,7 @@ class WGOptionChip extends StatelessWidget {
   // UI
   @override
   Widget build(BuildContext context) {
-    final effectiveAccent = accentColor ?? ThemeColors.primary;
+    final effectiveAccent = accentColor ?? context.appColors.primary;
 
     return ChoiceChip(
       label: Text(label),
@@ -40,16 +40,16 @@ class WGOptionChip extends StatelessWidget {
       selectedColor: accentColor != null
           ? effectiveAccent.withValues(alpha: 0.15)
           : effectiveAccent,
-      backgroundColor: ThemeColors.surface,
+      backgroundColor: context.appColors.surface,
       visualDensity: VisualDensity.compact,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: isSelected ? effectiveAccent : ThemeColors.border,
+          color: isSelected ? effectiveAccent : context.appColors.border,
         ),
       ),
-      labelStyle: ThemeTextStyles.caption.copyWith(
-        color: isSelected ? effectiveAccent : ThemeColors.textSecondary,
+      labelStyle: ThemeTextStyles.caption(context.appColors).copyWith(
+        color: isSelected ? effectiveAccent : context.appColors.textSecondary,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
     );
@@ -85,7 +85,7 @@ class WGPublicationTypeSelector extends StatelessWidget {
         return WGOptionChip(
           label: type.label,
           isSelected: selectedType == type,
-          accentColor: type.color,
+          accentColor: type.color(context.appColors),
           onSelected: () => onChanged(type),
         );
       }).toList(),

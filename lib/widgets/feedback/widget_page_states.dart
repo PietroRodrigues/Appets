@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/buttons/widget_buttons.dart';
 import 'package:appets/widgets/feedback/widget_loading.dart';
@@ -38,8 +38,8 @@ class WGPageLoading extends StatelessWidget {
     final content = Column(
       children: [
         header,
-        const Expanded(
-          child: Center(child: WGLoading(color: ThemeColors.primary)),
+        Expanded(
+          child: Center(child: WGLoading(color: context.appColors.primary)),
         ),
       ],
     );
@@ -87,7 +87,7 @@ class WGErrorState extends StatelessWidget {
 
 //// Bloco placeholder retangular usado nos esqueletos de carregamento.
 ///
-/// Cor neutra ([ThemeColors.divider]) que se sobressai discretamente sobre
+/// Cor neutra ([AppColors.divider]) que se sobressai discretamente sobre
 /// o fundo creme; a "piscada" fica por conta da animação de pulso em
 /// [WGSkeletonPetGrid].
 class WGSkeletonBox extends StatelessWidget {
@@ -108,7 +108,7 @@ class WGSkeletonBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: ThemeColors.divider,
+        color: context.appColors.divider,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
@@ -125,7 +125,7 @@ class WGSkeletonPetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 3,
-      color: ThemeColors.white,
+      color: context.appColors.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: LayoutBuilder(
@@ -255,41 +255,44 @@ class _WGSkeletonPetGridState extends State<WGSkeletonPetGrid>
   @override
   Widget build(BuildContext context) {
     _ensureAnimation();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final crossAxisCount = width < 320
-            ? 1
-            : width < 700
-            ? 2
-            : 3;
-        final childAspectRatio = width < 320
-            ? 0.84
-            : width < 700
-            ? 0.68
-            : 0.74;
+    // O esqueleto é ruído para leitores de tela: ele é ignorado por completo.
+    return ExcludeSemantics(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final crossAxisCount = width < 320
+              ? 1
+              : width < 700
+              ? 2
+              : 3;
+          final childAspectRatio = width < 320
+              ? 0.84
+              : width < 700
+              ? 0.68
+              : 0.74;
 
-        return Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: width < 320 ? 10 : 14,
-            vertical: width < 320 ? 10 : 16,
-          ),
-          child: FadeTransition(
-            opacity: _pulse,
-            child: GridView.count(
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: width < 320 ? 8 : 12,
-              mainAxisSpacing: width < 320 ? 8 : 12,
-              childAspectRatio: childAspectRatio,
-              children: List.generate(
-                widget.itemCount,
-                (_) => const WGSkeletonPetCard(),
+          return Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: width < 320 ? 10 : 14,
+              vertical: width < 320 ? 10 : 16,
+            ),
+            child: FadeTransition(
+              opacity: _pulse,
+              child: GridView.count(
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: width < 320 ? 8 : 12,
+                mainAxisSpacing: width < 320 ? 8 : 12,
+                childAspectRatio: childAspectRatio,
+                children: List.generate(
+                  widget.itemCount,
+                  (_) => const WGSkeletonPetCard(),
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -324,10 +327,10 @@ class WGEmptyState extends StatelessWidget {
               width: 96,
               height: 96,
               decoration: BoxDecoration(
-                color: ThemeColors.primarySoft,
+                color: context.appColors.primarySoft,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 48, color: ThemeColors.primary),
+              child: Icon(icon, size: 48, color: context.appColors.primary),
             ),
 
             const SizedBox(height: 20),
@@ -335,7 +338,7 @@ class WGEmptyState extends StatelessWidget {
             // TÍTULO
             Text(
               title,
-              style: ThemeTextStyles.subtitle,
+              style: ThemeTextStyles.subtitle(context.appColors),
               textAlign: TextAlign.center,
             ),
 
@@ -344,8 +347,8 @@ class WGEmptyState extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 description!,
-                style: ThemeTextStyles.body.copyWith(
-                  color: ThemeColors.textSecondary,
+                style: ThemeTextStyles.body(context.appColors).copyWith(
+                  color: context.appColors.textSecondary,
                   fontSize: 14,
                 ),
                 textAlign: TextAlign.center,
@@ -360,7 +363,7 @@ class WGEmptyState extends StatelessWidget {
                 onPressed: onAction,
                 width: 220,
                 height: 46,
-                backgroundColor: ThemeColors.primary,
+                backgroundColor: context.appColors.primary,
               ),
             ],
           ],

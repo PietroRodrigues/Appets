@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 
 /// Extensões visuais do tipo de publicação do pet.
@@ -17,13 +17,13 @@ extension AppPetPublicationTypeX on AppPetPublicationType {
   }
 
   /// Cor de destaque.
-  Color get color {
+  Color color(AppColors colors) {
     switch (this) {
       case AppPetPublicationType.adoption:
-        return ThemeColors.success;
+        return colors.success;
 
       case AppPetPublicationType.lost:
-        return ThemeColors.error;
+        return colors.error;
     }
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/widgets/system/widget_system_bars_backdrop.dart';
 
 void main() {
@@ -26,7 +26,7 @@ void main() {
     final backdrop = tester.widget<Container>(
       find.byKey(statusBarBackdropKey),
     );
-    expect(backdrop.color, ThemeColors.statusBar);
+    expect(backdrop.color, AppColors.light.statusBar);
   });
 
   testWidgets('ocupa exatamente a altura da barra de status', (tester) async {
@@ -55,7 +55,7 @@ void main() {
     final backdrop = tester.widget<Container>(
       find.byKey(systemNavBarBackdropKey),
     );
-    expect(backdrop.color, ThemeColors.statusBar);
+    expect(backdrop.color, AppColors.light.statusBar);
   });
 
   testWidgets('faixa da barra de navegação ocupa a base na altura do inset',

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 
 /// Chave da faixa da barra de status (usada nos testes).
 const statusBarBackdropKey = ValueKey<String>('status_bar_backdrop');
@@ -39,7 +39,7 @@ class SystemBarsBackdrop extends StatelessWidget {
               child: Container(
                 key: statusBarBackdropKey,
                 width: double.infinity,
-                color: ThemeColors.statusBar,
+                color: context.appColors.statusBar,
               ),
             ),
           ),
@@ -53,7 +53,7 @@ class SystemBarsBackdrop extends StatelessWidget {
               child: Container(
                 key: systemNavBarBackdropKey,
                 width: double.infinity,
-                color: ThemeColors.statusBar,
+                color: context.appColors.statusBar,
               ),
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// Rótulo padronizado dos campos de formulário.
@@ -18,7 +19,7 @@ class WGFieldLabel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(text, style: ThemeTextStyles.subtitle),
+        Text(text, style: ThemeTextStyles.subtitle(context.appColors)),
 
         const SizedBox(height: 8),
       ],

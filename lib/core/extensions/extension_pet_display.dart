@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 
@@ -49,12 +49,12 @@ extension AppPetDisplayX on Pet {
   }
 
   /// Cor associada ao gênero (azul para macho, rosa para fêmea).
-  Color get genderColor {
+  Color genderColor(AppColors colors) {
     switch (gender) {
       case AppPetGender.male:
-        return ThemeColors.genderMale;
+        return colors.genderMale;
       case AppPetGender.female:
-        return ThemeColors.genderFemale;
+        return colors.genderFemale;
     }
   }
 

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
-
 /// Animação de carregamento com três bolinhas pulsantes.
 class WGLoading extends StatefulWidget {
   const WGLoading({
     super.key,
-    this.color = ThemeColors.white,
+    this.color = Colors.white,
     this.size = 10,
     this.spacing = 8,
   });
@@ -50,29 +48,34 @@ class _WGLoadingState extends State<WGLoading>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (_, _) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            return Padding(
-              padding: EdgeInsets.symmetric(horizontal: widget.spacing / 2),
-              child: Opacity(
-                opacity: _opacity(index),
-                child: Container(
-                  width: widget.size,
-                  height: widget.size,
-                  decoration: BoxDecoration(
-                    color: widget.color,
-                    shape: BoxShape.circle,
+    return Semantics(
+      // Anuncia o carregamento para leitores de tela quando ele aparece.
+      label: 'Carregando',
+      liveRegion: true,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (_, _) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(3, (index) {
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: widget.spacing / 2),
+                child: Opacity(
+                  opacity: _opacity(index),
+                  child: Container(
+                    width: widget.size,
+                    height: widget.size,
+                    decoration: BoxDecoration(
+                      color: widget.color,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
-        );
-      },
+              );
+            }),
+          );
+        },
+      ),
     );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -169,18 +169,18 @@ class _WGSearchBarState extends State<WGSearchBar> {
                       IconButton(
                         onPressed: _clear,
                         tooltip: HomeStrings.CLEAR_SEARCH,
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close,
                           size: 20,
-                          color: ThemeColors.hint,
+                          color: context.appColors.hint,
                         ),
                       ),
                     IconButton(
                       onPressed: _submit,
                       tooltip: HomeStrings.SUBMIT_SEARCH,
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.search,
-                        color: ThemeColors.primary,
+                        color: context.appColors.primary,
                       ),
                     ),
                   ],
@@ -188,7 +188,7 @@ class _WGSearchBarState extends State<WGSearchBar> {
 
                 filled: true,
 
-                fillColor: ThemeColors.surface,
+                fillColor: context.appColors.surface,
 
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
 
@@ -217,7 +217,7 @@ class _WGSearchBarState extends State<WGSearchBar> {
                 message: HomeStrings.FILTERS,
 
                 child: Material(
-                  color: ThemeColors.primary,
+                  color: context.appColors.primary,
 
                   borderRadius: BorderRadius.circular(14),
 
@@ -226,9 +226,9 @@ class _WGSearchBarState extends State<WGSearchBar> {
 
                     onTap: () => widget.onFilterPressed?.call(buttonContext),
 
-                    child: const Icon(
+                    child: Icon(
                       Icons.filter_alt,
-                      color: ThemeColors.onPrimary,
+                      color: context.appColors.onPrimary,
                     ),
                   ),
                 ),

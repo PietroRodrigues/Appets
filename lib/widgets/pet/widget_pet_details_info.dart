@@ -2,7 +2,7 @@ import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/display/widget_info_row.dart';
@@ -29,7 +29,7 @@ class WGPetDetailsInfo extends StatelessWidget {
 
       child: FilledButton(
         style: FilledButton.styleFrom(
-          backgroundColor: ThemeColors.primary,
+          backgroundColor: context.appColors.primary,
 
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
@@ -60,16 +60,16 @@ class WGPetDetailsInfo extends StatelessWidget {
                 context,
                 title: SharedStrings.ERROR_TITLE,
                 message: PetDetailsStrings.WHATSAPP_ERROR,
-                actionColor: ThemeColors.error,
+                actionColor: context.appColors.error,
               );
             }
           }
         },
 
-        child: const Text(
+        child: Text(
           PetDetailsStrings.CONTACT_BUTTON,
 
-          style: TextStyle(color: ThemeColors.onPrimary),
+          style: TextStyle(color: context.appColors.onPrimary),
         ),
       ),
     );
@@ -85,7 +85,7 @@ class WGPetDetailsInfo extends StatelessWidget {
 
         children: [
           // Nome
-          Text(pet.name, style: ThemeTextStyles.heading),
+          Text(pet.name, style: ThemeTextStyles.heading(context.appColors)),
 
           const SizedBox(height: 20),
 
@@ -101,7 +101,7 @@ class WGPetDetailsInfo extends StatelessWidget {
           // Gênero com ícone e cor coerentes ao gênero do pet.
           WGInfoRow(
             icon: pet.genderIcon,
-            iconColor: pet.genderColor,
+            iconColor: pet.genderColor(context.appColors),
             text: pet.genderLabel,
           ),
 
@@ -127,10 +127,10 @@ class WGPetDetailsInfo extends StatelessWidget {
           // Tipo de publicação
           WGInfoRow(
             icon: pet.publicationType.icon,
-            iconColor: pet.publicationType.color,
+            iconColor: pet.publicationType.color(context.appColors),
             text: pet.publicationType.label,
-            textStyle: ThemeTextStyles.body.copyWith(
-              color: pet.publicationType.color,
+            textStyle: ThemeTextStyles.body(context.appColors).copyWith(
+              color: pet.publicationType.color(context.appColors),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -140,7 +140,7 @@ class WGPetDetailsInfo extends StatelessWidget {
           // Sobre
           Text(
             PetDetailsStrings.ABOUT_SECTION,
-            style: ThemeTextStyles.subtitle,
+            style: ThemeTextStyles.subtitle(context.appColors),
           ),
 
           const SizedBox(height: 10),
@@ -148,7 +148,7 @@ class WGPetDetailsInfo extends StatelessWidget {
           Text(
             pet.description ?? PetDetailsStrings.DESCRIPTION_NOT_INFORMED,
 
-            style: ThemeTextStyles.body,
+            style: ThemeTextStyles.body(context.appColors),
           ),
 
           const SizedBox(height: 40),

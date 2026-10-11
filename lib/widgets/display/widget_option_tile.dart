@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// Tile de opção reutilizável com ícone, título e subtítulo opcional.
 ///
 /// Usado nas telas de perfil, configurações e dados da conta.
 ///
-/// Com [filled] (padrão), o tile ganha fundo em [ThemeColors.surface]
+/// Com [filled] (padrão), o tile ganha fundo em [AppColors.surface]
 /// e uma seta à direita (estilo das listas de configurações).
 /// Sem [filled], fica centralizado e sem fundo
 /// (estilo das opções da tela de perfil).
@@ -17,7 +17,7 @@ import 'package:appets/core/theme/theme_text_styles.dart';
 ///
 /// Com [enabled] `false`, o tile fica visível porém bloqueado:
 /// ícone, título, subtítulo e seta ficam acinzentados
-/// ([ThemeColors.disabled]) e o toque não dispara [onTap].
+/// ([AppColors.disabled]) e o toque não dispara [onTap].
 class WGOptionTile extends StatelessWidget {
   const WGOptionTile({
     super.key,
@@ -44,26 +44,27 @@ class WGOptionTile extends StatelessWidget {
   final bool enabled;
 
   // UI
-  Color get _accentColor {
-    return isDestructive ? ThemeColors.error : ThemeColors.primary;
+  Color _accentColor(AppColors colors) {
+    return isDestructive ? colors.error : colors.primary;
   }
 
-  Color get _iconColor => enabled ? _accentColor : ThemeColors.disabled;
+  Color _iconColor(AppColors colors) =>
+      enabled ? _accentColor(colors) : colors.disabled;
 
-  Color get _titleColor {
-    if (!enabled) return ThemeColors.disabled;
-    return isDestructive ? ThemeColors.error : ThemeColors.textPrimary;
+  Color _titleColor(AppColors colors) {
+    if (!enabled) return colors.disabled;
+    return isDestructive ? colors.error : colors.textPrimary;
   }
 
-  Widget _buildIcon() {
+  Widget _buildIcon(AppColors colors) {
     return Container(
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: _iconColor.withValues(alpha: 0.12),
+        color: _iconColor(colors).withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(icon, color: _iconColor),
+      child: Icon(icon, color: _iconColor(colors)),
     );
   }
 
@@ -80,16 +81,15 @@ class WGOptionTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // ÍCONE
-                _buildIcon(),
+                _buildIcon(context.appColors),
 
                 const SizedBox(width: 14),
 
                 // TÍTULO
                 Text(
                   title,
-                  style: ThemeTextStyles.subtitle.copyWith(
-                    color: _titleColor,
-                  ),
+                  style: ThemeTextStyles.subtitle(context.appColors)
+                      .copyWith(color: _titleColor(context.appColors)),
                 ),
               ],
             ),
@@ -100,7 +100,7 @@ class WGOptionTile extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: ThemeColors.surface,
+        color: context.appColors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
@@ -111,7 +111,7 @@ class WGOptionTile extends StatelessWidget {
           child: Row(
             children: [
               // ÍCONE
-              _buildIcon(),
+              _buildIcon(context.appColors),
 
               const SizedBox(width: 14),
 
@@ -122,17 +122,19 @@ class WGOptionTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: ThemeTextStyles.subtitle.copyWith(
-                        color: _titleColor,
-                      ),
+                      style: ThemeTextStyles.subtitle(context.appColors)
+                          .copyWith(color: _titleColor(context.appColors)),
                     ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         subtitle!,
-                        style: ThemeTextStyles.caption.copyWith(
-                          color: enabled ? null : ThemeColors.disabled,
-                        ),
+                        style: ThemeTextStyles.caption(context.appColors)
+                            .copyWith(
+                              color: enabled
+                                  ? null
+                                  : context.appColors.disabled,
+                            ),
                       ),
                     ],
                   ],
@@ -144,7 +146,9 @@ class WGOptionTile extends StatelessWidget {
               // SETA
               Icon(
                 Icons.chevron_right_outlined,
-                color: enabled ? ThemeColors.hint : ThemeColors.disabled,
+                color: enabled
+                    ? context.appColors.hint
+                    : context.appColors.disabled,
               ),
             ],
           ),

@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:appets/core/constants/constants_strings_home.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 
 /// Protege o app de fechar ao tocar o voltar do sistema numa aba raiz.
@@ -42,7 +42,7 @@ class WGRootBackExit extends StatelessWidget {
       context,
       title: HomeStrings.EXIT_CONFIRM_TITLE,
       message: HomeStrings.EXIT_CONFIRM_MESSAGE,
-      confirmColor: ThemeColors.error,
+      confirmColor: context.appColors.error,
     );
     if (!context.mounted || !confirmed) return;
     await _exitApp(context);

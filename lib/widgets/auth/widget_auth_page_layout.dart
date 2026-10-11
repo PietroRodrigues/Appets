@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/widgets/layout/widget_layout.dart';
 
 /// Layout base para telas de autenticação com formulário centralizado.
@@ -24,7 +24,7 @@ class WGAuthPageLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WGScaffold(
-      backgroundColor: ThemeColors.primary,
+      backgroundColor: context.appColors.primary,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
 
       // Sem resize: o scroll cuida de manter o campo focado visível,

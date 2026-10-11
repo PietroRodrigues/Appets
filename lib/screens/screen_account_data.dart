@@ -9,7 +9,7 @@ import 'package:appets/core/services/account_purge_service.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/user_model.dart';
@@ -159,7 +159,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
         context,
         title: SharedStrings.ERROR_TITLE,
         message: ProfileStrings.CONTACT_SAVE_ERROR,
-        actionColor: ThemeColors.error,
+        actionColor: context.appColors.error,
       );
       return;
     }
@@ -175,7 +175,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
         context,
         title: SharedStrings.ERROR_TITLE,
         message: phoneError,
-        actionColor: ThemeColors.error,
+        actionColor: context.appColors.error,
       );
       return;
     }
@@ -210,7 +210,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
             context,
             title: SharedStrings.ERROR_TITLE,
             message: reauth.message ?? ProfileStrings.EMAIL_CHANGE_ERROR,
-            actionColor: ThemeColors.error,
+            actionColor: context.appColors.error,
           );
           return;
         }
@@ -227,7 +227,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
               'email-already-in-use': AuthStrings.EMAIL_ALREADY_IN_USE,
               'invalid-email': AuthStrings.INVALID_EMAIL,
             }),
-            actionColor: ThemeColors.error,
+            actionColor: context.appColors.error,
           );
           return;
         }
@@ -311,7 +311,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                 context,
                 title: SharedStrings.ERROR_TITLE,
                 message: ProfileStrings.CONTACT_SAVE_ERROR,
-                actionColor: ThemeColors.error,
+                actionColor: context.appColors.error,
               );
             }
           }
@@ -324,7 +324,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
           context,
           title: SharedStrings.ERROR_TITLE,
           message: ProfileStrings.CONTACT_SAVE_ERROR,
-          actionColor: ThemeColors.error,
+          actionColor: context.appColors.error,
         );
       }
     }
@@ -416,7 +416,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
             title: SharedStrings.ERROR_TITLE,
             message:
                 result?.message ?? DeleteAccountStrings.DELETE_ACCOUNT_ERROR,
-            actionColor: ThemeColors.error,
+            actionColor: context.appColors.error,
           );
         }
       case WGProcessStatus.canceled:
@@ -548,7 +548,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
         context,
         title: SharedStrings.ERROR_TITLE,
         message: AuthStrings.WRONG_PASSWORD_MESSAGE,
-        actionColor: ThemeColors.error,
+        actionColor: context.appColors.error,
       );
       return;
     }
@@ -600,7 +600,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
         context,
         title: SharedStrings.ERROR_TITLE,
         message: ProfileStrings.CHANGE_PASSWORD_ERROR,
-        actionColor: ThemeColors.error,
+        actionColor: context.appColors.error,
       );
     }
   }
@@ -687,7 +687,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                               width: 20,
                               height: 20,
                             )
-                          : null,
+                          : null, 
                       onStartEditing: () => _startEditing('email'),
                       onCommit: (v) => _commitField('email', v),
                       keyboardType: TextInputType.emailAddress,
@@ -761,15 +761,15 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                       text: ProfileStrings.SAVE_CONTACT,
                       onPressed: _isSaving ? () {} : _saveChanges,
                       height: 50,
-                      backgroundColor: ThemeColors.success,
+                      backgroundColor: context.appColors.success,
                     ),
 
                     const SizedBox(height: 24),
 
                     // SEÇÃO: GERENCIAR CONTA
-                    const WGSectionTitle(
+                    WGSectionTitle(
                       title: ProfileStrings.DANGER_ZONE,
-                      titleColor: ThemeColors.error,
+                      titleColor: context.appColors.error,
                     ),
 
                     const SizedBox(height: 12),

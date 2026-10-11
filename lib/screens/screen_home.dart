@@ -5,7 +5,7 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/utils/pet_filters_controller.dart';
 import 'package:appets/core/utils/search_query_controller.dart';
 import 'package:appets/models/enums/enums_app.dart';
@@ -242,8 +242,8 @@ class _HomeScreenState extends State<HomeScreen> {
             floatingActionButton: showFab
                 ? FloatingActionButton(
                     onPressed: _openPublishPet,
-                    backgroundColor: ThemeColors.primary,
-                    foregroundColor: ThemeColors.onPrimary,
+                    backgroundColor: context.appColors.primary,
+                    foregroundColor: context.appColors.onPrimary,
                     elevation: 8,
                     child: const Icon(Icons.add, size: 32),
                   )

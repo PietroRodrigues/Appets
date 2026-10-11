@@ -1,4 +1,4 @@
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -60,7 +60,7 @@ void main() {
       await tester.pump();
 
       final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
-      expect(snackBar.backgroundColor, ThemeColors.error);
+      expect(snackBar.backgroundColor, AppColors.light.error);
 
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// Linha de informação reutilizável com ícone e texto.
@@ -12,7 +12,7 @@ class WGInfoRow extends StatelessWidget {
     super.key,
     required this.icon,
     required this.text,
-    this.iconColor = ThemeColors.primary,
+    this.iconColor,
     this.textStyle,
   });
 
@@ -20,8 +20,8 @@ class WGInfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  /// Cor do ícone (padrão: secundária).
-  final Color iconColor;
+  /// Cor do ícone (padrão: primária da paleta ativa).
+  final Color? iconColor;
 
   /// Estilo do texto (padrão: [ThemeTextStyles.body]).
   final TextStyle? textStyle;
@@ -32,12 +32,12 @@ class WGInfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: iconColor),
+        Icon(icon, color: iconColor ?? context.appColors.primary),
 
         const SizedBox(width: 8),
 
         Expanded(
-          child: Text(text, style: textStyle ?? ThemeTextStyles.body),
+          child: Text(text, style: textStyle ?? ThemeTextStyles.body(context.appColors)),
         ),
       ],
     );

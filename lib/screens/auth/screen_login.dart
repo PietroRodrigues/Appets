@@ -3,7 +3,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/user_model.dart';
@@ -38,11 +38,13 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
   final _passwordFocusNode = FocusNode();
 
   // Estilo do texto de erro legível sobre o fundo laranja.
-  static const _loginErrorStyle = TextStyle(
-    color: ThemeColors.errorOnPrimary,
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
-  );
+  TextStyle _loginErrorStyle(AppColors colors) {
+    return TextStyle(
+      color: colors.errorOnPrimary,
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+    );
+  }
 
   // Libera os controladores e focus nodes ao sair da tela.
   @override
@@ -120,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
             context,
             title: SharedStrings.ERROR_TITLE,
             message: result!.message!,
-            actionColor: ThemeColors.error,
+            actionColor: context.appColors.error,
           );
         }
       case WGProcessStatus.canceled:
@@ -177,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
             context,
             title: SharedStrings.ERROR_TITLE,
             message: result!.message!,
-            actionColor: ThemeColors.error,
+            actionColor: context.appColors.error,
           );
         }
       case null:
@@ -208,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
             controller: _emailController,
             focusNode: _emailFocusNode,
             textInputAction: TextInputAction.next,
-            errorStyle: _loginErrorStyle,
+            errorStyle: _loginErrorStyle(context.appColors),
             onFieldSubmitted: (_) {
               _passwordFocusNode.requestFocus();
             },
@@ -222,10 +224,10 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
             controller: _passwordController,
             focusNode: _passwordFocusNode,
             label: AuthStrings.PASSWORD,
-            labelStyle: ThemeTextStyles.authBody,
+            labelStyle: ThemeTextStyles.authBody(),
             hintText: AuthStrings.PASSWORD_HINT,
             textInputAction: TextInputAction.done,
-            errorStyle: _loginErrorStyle,
+            errorStyle: _loginErrorStyle(context.appColors),
             onFieldSubmitted: (_) {
               _login();
             },
@@ -253,7 +255,9 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
               onPressed: _goToForgotPassword,
               child: Text(
                 AuthStrings.FORGOT_PASSWORD,
-                style: ThemeTextStyles.body.copyWith(color: ThemeColors.onPrimary),
+                style: ThemeTextStyles.body(
+                  context.appColors,
+                ).copyWith(color: context.appColors.onPrimary),
               ),
             ),
           ),
@@ -276,20 +280,20 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
           // Divisor
           Row(
             children: [
-              const Expanded(
-                child: Divider(color: ThemeColors.onPrimary, thickness: 0.5),
+              Expanded(
+                child: Divider(color: context.appColors.onPrimary, thickness: 0.5),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   AuthStrings.OR,
-                  style: ThemeTextStyles.body.copyWith(
-                    color: ThemeColors.onPrimary,
+                  style: ThemeTextStyles.body(context.appColors).copyWith(
+                    color: context.appColors.onPrimary,
                   ),
                 ),
               ),
-              const Expanded(
-                child: Divider(color: ThemeColors.onPrimary, thickness: 0.5),
+              Expanded(
+                child: Divider(color: context.appColors.onPrimary, thickness: 0.5),
               ),
             ],
           ),

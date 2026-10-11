@@ -4,7 +4,7 @@ import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
@@ -137,7 +137,7 @@ class _WGPetCardState extends State<WGPetCard>
         // CARD PRINCIPAL
         Card(
           elevation: 3,
-          color: ThemeColors.white,
+          color: context.appColors.surface,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
@@ -236,9 +236,16 @@ class _PetCardImage extends StatelessWidget {
                   : PetDetailsStrings.ADD_TO_FAVORITES,
               icon: Icon(
                 favorited ? Icons.star_rounded : Icons.star_border_rounded,
-                color: favorited ? ThemeColors.warning : ThemeColors.hint,
+                color: favorited
+                    ? context.appColors.warning
+                    : context.appColors.hint,
                 size: 30,
-                shadows: const [Shadow(color: ThemeColors.shadowCard, blurRadius: 4)],
+                shadows: [
+                  Shadow(
+                    color: context.appColors.shadowCard,
+                    blurRadius: 4,
+                  ),
+                ],
               ),
             ),
           ),
@@ -257,7 +264,8 @@ class _PetCardInfo extends StatelessWidget {
   // Rótulos formatados exibidos no card.
   String get _formattedPublicationType => pet.publicationType.label;
 
-  Color get _publicationTypeColor => pet.publicationType.color;
+  Color _publicationTypeColor(AppColors colors) =>
+      pet.publicationType.color(colors);
 
   @override
   Widget build(BuildContext context) {
@@ -272,7 +280,8 @@ class _PetCardInfo extends StatelessWidget {
               pet.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: ThemeTextStyles.subtitle.copyWith(fontSize: 16),
+              style: ThemeTextStyles.subtitle(context.appColors)
+                  .copyWith(fontSize: 16),
             ),
             if (pet.speciesRaceLabel.isNotEmpty) ...[
               const SizedBox(height: 2),
@@ -280,8 +289,8 @@ class _PetCardInfo extends StatelessWidget {
                 pet.speciesRaceLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: ThemeTextStyles.caption.copyWith(
-                  color: ThemeColors.textSecondary,
+                style: ThemeTextStyles.caption(context.appColors).copyWith(
+                  color: context.appColors.textSecondary,
                   fontSize: 12,
                 ),
               ),
@@ -295,34 +304,40 @@ class _PetCardInfo extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.cake_outlined,
                       size: 13,
-                      color: ThemeColors.textSecondary,
+                      color: context.appColors.textSecondary,
                     ),
                     const SizedBox(width: 3),
                     Text(
                       pet.ageLabel,
-                      style: ThemeTextStyles.body.copyWith(fontSize: 12),
+                      style: ThemeTextStyles.body(context.appColors)
+                          .copyWith(fontSize: 12),
                     ),
                   ],
                 ),
 
                 // Gênero (ícone colorido)
-                Icon(pet.genderIcon, size: 16, color: pet.genderColor),
+                Icon(
+                  pet.genderIcon,
+                  size: 16,
+                  color: pet.genderColor(context.appColors),
+                ),
               ],
             ),
             const SizedBox(height: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: _publicationTypeColor.withValues(alpha: 0.12),
+                color: _publicationTypeColor(context.appColors)
+                    .withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 _formattedPublicationType,
-                style: ThemeTextStyles.caption.copyWith(
-                  color: _publicationTypeColor,
+                style: ThemeTextStyles.caption(context.appColors).copyWith(
+                  color: _publicationTypeColor(context.appColors),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),
@@ -354,19 +369,19 @@ class _PetCardEditButton extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: ThemeColors.primary,
+              color: context.appColors.primary,
               shape: BoxShape.circle,
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: ThemeColors.shadowCard,
+                  color: context.appColors.shadowCard,
                   blurRadius: 6,
                   offset: Offset(0, 3),
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.edit_outlined,
-              color: ThemeColors.onPrimary,
+              color: context.appColors.onPrimary,
               size: 22,
             ),
           ),
@@ -397,11 +412,11 @@ class _PetCardDeleteButton extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: ThemeColors.primary,
+              color: context.appColors.primary,
               shape: BoxShape.circle,
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: ThemeColors.shadowCard,
+                  color: context.appColors.shadowCard,
                   blurRadius: 6,
                   offset: Offset(0, 3),
                 ),
@@ -409,9 +424,9 @@ class _PetCardDeleteButton extends StatelessWidget {
             ),
             child: Tooltip(
               message: HomeStrings.DELETE_PET,
-              child: const Icon(
+              child: Icon(
                 Icons.close,
-                color: ThemeColors.onPrimary,
+                color: context.appColors.onPrimary,
                 size: 16,
               ),
             ),

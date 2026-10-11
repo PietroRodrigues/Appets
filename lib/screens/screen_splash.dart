@@ -5,7 +5,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/session_state_cleaner.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/buttons/widget_buttons.dart';
 import 'package:appets/widgets/display/widget_logo.dart';
@@ -82,21 +82,23 @@ class _SplashScreenState extends State<SplashScreen> {
         Text(
           SharedStrings.APP_START_ERROR_TITLE,
           textAlign: TextAlign.center,
-          style: ThemeTextStyles.heading.copyWith(color: ThemeColors.onPrimary),
+          style: ThemeTextStyles.heading(context.appColors).copyWith(
+            color: context.appColors.onPrimary,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           SharedStrings.LOAD_DATA_ERROR_DESCRIPTION,
           textAlign: TextAlign.center,
-          style: ThemeTextStyles.authBody,
+          style: ThemeTextStyles.authBody(),
         ),
         const SizedBox(height: 24),
         WGButton(
           text: SharedStrings.RETRY_ACTION,
           onPressed: _initializeApp,
           width: 240,
-          backgroundColor: ThemeColors.white,
-          foregroundColor: ThemeColors.secondary,
+          backgroundColor: context.appColors.surface,
+          foregroundColor: context.appColors.secondary,
         ),
       ],
     );
@@ -106,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ThemeColors.primary,
+      backgroundColor: context.appColors.primary,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),

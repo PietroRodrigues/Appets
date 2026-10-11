@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 
 /// Scaffold base com estilo visual e opções comuns do projeto.
@@ -43,7 +43,7 @@ class WGScaffold extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: backgroundColor ?? ThemeColors.background,
+      backgroundColor: backgroundColor ?? context.appColors.background,
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       extendBody: extendBody,
       body: body,
@@ -68,8 +68,8 @@ class WGSectionTitle extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Text(
         title,
-        style: ThemeTextStyles.subtitle.copyWith(
-          color: titleColor ?? ThemeColors.primary,
+        style: ThemeTextStyles.subtitle(context.appColors).copyWith(
+          color: titleColor ?? context.appColors.primary,
           fontWeight: FontWeight.w600,
         ),
       ),

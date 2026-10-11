@@ -1,5 +1,5 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/filters/widget_pet_filters_sheet.dart';
 import 'package:flutter/material.dart';
@@ -49,13 +49,13 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: ThemeColors.primary,
+        color: context.appColors.primary,
         borderRadius: BorderRadius.circular(30),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: ThemeColors.shadowChips,
+            color: context.appColors.shadowChips,
             blurRadius: 4,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -65,7 +65,8 @@ class _FilterChip extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             option.label,
-            style: ThemeTextStyles.caption.copyWith(color: ThemeColors.onPrimary),
+            style: ThemeTextStyles.caption(context.appColors)
+                .copyWith(color: context.appColors.onPrimary),
           ),
           const SizedBox(width: 2),
           IconButton(
@@ -75,10 +76,10 @@ class _FilterChip extends StatelessWidget {
               minWidth: 48,
               minHeight: 48,
             ),
-            icon: const Icon(
+            icon: Icon(
               Icons.close,
               size: 16,
-              color: ThemeColors.onPrimary,
+              color: context.appColors.onPrimary,
             ),
             tooltip: HomeStrings.FILTER_REMOVE,
           ),

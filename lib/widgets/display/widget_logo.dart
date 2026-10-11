@@ -10,6 +10,17 @@ class WGLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(AppAssets.LOGO, width: width, fit: BoxFit.contain);
+    return Semantics(
+      // O logo é decorativo; o rótulo identifica o app para leitores de tela.
+      label: 'APPets',
+      image: true,
+      child: ExcludeSemantics(
+        child: Image.asset(
+          AppAssets.LOGO,
+          width: width,
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:appets/core/theme/theme_colors.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/display/widget_pet_image.dart';
 
@@ -69,7 +69,7 @@ class _WGPetGalleryState extends State<WGPetGallery> {
       width: double.infinity,
       height: 280,
       child: Container(
-        color: ThemeColors.surface,
+        color: context.appColors.surface,
         padding: const EdgeInsets.all(24),
         child: Stack(
           children: [
@@ -110,8 +110,8 @@ class _WGPetGalleryState extends State<WGPetGallery> {
                         height: isActive ? 12 : 8,
                         decoration: BoxDecoration(
                           color: isActive
-                              ? ThemeColors.primary
-                              : ThemeColors.secondarySoft,
+                              ? context.appColors.primary
+                              : context.appColors.secondarySoft,
                           shape: BoxShape.circle,
                         ),
                       );
@@ -131,13 +131,13 @@ class _WGPetGalleryState extends State<WGPetGallery> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: ThemeColors.overlayCounter,
+                    color: context.appColors.overlayCounter,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${_currentImage + 1}/${widget.images.length}',
-                    style: ThemeTextStyles.caption.copyWith(
-                      color: ThemeColors.white,
+                    style: ThemeTextStyles.caption(context.appColors).copyWith(
+                      color: context.appColors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
