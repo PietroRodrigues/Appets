@@ -104,6 +104,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  //513
   testWidgets('task concluída devolve o WGProcessResult e fecha a tela', (
     tester,
   ) async {
@@ -119,6 +120,7 @@ void main() {
     expect(captured.value?.status, WGProcessStatus.success);
   });
 
+  //514
   testWidgets('task que lança devolve falha genérica e não trava o loading', (
     tester,
   ) async {
@@ -135,6 +137,7 @@ void main() {
     expect(captured.value?.message, SharedStrings.PROCESS_GENERIC_ERROR);
   });
 
+  //515
   testWidgets('timeout: task que nunca resolve fecha com falha genérica', (
     tester,
   ) async {
@@ -184,6 +187,7 @@ void main() {
     expect(captured.value?.message, SharedStrings.PROCESS_GENERIC_ERROR);
   });
 
+  //516
   testWidgets('pushProcess offline: não abre o loading, avisa e retorna null', (
     tester,
   ) async {
@@ -203,6 +207,7 @@ void main() {
     expect(host.result, isNull);
   });
 
+  //517
   testWidgets('pushProcess online: abre o loading e conclui com sucesso', (
     tester,
   ) async {
@@ -217,6 +222,7 @@ void main() {
     expect(host.result?.status, WGProcessStatus.success);
   });
 
+  //518
   testWidgets('pushProcess ignora a segunda chamada enquanto a primeira roda', (
     tester,
   ) async {
@@ -242,12 +248,14 @@ void main() {
   });
 
   group('WGProcessResult.userFacingMessage', () {
+    //519
     test('sem causa retorna apenas a mensagem', () {
       const result = WGProcessResult.failure('Deu errado.');
 
       expect(result.userFacingMessage, 'Deu errado.');
     });
 
+    //520
     test('causa desconhecida não vaza detalhe técnico', () {
       final result = WGProcessResult.failure(
         'Deu errado.',
@@ -259,6 +267,7 @@ void main() {
       expect(result.userFacingMessage, 'Deu errado.');
     });
 
+    //521
     test('causa de rede acrescenta dica amigável', () {
       final result = WGProcessResult.failure(
         'Deu errado.',
@@ -271,6 +280,7 @@ void main() {
       );
     });
 
+    //522
     test('causa de permissão acrescenta dica amigável', () {
       final result = WGProcessResult.failure(
         'Deu errado.',

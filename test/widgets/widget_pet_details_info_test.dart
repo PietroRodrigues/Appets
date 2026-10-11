@@ -39,6 +39,7 @@ void main() {
     );
   }
 
+  //493
   testWidgets('exibe os dados básicos do pet', (tester) async {
     await tester.pumpWidget(wrap(WGPetDetailsInfo(pet: buildPet())));
 
@@ -52,6 +53,7 @@ void main() {
     expect(find.text(PetDetailsStrings.ABOUT_SECTION), findsOneWidget);
   });
 
+  //494
   testWidgets('raça e peso aparecem só quando informados', (tester) async {
     // Sem raça nem peso: 5 linhas de informação.
     await tester.pumpWidget(wrap(WGPetDetailsInfo(pet: buildPet())));
@@ -69,6 +71,7 @@ void main() {
     expect(find.text('12,5 kg'), findsOneWidget);
   });
 
+  //495
   testWidgets('descrição ausente mostra o aviso padrão', (tester) async {
     await tester.pumpWidget(
       wrap(WGPetDetailsInfo(pet: buildPet(description: null))),
@@ -77,6 +80,7 @@ void main() {
     expect(find.text(PetDetailsStrings.DESCRIPTION_NOT_INFORMED), findsOneWidget);
   });
 
+  //496
   testWidgets('contato sem telefone abre o aviso, sem tocar o WhatsApp', (
     tester,
   ) async {

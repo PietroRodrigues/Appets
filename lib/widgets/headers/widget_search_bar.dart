@@ -1,5 +1,6 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/theme/app_colors.dart';
+import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/utils/search_tokens.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -161,6 +162,13 @@ class _WGSearchBarState extends State<WGSearchBar> {
 
               decoration: InputDecoration(
                 hintText: widget.hintText ?? HomeStrings.SEARCH_DEFAULT_HINT,
+
+                // Hint em cinza e um pouco menor para a frase inteira caber
+                // na caixa (o texto digitado segue no tamanho padrão).
+                hintStyle: ThemeTextStyles.body(context.appColors).copyWith(
+                  fontSize: 12,
+                  color: const Color(0xFF9E9E9E),
+                ),
 
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,

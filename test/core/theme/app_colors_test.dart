@@ -27,6 +27,7 @@ double _contrast(Color a, Color b) {
 }
 
 void _expectAccessible(AppColors colors) {
+  //102
   test('texto principal é legível (AAA ≥7) sobre o fundo', () {
     expect(
       _contrast(colors.background, colors.textPrimary),
@@ -34,6 +35,7 @@ void _expectAccessible(AppColors colors) {
     );
   });
 
+  //103
   test('texto secundário é legível (AA ≥4.5) sobre a surface', () {
     expect(
       _contrast(colors.surface, colors.textSecondary),
@@ -41,6 +43,7 @@ void _expectAccessible(AppColors colors) {
     );
   });
 
+  //104
   test('onPrimary (creme) é mais claro que primary (destaque estético)', () {
     expect(
       _luminance(colors.onPrimary),
@@ -48,6 +51,7 @@ void _expectAccessible(AppColors colors) {
     );
   });
 
+  //105
   test('navigationInactive alcança AA (≥4.5) sobre primary', () {
     expect(
       _contrast(colors.primary, colors.navigationInactive),
@@ -55,6 +59,7 @@ void _expectAccessible(AppColors colors) {
     );
   });
 
+  //106
   test('navigationActive é mais claro que a barra (item ativo distinto)', () {
     expect(
       _luminance(colors.navigationActive),
@@ -62,6 +67,7 @@ void _expectAccessible(AppColors colors) {
     );
   });
 
+  //107
   test('onColor escolhe a cor de maior contraste para o fundo', () {
     // Sobre a primária, onColor devolve o creme (destaque estético).
     expect(colors.onColor(colors.primary), colors.onPrimary);
@@ -83,10 +89,12 @@ void main() {
   group('AppColors.light', () {
     _expectAccessible(AppColors.light);
 
+    //108
     test('onColor sobre a secundária devolve branco', () {
       expect(AppColors.light.onColor(AppColors.light.secondary), Colors.white);
     });
 
+    //109
     test('onColor sobre success usa texto escuro (verde é claro)', () {
       expect(AppColors.light.onColor(AppColors.light.success), isNot(Colors.white));
       expect(
@@ -97,12 +105,14 @@ void main() {
     });
   });
 
+  //110
   test('copyWith preserva os demais campos', () {
     final copy = AppColors.light.copyWith(primary: const Color(0xFF123456));
     expect(copy.primary, const Color(0xFF123456));
     expect(copy.background, AppColors.light.background);
   });
 
+  //111
   test('lerp mistura variantes da paleta clara', () {
     final other = AppColors.light.copyWith(primary: const Color(0xFF123456));
     final half = AppColors.light.lerp(other, 0.5);
@@ -113,6 +123,7 @@ void main() {
     expect(half.background, AppColors.light.background);
   });
 
+  //112
   testWidgets('AppColors.of cai na paleta clara sem tema do app', (tester) async {
     late AppColors resolved;
     await tester.pumpWidget(

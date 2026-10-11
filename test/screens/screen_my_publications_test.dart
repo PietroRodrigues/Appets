@@ -152,6 +152,7 @@ void main() {
     await tester.tap(find.text(SharedStrings.YES));
   }
 
+  //219
   testWidgets('excluir publicação mostra o loading e conclui com sucesso', (
     tester,
   ) async {
@@ -193,6 +194,7 @@ void main() {
     expect(find.text(HomeStrings.EMPTY_PUBLICATIONS_TITLE), findsOneWidget);
   });
 
+  //220
   testWidgets('falha ao excluir mostra erro e nada é removido', (
     tester,
   ) async {
@@ -219,6 +221,7 @@ void main() {
     expect(MyPublicationsService.instance.current, contains(pet.id));
   });
 
+  //221
   testWidgets('cancelar a confirmação não inicia a exclusão', (tester) async {
     db = FakeFirebaseFirestore();
     final pet = publication('pet_001');

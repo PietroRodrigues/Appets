@@ -92,6 +92,7 @@ void main() {
   }
 
   group('WGResponsivePetGrid · filtro ativo com página vazia (1.7)', () {
+    //559
     testWidgets(
       'auto-avança até achar correspondências nas páginas seguintes',
       (tester) async {
@@ -157,6 +158,7 @@ void main() {
       },
     );
 
+    //560
     testWidgets(
       'sem correspondências em nenhuma página termina no vazio sem loop',
       (tester) async {
@@ -202,6 +204,7 @@ void main() {
   });
 
   group('WGResponsivePetGrid · estado de erro com retry (item 1)', () {
+    //561
     testWidgets(
       'erro na primeira página mostra erro em vez do vazio/loading',
       (tester) async {
@@ -223,6 +226,7 @@ void main() {
       },
     );
 
+    //562
     testWidgets(
       '"Tentar de novo" recarrega e mostra os pets',
       (tester) async {
@@ -266,6 +270,7 @@ void main() {
   });
 
   group('WGResponsivePetGrid · sem conexão e cache-first (item 2)', () {
+    //563
     testWidgets(
       'offline com pets no cache mostra os pets (sem vazio/sem conexão)',
       (tester) async {
@@ -294,6 +299,7 @@ void main() {
       },
     );
 
+    //564
     testWidgets(
       'offline sem cache mostra "Sem conexão" + retry em vez do vazio',
       (tester) async {
@@ -317,6 +323,7 @@ void main() {
       },
     );
 
+    //565
     testWidgets(
       'voltar a ficar online recarrega sozinho e mostra os pets',
       (tester) async {
@@ -349,6 +356,7 @@ void main() {
       },
     );
 
+    //566
     testWidgets(
       'cache-first: erro do servidor com pets no cache mantém o cache',
       (tester) async {
@@ -376,6 +384,7 @@ void main() {
       },
     );
 
+    //567
     testWidgets(
       '"Tentar de novo" offline sem cache mantém o estado de conexão',
       (tester) async {
@@ -400,6 +409,7 @@ void main() {
   });
 
   group('WGResponsivePetGrid · ordem dos favoritos (item 13)', () {
+    //568
     testWidgets('favoritos aparecem na ordem dos IDs, não a do Firestore', (
       tester,
     ) async {
@@ -476,6 +486,7 @@ void main() {
   });
 
   group('WGResponsivePetGrid · stream pausada por aba (item 22)', () {
+    //569
     testWidgets(
       'aba oculta suspende a stream e não reage a mudanças no banco',
       (tester) async {
@@ -519,6 +530,7 @@ void main() {
       },
     );
 
+    //570
     testWidgets(
       'voltar para a aba recarrega e mostra o que mudou enquanto oculto',
       (tester) async {
@@ -580,6 +592,7 @@ void main() {
       });
     }
 
+    //571
     testWidgets(
       'limpar órfãos não recarrega o grid de favoritos durante a carga',
       (tester) async {
@@ -616,6 +629,7 @@ void main() {
       },
     );
 
+    //572
     testWidgets(
       'limpar órfãos não recarrega o grid de minhas publicações',
       (tester) async {

@@ -24,11 +24,13 @@ void main() {
   });
 
   group('MyPublicationsService', () {
+    //332
     test('começa vazio e isMine retorna false', () {
       expect(service.current, isEmpty);
       expect(service.isMine('pet_a'), isFalse);
     });
 
+    //333
     test('removeLocal remove o pet e notifica ouvintes', () {
       service.myPetIds.value = {'pet_a', 'pet_b'};
       expect(service.isMine('pet_a'), isTrue);
@@ -43,6 +45,7 @@ void main() {
       expect(notified, 1);
     });
 
+    //334
     test('removeLocal não notifica quando o pet não é publicação', () {
       service.myPetIds.value = {'pet_a'};
 
@@ -55,6 +58,7 @@ void main() {
       expect(service.myPetIds.value, {'pet_a'});
     });
 
+    //335
     test('removeLocalMany remove vários pets com uma única notificação', () {
       service.myPetIds.value = {'pet_a', 'pet_b', 'pet_c', 'pet_d'};
 
@@ -70,6 +74,7 @@ void main() {
       expect(notified, 1);
     });
 
+    //336
     test('removeLocalMany não notifica quando nada é removido', () {
       service.myPetIds.value = {'pet_a'};
 
@@ -82,6 +87,7 @@ void main() {
       expect(service.isMine('pet_a'), isTrue);
     });
 
+    //337
     test('removeLocalMany não notifica quando a lista é vazia', () {
       service.myPetIds.value = {'pet_a'};
 
@@ -94,6 +100,7 @@ void main() {
       expect(service.myPetIds.value, {'pet_a'});
     });
 
+    //338
     test('reset limpa todas as publicações', () {
       service.myPetIds.value = {'pet_a'};
       service.reset();
@@ -103,6 +110,7 @@ void main() {
     group('add/remove com persistência', () {
       // Sem Firebase inicializado, a persistência falha e o serviço deve
       // reverter o estado otimista e devolver `false`.
+      //339
       test('add devolve false e reverte o estado quando o Firestore falha',
           () async {
         service.myPetIds.value = {'pet_a'};
@@ -114,6 +122,7 @@ void main() {
         expect(service.isMine('pet_a'), isTrue);
       });
 
+      //340
       test('remove devolve false e restaura a publicação quando o Firestore '
           'falha', () async {
         service.myPetIds.value = {'pet_a'};
@@ -124,6 +133,7 @@ void main() {
         expect(service.isMine('pet_a'), isTrue);
       });
 
+      //341
       test('add falha: rollback restaura o snapshot pré-escrita em vez de '
           'recalcular do estado atual', () async {
         service.myPetIds.value = {'pet_a'};
@@ -138,6 +148,7 @@ void main() {
         expect(service.myPetIds.value, {'pet_a'});
       });
 
+      //342
       test('remove falha: rollback restaura o snapshot pré-escrita em vez de '
           'recalcular do estado atual', () async {
         service.myPetIds.value = {'pet_a', 'pet_b'};
@@ -154,6 +165,7 @@ void main() {
     });
 
     group('cleanOrphans', () {
+      //343
       test('remove localmente as publicações que não existem mais', () async {
         service.myPetIds.value = {'pet_a', 'pet_b', 'pet_c'};
 
@@ -164,6 +176,7 @@ void main() {
         expect(service.isMine('pet_b'), isFalse);
       });
 
+      //344
       test('não altera nada quando não há órfãos', () async {
         service.myPetIds.value = {'pet_a', 'pet_b'};
 
@@ -172,6 +185,7 @@ void main() {
         expect(service.myPetIds.value, {'pet_a', 'pet_b'});
       });
 
+      //345
       test('não altera nada quando não há publicações', () async {
         var notified = 0;
         service.myPetIds.addListener(() => notified++);
@@ -182,6 +196,7 @@ void main() {
         expect(notified, 0);
       });
 
+      //346
       test('notifica uma única vez ao remover vários órfãos', () async {
         service.myPetIds.value = {'pet_a', 'pet_b', 'pet_c', 'pet_d'};
 
@@ -194,6 +209,7 @@ void main() {
         expect(service.myPetIds.value, {'pet_a', 'pet_b'});
       });
 
+      //347
       test('persiste a remoção no campo myPublishedPetIds', () async {
         final db = FakeFirebaseFirestore();
         FirestoreService.instance.debugDb = db;
@@ -212,6 +228,7 @@ void main() {
       });
     });
 
+    //348
     test('notifica ouvintes ao alterar myPetIds.value', () {
       var notified = 0;
       void listener() => notified++;
@@ -224,12 +241,14 @@ void main() {
       expect(service.isMine('pet_x'), isTrue);
     });
 
+    //349
     test('current é uma visão mutável mas começa vazia', () {
       expect(service.current, isEmpty);
       expect(service.myPetIds, isA<ValueNotifier<Set<String>>>());
     });
 
     group('applyUser', () {
+      //350
       test('preenche as publicações a partir do UserModel', () async {
         final user = UserModel(
           id: 'uid_1',
@@ -243,6 +262,7 @@ void main() {
         expect(service.myPetIds.value, contains('pet_a'));
       });
 
+      //351
       test('user null zera o estado (lista vazia, sem backfill)', () async {
         service.myPetIds.value = {'pet_x'};
 
@@ -251,6 +271,7 @@ void main() {
         expect(service.current, isEmpty);
       });
 
+      //352
       test('não chama getUser (falha nele não afeta o applyUser)', () async {
         FirestoreService.instance.debugGetUserError =
             StateError('não deve ler');
@@ -297,6 +318,7 @@ void main() {
             'images': <String>[],
           });
 
+      //353
       test('mescla as publicações do dono e persiste as que faltavam',
           () async {
         await seedUser(<String>['pet_old']);
@@ -318,6 +340,7 @@ void main() {
         );
       });
 
+      //354
       test('não grava quando a lista já está sincronizada', () async {
         await seedUser(<String>['pet_owned']);
         await seedOwnedPet();
@@ -335,6 +358,7 @@ void main() {
         expect(doc.get('myPublishedPetIds'), ['pet_owned']);
       });
 
+      //355
       test('falha ao persistir o backfill mantém o estado local mesclado',
           () async {
         await seedUser(<String>[]);

@@ -7,6 +7,7 @@ void main() {
   Widget harness() => const MaterialApp(home: Scaffold(body: SizedBox()));
 
   group('WGSnackBar', () {
+    //581
     testWidgets('showError exibe a mensagem de erro', (tester) async {
       await tester.pumpWidget(harness());
 
@@ -26,6 +27,7 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    //582
     testWidgets('showSuccess exibe a mensagem de sucesso', (tester) async {
       await tester.pumpWidget(harness());
 
@@ -38,6 +40,7 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    //583
     testWidgets('nova chamada não empilha avisos anteriores', (tester) async {
       await tester.pumpWidget(harness());
 
@@ -53,6 +56,7 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    //584
     testWidgets('usa o fundo da cor do tipo', (tester) async {
       await tester.pumpWidget(harness());
 

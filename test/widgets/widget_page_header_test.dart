@@ -32,6 +32,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  //464
   testWidgets('botão de filtro abre a janela de filtros', (tester) async {
     await tester.pumpWidget(wrap());
 
@@ -41,6 +42,7 @@ void main() {
     expect(find.text('Espécie'), findsOneWidget);
   });
 
+  //465
   testWidgets('aplicar filtro exibe o chip abaixo do cabeçalho',
       (tester) async {
     await tester.pumpWidget(wrap());
@@ -51,6 +53,7 @@ void main() {
     expect(find.text('Cachorro'), findsOneWidget);
   });
 
+  //466
   testWidgets('X do chip remove o filtro', (tester) async {
     await tester.pumpWidget(wrap());
 
@@ -63,6 +66,7 @@ void main() {
     expect(find.text('Cachorro'), findsNothing);
   });
 
+  //467
   testWidgets('trocar de aba limpa os chips', (tester) async {
     await tester.pumpWidget(wrap());
 
@@ -75,6 +79,7 @@ void main() {
     expect(find.text('Gato'), findsNothing);
   });
 
+  //468
   testWidgets('cabeçalho sem busca não exibe o botão de filtro',
       (tester) async {
     await tester.pumpWidget(

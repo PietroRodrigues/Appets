@@ -42,6 +42,7 @@ void main() {
       petTokenFields(pet)..['createdAt'] = DateTime(2024, 1, 1);
 
   group('petTokenFields', () {
+    //5
     test('gera os 6 campos de token em PT normalizado', () {
       final fields = petTokenFields(_pet('p1'));
 
@@ -57,6 +58,7 @@ void main() {
   });
 
   group('petBackfillNeeding', () {
+    //6
     test('migra todos os campos quando o documento é legado (inglês)', () {
       final pet = _pet('p1');
       final stored = {
@@ -84,6 +86,7 @@ void main() {
       });
     });
 
+    //7
     test('pula quando tudo já está em PT', () {
       final pet = _pet('p1');
       final stored = {'p1': migratedFields(pet)};
@@ -93,6 +96,7 @@ void main() {
       expect(pending, isEmpty);
     });
 
+    //8
     test('corrige só o campo divergente (migração parcial)', () {
       final pet = _pet('p1');
       final stored = {
@@ -116,6 +120,7 @@ void main() {
       });
     });
 
+    //9
     test('campos extras e ausentes são tratados como divergência', () {
       final pet = _pet('p1');
 
@@ -129,6 +134,7 @@ void main() {
       expect(semCampos['p1']!['createdAt'], isA<FieldValue>());
     });
 
+    //10
     test('agenda createdAt quando o documento não tem o campo', () {
       final pet = _pet('p1');
       // Tokens já em PT (dados válidos), mas documento sem createdAt.
@@ -141,6 +147,7 @@ void main() {
       expect(pending['p1']!['createdAt'], isA<FieldValue>());
     });
 
+    //11
     test('mistura pendentes e já migrados corretamente', () {
       final ok = _pet('ok');
       final legacy = _pet('legacy');
@@ -155,6 +162,7 @@ void main() {
   });
 
   group('PetTokensBackfillRunner', () {
+    //12
     test('sem pendentes retorna 0 e não chama o writer', () async {
       final writes = <Map<String, Map<String, dynamic>>>[];
       final runner = PetTokensBackfillRunner(_FakeWriter(writes));
@@ -166,6 +174,7 @@ void main() {
       expect(writes, isEmpty);
     });
 
+    //13
     test('grava apenas os pendentes e retorna a quantidade', () async {
       final writes = <Map<String, Map<String, dynamic>>>[];
       final runner = PetTokensBackfillRunner(_FakeWriter(writes));

@@ -28,6 +28,7 @@ void main() {
   });
 
   group('SessionStateCleaner', () {
+    //379
     test('zera favoritos e publicações quando a sessão é perdida sem logout'
         ' (token expirado/revogado)', () async {
       FavoritesService.instance.favoriteIds.value = {'pet_a'};
@@ -41,6 +42,7 @@ void main() {
       expect(MyPublicationsService.instance.current, isEmpty);
     });
 
+    //380
     test('zera o estado quando o usuário atual muda de conta', () async {
       final other = MockUser(uid: 'user_b', email: 'b@test.com');
 
@@ -56,6 +58,7 @@ void main() {
       expect(MyPublicationsService.instance.current, isEmpty);
     });
 
+    //381
     test('mantém o estado enquanto a sessão não muda', () async {
       SessionStateCleaner.instance.attach();
       // Primeira emissão estabelece a sessão atual (igual ao cold start).

@@ -62,4 +62,75 @@ class AppValidators {
 
     return null;
   }
+
+  /// Valida o nome do pet: pelo menos 2 caracteres (após `trim`).
+  static String? validatePetName(String? value) {
+    if ((value?.trim().length ?? 0) < 2) {
+      return PublishStrings.PET_NAME_REQUIRED;
+    }
+    return null;
+  }
+
+  /// Valida o endereço: obrigatório (não vazio após `trim`).
+  static String? validateAddress(String? value) {
+    if (value?.trim().isEmpty ?? true) {
+      return PublishStrings.ADDRESS_REQUIRED;
+    }
+    return null;
+  }
+
+  /// Converte o texto do campo de peso em `double`, aceitando vírgula ou
+  /// ponto como separador decimal. Texto vazio ou inválido vira `null`.
+  static double? parseWeight(String input) {
+    final cleaned = input.trim().replaceAll(',', '.');
+    if (cleaned.isEmpty) return null;
+    return double.tryParse(cleaned);
+  }
+
+  /// Valida o peso opcional: vazio passa; presente precisa ser `0 < x ≤ 200`.
+  static String? validateWeight(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return null;
+    final weight = parseWeight(text);
+    if (weight == null || weight <= 0 || weight > 200) {
+      return PublishStrings.WEIGHT_INVALID;
+    }
+    return null;
+  }
+
+  /// Valida a idade do pet: obrigatória.
+  static String? validatePetAge(int? value) {
+    if (value == null) return PublishStrings.AGE_REQUIRED;
+    return null;
+  }
+
+  /// Valida a senha: obrigatória e com no mínimo 6 caracteres.
+  static String? validatePassword(String? value) {
+    final password = value ?? '';
+    if (password.isEmpty) {
+      return AuthStrings.PASSWORD_REQUIRED;
+    }
+    if (password.length < 6) {
+      return AuthStrings.PASSWORD_MIN_LENGTH;
+    }
+    return null;
+  }
+
+  /// Valida a confirmação de senha contra [original].
+  ///
+  /// Vazio → `PASSWORD_REQUIRED`; diferente de [original] →
+  /// `PASSWORD_MISMATCH`.
+  static String? validatePasswordConfirmation(
+    String? value,
+    String? original,
+  ) {
+    final confirmation = value ?? '';
+    if (confirmation.isEmpty) {
+      return AuthStrings.PASSWORD_REQUIRED;
+    }
+    if (confirmation != original) {
+      return AuthStrings.PASSWORD_MISMATCH;
+    }
+    return null;
+  }
 }

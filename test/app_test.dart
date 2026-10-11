@@ -23,6 +23,7 @@ void main() {
     AuthService.instance.debugAuth = null;
   });
 
+  //1
   testWidgets('configura tema, rota inicial, mapa de rotas e o builder', (
     tester,
   ) async {

@@ -8,6 +8,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/services/home_data_service.dart';
 import 'package:appets/screens/screen_splash.dart';
 
 // Os mocks do firebase_auth_mocks já declaram campos não-finais.
@@ -28,12 +29,14 @@ void main() {
   setUp(() {
     FirestoreService.instance.debugDb = FakeFirebaseFirestore();
     AuthService.instance.debugAuthStateError = null;
+    HomeDataService.instance.reset();
   });
 
   tearDown(() {
     FirestoreService.instance.debugDb = null;
     AuthService.instance.debugAuth = null;
     AuthService.instance.debugAuthStateError = null;
+    HomeDataService.instance.reset();
   });
 
   Widget buildApp(MockFirebaseAuth auth) {
@@ -53,6 +56,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
+  //240
   testWidgets('usuário logado é encaminhado para o Home', (tester) async {
     await pumpSplash(
       tester,
@@ -61,8 +65,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('TELA HOME'), findsOneWidget);
+    // A splash pré-carrega os dados da Home antes de navegar.
+    expect(HomeDataService.instance.loaded, isTrue);
   });
 
+  //241
   testWidgets('conta excluída/revogada sai da sessão e vai para o Login', (
     tester,
   ) async {
@@ -79,6 +86,7 @@ void main() {
     expect(find.text('TELA HOME'), findsNothing);
   });
 
+  //242
   testWidgets('falha na espera do auth mostra aviso de erro e não navega', (
     tester,
   ) async {
@@ -93,6 +101,7 @@ void main() {
     expect(find.text('TELA LOGIN'), findsNothing);
   });
 
+  //243
   testWidgets('Tentar de novo reinicia a espera e encaminha para o Home', (
     tester,
   ) async {

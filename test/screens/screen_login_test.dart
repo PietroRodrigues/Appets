@@ -103,6 +103,7 @@ void main() {
     FirestoreService.instance.debugDb = null;
   });
 
+  //208
   testWidgets('login válido navega para a Home e garante o doc no Firestore',
       (tester) async {
     final db = FakeFirebaseFirestore();
@@ -121,6 +122,7 @@ void main() {
     expect(doc.get('email'), 'ana@test.com');
   });
 
+  //209
   testWidgets('login preserva favoritos, publicações e telefone já gravados',
       (tester) async {
     final db = FakeFirebaseFirestore();
@@ -156,6 +158,7 @@ void main() {
     expect(doc.get('myPublishedPetIds'), ['pet_b']);
   });
 
+  //210
   testWidgets('falha ao garantir o doc mostra aviso e não navega', (
     tester,
   ) async {
@@ -174,6 +177,7 @@ void main() {
   });
 
   group('validação do formulário', () {
+    //211
     testWidgets('formulário vazio mostra os erros sem chamar o Firebase',
         (tester) async {
       await _pumpLogin(tester);
@@ -186,6 +190,7 @@ void main() {
       expect(find.text('payload_home'), findsNothing);
     });
 
+    //212
     testWidgets('e-mail com formato inválido mostra o erro específico',
         (tester) async {
       await _pumpLogin(tester);
@@ -197,6 +202,7 @@ void main() {
       expect(find.text('payload_home'), findsNothing);
     });
 
+    //213
     testWidgets('senha com menos de 6 caracteres mostra o erro de tamanho',
         (tester) async {
       await _pumpLogin(tester);
@@ -210,6 +216,7 @@ void main() {
   });
 
   group('erros de autenticação', () {
+    //214
     testWidgets('usuário inexistente mostra a mensagem específica', (
       tester,
     ) async {
@@ -224,6 +231,7 @@ void main() {
       expect(find.text('payload_home'), findsNothing);
     });
 
+    //215
     testWidgets('credencial inválida mostra a mensagem específica', (
       tester,
     ) async {
@@ -237,6 +245,7 @@ void main() {
       expect(find.text('payload_home'), findsNothing);
     });
 
+    //216
     testWidgets('login com Google cancelado avisa e não navega', (
       tester,
     ) async {
@@ -255,6 +264,7 @@ void main() {
   });
 
   group('navegação', () {
+    //217
     testWidgets('"Criar Conta" abre a tela de cadastro', (tester) async {
       await _pumpLogin(tester);
 
@@ -265,6 +275,7 @@ void main() {
       expect(find.text('payload_register'), findsOneWidget);
     });
 
+    //218
     testWidgets('"Esqueci minha senha" abre a recuperação', (tester) async {
       await _pumpLogin(tester);
 

@@ -21,6 +21,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  //573
   testWidgets('voltar na raiz abre a confirmação e não fecha o app',
       (tester) async {
     await pump(tester);
@@ -31,6 +32,7 @@ void main() {
     expect(find.text('raiz'), findsOneWidget);
   });
 
+  //574
   testWidgets('confirmar com "Sim" encerra o app', (tester) async {
     var exited = false;
     await pump(tester, onExit: () => exited = true);
@@ -42,6 +44,7 @@ void main() {
     expect(exited, isTrue);
   });
 
+  //575
   testWidgets('cancelar com "Não" mantém o app aberto', (tester) async {
     var exited = false;
     await pump(tester, onExit: () => exited = true);

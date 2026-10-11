@@ -48,6 +48,7 @@ void main() {
   }
 
   group('WGPetGallery → sem fotos', () {
+    //497
     testWidgets('mostra o placeholder de pet em vez de caixa em branco',
         (tester) async {
       await tester.pumpWidget(wrap(images: const []));
@@ -56,6 +57,7 @@ void main() {
       expect(find.byType(PageView), findsNothing);
     });
 
+    //498
     testWidgets('não exibe contador nem dots', (tester) async {
       await tester.pumpWidget(wrap(images: const []));
 
@@ -65,6 +67,7 @@ void main() {
   });
 
   group('WGPetGallery → contador e dots', () {
+    //499
     testWidgets('mostra 1/N ao abrir e acompanha o deslize', (tester) async {
       await tester.pumpWidget(wrap(images: urls));
 
@@ -82,6 +85,7 @@ void main() {
       expect(find.text('1/3'), findsNothing);
     });
 
+    //500
     testWidgets('resincroniza o índice quando a lista encolhe',
         (tester) async {
       await tester.pumpWidget(wrap(images: urls));

@@ -4,22 +4,26 @@ import 'package:appets/core/utils/search_tokens.dart';
 
 void main() {
   group('normalizeText', () {
+    //61
     test('converte para minúsculas', () {
       expect(normalizeText('REX'), 'rex');
       expect(normalizeText('Rex'), 'rex');
       expect(normalizeText('rex'), 'rex');
     });
 
+    //62
     test('remove acentos', () {
       expect(normalizeText('Dócil'), 'docil');
       expect(normalizeText('Coração'), 'coracao');
       expect(normalizeText('Ção'), 'cao');
     });
 
+    //63
     test('remove espaços nas bordas', () {
       expect(normalizeText('  Rex  '), 'rex');
     });
 
+    //64
     test('aplica os 24 mapeamentos de acento', () {
       expect(
         normalizeText('Áàâãä Éèêë Íìîï Óòôõö Úùûü ÇÑ'),
@@ -27,12 +31,14 @@ void main() {
       );
     });
 
+    //65
     test('caracteres fora do mapa passam intactos', () {
       expect(normalizeText('Rex ß ø'), 'rex ß ø');
     });
   });
 
   group('buildSearchTokens', () {
+    //66
     test('inclui nome, descrição e prefixos a partir de 3 letras', () {
       final tokens = buildSearchTokens(
         name: 'Rex',
@@ -48,6 +54,7 @@ void main() {
       expect(tokens, contains('car'));
     });
 
+    //67
     test('gera token de prefixo para buscar digitação parcial', () {
       final tokens = buildSearchTokens(name: 'Poodle');
 
@@ -56,18 +63,21 @@ void main() {
       expect(tokens, contains('poodle'));
     });
 
+    //68
     test('não gera prefixo para palavras com menos de 3 letras', () {
       final tokens = buildSearchTokens(name: 'Bo');
 
       expect(tokens, ['bo']);
     });
 
+    //69
     test('ignora palavras com menos de 2 caracteres', () {
       final tokens = buildSearchTokens(name: 'A', description: 'e');
 
       expect(tokens, isEmpty);
     });
 
+    //70
     test('remove tokens duplicados', () {
       final tokens = buildSearchTokens(name: 'Rex', description: 'REX');
 
@@ -75,12 +85,14 @@ void main() {
       expect(occurrences, 1);
     });
 
+    //71
     test('não gera tokens de descrição quando ela é nula', () {
       final tokens = buildSearchTokens(name: 'Rex');
 
       expect(tokens, ['rex']);
     });
 
+    //72
     test('não gera tokens com raça ou espécie', () {
       final tokens = buildSearchTokens(
         name: 'Rex',
@@ -91,6 +103,7 @@ void main() {
       expect(tokens, isNot(contains('gato')));
     });
 
+    //73
     test('limita a quantidade de tokens', () {
       final description = List.generate(
         200,
@@ -103,10 +116,12 @@ void main() {
   });
 
   group('searchWords', () {
+    //74
     test('divide o termo em palavras normalizadas', () {
       expect(searchWords('  Poodle Preto  '), ['poodle', 'preto']);
     });
 
+    //75
     test('ignora palavras com menos de 2 caracteres', () {
       expect(searchWords('a e o'), isEmpty);
       expect(searchWords('Rex a'), ['rex']);
@@ -114,15 +129,18 @@ void main() {
   });
 
   group('searchQueryWords', () {
+    //76
     test('normaliza, remove duplicadas e preserva a ordem digitada', () {
       expect(searchQueryWords('  Poodle poodle PRETO  '), ['poodle', 'preto']);
     });
 
+    //77
     test('ignora palavras com menos de 2 caracteres', () {
       expect(searchQueryWords('a e o'), isEmpty);
       expect(searchQueryWords('Rex a'), ['rex']);
     });
 
+    //78
     test('limita às 10 primeiras palavras distintas', () {
       final term = List.generate(12, (i) => 'palavra$i').join(' ');
 
@@ -136,16 +154,19 @@ void main() {
   });
 
   group('searchWordsExceedLimit', () {
+    //79
     test('é false com até 10 palavras distintas', () {
       final term = List.generate(10, (i) => 'palavra$i').join(' ');
       expect(searchWordsExceedLimit(term), isFalse);
     });
 
+    //80
     test('é true com mais de 10 palavras distintas', () {
       final term = List.generate(11, (i) => 'palavra$i').join(' ');
       expect(searchWordsExceedLimit(term), isTrue);
     });
 
+    //81
     test('não conta palavras duplicadas', () {
       final term = List.filled(15, 'rex').join(' ');
       expect(searchWordsExceedLimit(term), isFalse);
@@ -153,34 +174,41 @@ void main() {
   });
 
   group('containsAllSearchWords', () {
+    //82
     test('exige todas as palavras do termo', () {
       expect(containsAllSearchWords('Poodle preto', 'poodle preto'), isTrue);
       expect(containsAllSearchWords('Poodle', 'poodle preto'), isFalse);
       expect(containsAllSearchWords('preto', 'poodle preto'), isFalse);
     });
 
+    //83
     test('palavras em qualquer ordem', () {
       expect(containsAllSearchWords('preto poodle', 'poodle preto'), isTrue);
     });
 
+    //84
     test('permite digitação parcial por palavra', () {
       expect(containsAllSearchWords('Poodle dócil', 'poo doci'), isTrue);
     });
 
+    //85
     test('é insensível a maiúsculas e acentos', () {
       expect(containsAllSearchWords('Dócil', 'docil'), isTrue);
       expect(containsAllSearchWords('Poodle', 'POODLE'), isTrue);
     });
 
+    //86
     test('retorna true para termo vazio ou sem palavras', () {
       expect(containsAllSearchWords('Rex', ''), isTrue);
       expect(containsAllSearchWords('Rex', 'a e'), isTrue);
     });
 
+    //87
     test('retorna false quando falta qualquer palavra', () {
       expect(containsAllSearchWords('Rex', 'rex gato'), isFalse);
     });
 
+    //88
     test('considera apenas as 10 primeiras palavras', () {
       final term = [
         ...List.generate(10, (i) => 'palavra$i'),

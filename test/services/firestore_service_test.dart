@@ -16,6 +16,7 @@ void main() {
   });
 
   group('FirestoreService', () {
+    //322
     test('createUser persiste o documento em users', () async {
       await service.createUser(user);
 
@@ -25,10 +26,12 @@ void main() {
       expect(doc.get('email'), 'ana@test.com');
     });
 
+    //323
     test('getUser devolve null quando o usuário não existe', () async {
       expect(await service.getUser('inexistente'), isNull);
     });
 
+    //324
     test('getUser devolve o usuário quando o documento existe', () async {
       await service.createUser(user);
 
@@ -40,6 +43,7 @@ void main() {
       expect(result.email, 'ana@test.com');
     });
 
+    //325
     test('createUser com merge preserva listas e telefone já gravados', () async {
       await db.collection('users').doc('uid_1').set({
         'name': 'Nome Antigo',
@@ -64,6 +68,7 @@ void main() {
       expect(doc.get('myPublishedPetIds'), ['pet_b']);
     });
 
+    //326
     test('updateUser atualiza campos do documento', () async {
       await service.createUser(user);
 
@@ -73,6 +78,7 @@ void main() {
       expect(doc.get('phone'), '(11) 99999-0000');
     });
 
+    //327
     test('addFavorite adiciona o pet à lista via arrayUnion', () async {
       await service.createUser(user);
 
@@ -83,6 +89,7 @@ void main() {
       expect(doc.get('favoritePetIds'), ['pet_a', 'pet_b']);
     });
 
+    //328
     test('removeFavorite remove o pet da lista via arrayRemove', () async {
       await service.createUser(user);
       await service.addFavorite('uid_1', 'pet_a');
@@ -94,6 +101,7 @@ void main() {
       expect(doc.get('favoritePetIds'), ['pet_b']);
     });
 
+    //329
     test('addMyPet adiciona o pet à lista de publicações', () async {
       await service.createUser(user);
 
@@ -103,6 +111,7 @@ void main() {
       expect(doc.get('myPublishedPetIds'), ['pet_a']);
     });
 
+    //330
     test('removeMyPet remove o pet da lista de publicações', () async {
       await service.createUser(user);
       await service.addMyPet('uid_1', 'pet_a');
@@ -114,6 +123,7 @@ void main() {
       expect(doc.get('myPublishedPetIds'), ['pet_b']);
     });
 
+    //331
     test('deleteUser remove o documento do usuário', () async {
       await service.createUser(user);
 

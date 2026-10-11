@@ -4,16 +4,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
+import 'package:appets/core/services/home_data_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 
-/// Zera os estados globais em memória (favoritos e publicações) quando a
-/// sessão muda ou é perdida sem logout explícito — token expirado/revogado,
-/// conta trocada ou excluída remotamente.
+/// Zera os estados globais em memória (dados da Home, favoritos e
+/// publicações) quando a sessão muda ou é perdida sem logout explícito —
+/// token expirado/revogado, conta trocada ou excluída remotamente.
 ///
-/// Sem isso, os dados da conta anterior continuam na memória (`FavoritesService`
-/// e `MyPublicationsService`) e vazam para a próxima sessão. O logout explícito
-/// e a exclusão de conta já limpam por conta própria; este observador cobre os
-/// caminhos implícitos, reagindo ao `authStateChanges`.
+/// Sem isso, os dados da conta anterior continuam na memória (`HomeDataService`,
+/// `FavoritesService` e `MyPublicationsService`) e vazam para a próxima sessão.
+/// O logout explícito e a exclusão de conta já limpam por conta própria; este
+/// observador cobre os caminhos implícitos, reagindo ao `authStateChanges`.
 class SessionStateCleaner {
   SessionStateCleaner._();
 
@@ -38,6 +39,7 @@ class SessionStateCleaner {
   void _onAuth(User? user) {
     if (_isSameSession(user)) return;
     _lastUid = user?.uid;
+    HomeDataService.instance.reset();
     FavoritesService.instance.reset();
     MyPublicationsService.instance.reset();
   }

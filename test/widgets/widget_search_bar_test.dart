@@ -8,6 +8,7 @@ void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
   group('WGSearchBar', () {
+    //576
     testWidgets('submit grava o termo no searchQuery', (tester) async {
       final controller = SearchQueryController();
       addTearDown(controller.dispose);
@@ -23,6 +24,7 @@ void main() {
       expect(controller.value, 'Poodle');
     });
 
+    //577
     testWidgets('botão de limpar zera o searchQuery', (tester) async {
       final controller = SearchQueryController();
       addTearDown(controller.dispose);
@@ -40,6 +42,7 @@ void main() {
       expect(controller.value, '');
     });
 
+    //578
     testWidgets('limpeza externa do searchQuery limpa o campo do texto',
         (tester) async {
       final controller = SearchQueryController();
@@ -62,6 +65,7 @@ void main() {
       expect(find.byIcon(Icons.close), findsNothing);
     });
 
+    //579
     testWidgets('sem searchQuery, usa onSearch no submit', (tester) async {
       String? submitted;
       await tester.pumpWidget(
@@ -80,6 +84,7 @@ void main() {
       expect(submitted, 'rex');
     });
 
+    //580
     testWidgets('botão de filtro invoca onFilterPressed', (tester) async {
       var pressed = 0;
 

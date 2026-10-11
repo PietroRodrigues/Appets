@@ -13,6 +13,7 @@ void main() {
       tester.widget<TextField>(find.byType(TextField));
 
   group('WGTextField', () {
+    //591
     testWidgets('mostra label, hint e prefixo informados', (tester) async {
       await tester.pumpWidget(
         wrap(
@@ -30,6 +31,7 @@ void main() {
       expect(find.byType(TextFormField), findsOneWidget);
     });
 
+    //592
     testWidgets('repassa obscureText, enabled e maxLines', (tester) async {
       await tester.pumpWidget(
         wrap(const WGTextField(hintText: 'Senha', obscureText: true)),
@@ -47,6 +49,7 @@ void main() {
       expect(textField(tester).enabled, isFalse);
     });
 
+    //593
     testWidgets('usa o validator e mostra o erro', (tester) async {
       final formKey = GlobalKey<FormState>();
 
@@ -69,6 +72,7 @@ void main() {
       expect(find.text('obrigatório'), findsOneWidget);
     });
 
+    //594
     testWidgets('dispara onChanged ao digitar', (tester) async {
       String? changed;
 
@@ -80,6 +84,7 @@ void main() {
       expect(changed, 'Rex');
     });
 
+    //595
     testWidgets('dispara onFieldSubmitted ao confirmar', (tester) async {
       String? submitted;
 
@@ -102,6 +107,7 @@ void main() {
   });
 
   group('WGEmailField', () {
+    //596
     testWidgets('usa label, hint, teclado e ícone de e-mail', (tester) async {
       await tester.pumpWidget(wrap(const WGEmailField()));
 
@@ -113,6 +119,7 @@ void main() {
   });
 
   group('WGFieldLabel', () {
+    //597
     testWidgets('mostra o texto informado', (tester) async {
       await tester.pumpWidget(wrap(const WGFieldLabel(text: 'Raça')));
 

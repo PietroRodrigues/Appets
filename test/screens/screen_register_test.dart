@@ -119,6 +119,7 @@ void main() {
     FirestoreService.instance.debugDb = null;
   });
 
+  //231
   testWidgets('formulário vazio mostra os erros antes de chamar o Firebase',
       (tester) async {
     await _pumpRegister(tester);
@@ -131,6 +132,7 @@ void main() {
     expect(find.byType(WGProcessLoadingScreen), findsNothing);
   });
 
+  //232
   testWidgets('senhas divergentes mostram o erro sob o campo',
       (tester) async {
     await _pumpRegister(tester);
@@ -142,6 +144,7 @@ void main() {
     expect(find.byType(WGProcessLoadingScreen), findsNothing);
   });
 
+  //233
   testWidgets('e-mail já cadastrado mostra a mensagem específica',
       (tester) async {
     AuthService.instance.debugAuth =
@@ -154,6 +157,7 @@ void main() {
     expect(find.text(AuthStrings.EMAIL_ALREADY_IN_USE), findsOneWidget);
   });
 
+  //234
   testWidgets('cadastro válido navega para a Home e grava o documento',
       (tester) async {
     final db = FakeFirebaseFirestore();
@@ -177,6 +181,7 @@ void main() {
     expect(docs.docs.first.get('name'), 'Ana Teste');
   });
 
+  //235
   testWidgets('displayName falha, mas o cadastro conclui e vai para a Home',
       (tester) async {
     final createdUser = _TrackingProfileUser(
@@ -206,6 +211,7 @@ void main() {
     expect(docs.docs.first.get('name'), 'Ana Teste');
   });
 
+  //236
   testWidgets('falha ao gravar o documento mostra erro específico e remove o fantasma',
       (tester) async {
     final createdUser = _TrackingProfileUser(

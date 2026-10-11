@@ -29,6 +29,7 @@ void main() {
     await tester.pump();
   }
 
+  //229
   testWidgets('modo publicar exibe o cabeçalho e o formulário',
       (tester) async {
     await pumpPublish(tester);
@@ -38,6 +39,7 @@ void main() {
     expect(find.byType(WGPublishPetForm), findsOneWidget);
   });
 
+  //230
   testWidgets('modo edição exibe o cabeçalho de edição e o formulário',
       (tester) async {
     await pumpPublish(tester, pet: _pet());

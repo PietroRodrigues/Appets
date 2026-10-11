@@ -4,12 +4,14 @@ import 'package:appets/core/utils/search_query_controller.dart';
 
 void main() {
   group('SearchQueryController', () {
+    //58
     test('começa com termo vazio', () {
       final controller = SearchQueryController();
       expect(controller.value, '');
       controller.dispose();
     });
 
+    //59
     test('notifica ao mudar o valor', () {
       final controller = SearchQueryController();
       addTearDown(controller.dispose);
@@ -23,6 +25,7 @@ void main() {
       expect(controller.value, 'poodle');
     });
 
+    //60
     test('clear zera o termo e notifica', () {
       final controller = SearchQueryController();
       addTearDown(controller.dispose);

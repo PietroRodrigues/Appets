@@ -1,10 +1,7 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
-import 'package:appets/core/services/auth_service.dart';
-import 'package:appets/core/services/favorites_service.dart';
-import 'package:appets/core/services/firestore_service.dart';
-import 'package:appets/core/services/my_publications_service.dart';
+import 'package:appets/core/services/home_data_service.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/user_model.dart';
@@ -38,7 +35,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     AppNavigation.selectedPage.value = AppPage.home;
-    _loadData();
+
+    // Se a splash já pré-carregou os dados, monta direto — sem passar pela
+    // tela "Olá, ..." com spinner; caso contrário, carrega aqui.
+    final data = HomeDataService.instance;
+    if (data.loaded) {
+      _user = data.user;
+      _loadError = data.error;
+      _isLoading = false;
+    } else {
+      _loadData();
+    }
   }
 
   @override
@@ -46,28 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  Future<void> _loadData() async {
-    try {
-      final authUser = AuthService.instance.currentUser;
-      if (authUser != null) {
-        // Leitura única do documento do usuário: o mesmo model alimenta o
-        // header da Home e os serviços de favoritos/publicações das abas.
-        _user = await FirestoreService.instance.getUser(authUser.uid);
-        FavoritesService.instance.applyUser(_user);
-        await MyPublicationsService.instance.applyUser(_user);
-      }
-      if (mounted) {
-        setState(() => _loadError = false);
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _loadError = true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+  Future<void> _loadData({bool force = false}) async {
+    await HomeDataService.instance.load(force: force);
+    if (!mounted) return;
+    setState(() {
+      _user = HomeDataService.instance.user;
+      _loadError = HomeDataService.instance.error;
+      _isLoading = false;
+    });
   }
 
   // Reexecuta a carga inicial após uma falha (botão "Tentar de novo").
@@ -76,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoading = true;
       _loadError = false;
     });
-    _loadData();
+    _loadData(force: true);
   }
 
   void _onNavigation(AppPage page) {
@@ -103,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
       errorDescription: SharedStrings.LOAD_DATA_ERROR_DESCRIPTION,
       onRetry: _retryLoad,
       onRefresh: () async {
-        await _loadData();
+        await _loadData(force: true);
         await _feedKey.currentState?.reload();
       },
       emptyIcon: Icons.pets_outlined,

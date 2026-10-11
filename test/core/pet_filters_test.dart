@@ -34,12 +34,14 @@ void main() {
       PetFilterOption(category: category, value: value, label: value);
 
   group('ageBracketOf', () {
+    //38
     test('faixa Filhote: < 12 meses', () {
       expect(ageBracketOf(0, AppPetAgeUnit.years), 'filhote');
       expect(ageBracketOf(11, AppPetAgeUnit.months), 'filhote');
       expect(ageBracketOf(350, AppPetAgeUnit.days), 'filhote');
     });
 
+    //39
     test('faixa Jovem: 12 meses a 5 anos', () {
       expect(ageBracketOf(12, AppPetAgeUnit.months), 'jovem');
       expect(ageBracketOf(1, AppPetAgeUnit.years), 'jovem');
@@ -47,6 +49,7 @@ void main() {
       expect(ageBracketOf(360, AppPetAgeUnit.days), 'jovem');
     });
 
+    //40
     test('faixa Adulto: > 5 anos', () {
       expect(ageBracketOf(6, AppPetAgeUnit.years), 'adulto');
       expect(ageBracketOf(61, AppPetAgeUnit.months), 'adulto');
@@ -55,6 +58,7 @@ void main() {
   });
 
   group('buildFilterTokens', () {
+    //41
     test('gera um token por categoria, na ordem fixa', () {
       expect(
         buildFilterTokens(
@@ -68,6 +72,7 @@ void main() {
       );
     });
 
+    //42
     test('usa years como padrão e deriva a faixa de idade', () {
       expect(
         buildFilterTokens(
@@ -82,10 +87,12 @@ void main() {
   });
 
   group('petMatchesFilters', () {
+    //43
     test('sem filtros aceita qualquer pet', () {
       expect(petMatchesFilters(makePet(), const []), isTrue);
     });
 
+    //44
     test('espécie casa (OR dentro da categoria)', () {
       final dogOrCat = [
         opt(PetFilterCategory.species, 'cachorro'),
@@ -99,6 +106,7 @@ void main() {
       );
     });
 
+    //45
     test('gênero exige AND sem false positive do array misto', () {
       // Caso clássico: filtra "cachorro OU gato" E "fêmea".
       final filters = [
@@ -122,6 +130,7 @@ void main() {
       );
     });
 
+    //46
     test('tipo de publicação filtra por categoria', () {
       final lost = [opt(PetFilterCategory.publicationType, 'perdido')];
       expect(
@@ -140,6 +149,7 @@ void main() {
       );
     });
 
+    //47
     test('idade compara a faixa derivada, não a idade bruta', () {
       final adult = [opt(PetFilterCategory.age, 'adulto')];
       expect(
@@ -152,6 +162,7 @@ void main() {
       );
     });
 
+    //48
     test('combina doses das categorias sem selecionar ignora o resto', () {
       final filters = [
         opt(PetFilterCategory.gender, 'macho'),
@@ -181,24 +192,28 @@ void main() {
   });
 
   group('petMatchesSearch', () {
+    //49
     test('busca multi-palavra divide entre nome e descrição', () {
       final pet = makePet(name: 'Poodle', description: 'é preto e dócil');
       expect(petMatchesSearch(pet, 'poodle preto'), isTrue);
       expect(petMatchesSearch(pet, 'preto poodle'), isTrue);
     });
 
+    //50
     test('exige todas as palavras do termo', () {
       final pet = makePet(name: 'Poodle', description: 'é preto e dócil');
       expect(petMatchesSearch(pet, 'poodle gato'), isFalse);
       expect(petMatchesSearch(pet, 'gato'), isFalse);
     });
 
+    //51
     test('permite digitação parcial e ignora acentos/caixa', () {
       final pet = makePet(name: 'Dócil', description: 'Poodle');
       expect(petMatchesSearch(pet, 'poo doci'), isTrue);
       expect(petMatchesSearch(pet, 'POODLE'), isTrue);
     });
 
+    //52
     test('sem descrição busca apenas pelo nome', () {
       final pet = makePet(name: 'Rex');
       expect(petMatchesSearch(pet, 'rex'), isTrue);
@@ -213,15 +228,18 @@ void main() {
       makePet(name: 'Poodle Preto', species: AppPetSpecies.dog, gender: AppPetGender.male),
     ];
 
+    //53
     test('sem busca nem filtros mantém a lista', () {
       expect(applyLocalFilters(pets: pets), hasLength(3));
     });
 
+    //54
     test('busca multi-palavra aplicada client-side', () {
       final result = applyLocalFilters(pets: pets, searchQuery: 'poodle preto');
       expect(result.map((p) => p.name), ['Poodle Preto']);
     });
 
+    //55
     test('busca + filtro AND são aplicados juntos', () {
       final femea = opt(PetFilterCategory.gender, 'femea');
       final result = applyLocalFilters(
@@ -232,12 +250,14 @@ void main() {
       expect(result.map((p) => p.name), ['Poodle']);
     });
 
+    //56
     test('filtro AND aplicado mesmo com busca desligada', () {
       final femea = opt(PetFilterCategory.gender, 'femea');
       final result = applyLocalFilters(pets: pets, filterOptions: [femea]);
       expect(result.map((p) => p.name), ['Poodle']);
     });
 
+    //57
     test('categorias descartam pets fora do AND', () {
       final lost = opt(PetFilterCategory.publicationType, 'perdido');
       final result = applyLocalFilters(pets: pets, filterOptions: [lost]);

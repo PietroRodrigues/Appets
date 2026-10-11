@@ -14,6 +14,7 @@ void main() {
     );
   }
 
+  //523
   testWidgets('renderiza um chip por tipo de publicação', (tester) async {
     await tester.pumpWidget(
       wrap(
@@ -33,6 +34,7 @@ void main() {
     }
   });
 
+  //524
   testWidgets('marca apenas o chip do tipo selecionado', (tester) async {
     await tester.pumpWidget(
       wrap(
@@ -50,6 +52,7 @@ void main() {
     );
   });
 
+  //525
   testWidgets('tocar em um chip devolve o tipo escolhido', (tester) async {
     AppPetPublicationType? picked;
     await tester.pumpWidget(
@@ -67,6 +70,7 @@ void main() {
   });
 
   group('WGOptionChip', () {
+    //526
     testWidgets('sem accentColor usa a cor primária sólida quando selecionado', (
       tester,
     ) async {
@@ -80,6 +84,7 @@ void main() {
       expect(chip.selectedColor, AppColors.light.primary);
     });
 
+    //527
     testWidgets('com accentColor usa a cor suave (alpha 0.15)', (
       tester,
     ) async {
@@ -101,6 +106,7 @@ void main() {
       );
     });
 
+    //528
     testWidgets('dispara onSelected no toque', (tester) async {
       var selected = false;
       await tester.pumpWidget(

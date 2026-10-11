@@ -49,63 +49,95 @@ void main() {
     };
   }
 
-  group('WGSkeletonPetGrid · esqueleto de carregamento', () {
-    testWidgets('renderiza cards placeholder em grade com pulso', (
-      tester,
-    ) async {
+  group('WGPetGridLoading · spinner de carregamento', () {
+    //501
+    testWidgets('renderiza o spinner em animação', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: WGSkeletonPetGrid())),
+        const MaterialApp(home: Scaffold(body: WGPetGridLoading())),
       );
       await tester.pump();
 
-      expect(find.byType(WGSkeletonPetCard), findsNWidgets(6));
-      expect(find.byType(FadeTransition), findsWidgets);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(tester.hasRunningAnimations, isTrue);
     });
 
-    testWidgets('sem animação quando animações estão desabilitadas', (
-      tester,
-    ) async {
+    //502
+    testWidgets('anima mesmo com animações desabilitadas', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(disableAnimations: true),
             child: child!,
           ),
-          home: const Scaffold(body: WGSkeletonPetGrid()),
+          home: const Scaffold(body: WGPetGridLoading()),
         ),
       );
       await tester.pump();
 
-      expect(find.byType(WGSkeletonPetCard), findsNWidgets(6));
-      expect(tester.hasRunningAnimations, isFalse);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(tester.hasRunningAnimations, isTrue);
     });
 
-    testWidgets('esqueleto é excluído da árvore semântica (a11y)', (
+    //503
+    testWidgets('anuncia o carregamento para leitores de tela (a11y)', (
       tester,
     ) async {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: WGSkeletonPetGrid())),
+        const MaterialApp(home: Scaffold(body: WGPetGridLoading())),
       );
       await tester.pump();
 
-      // O esqueleto é ruído visual para leitores de tela: a grade fica
-      // dentro de um ExcludeSemantics e não expõe nenhum nó com rótulo.
-      final excludeFinder = find.ancestor(
-        of: find.byType(GridView),
-        matching: find.byType(ExcludeSemantics),
-      );
-      expect(excludeFinder, findsOneWidget);
-      expect(tester.getSemantics(excludeFinder).label, isEmpty);
+      expect(find.bySemanticsLabel(RegExp('Carregando')), findsOneWidget);
 
       handle.dispose();
     });
   });
 
-  group('WGResponsivePetGrid · loading inicial usa skeleton', () {
+  group('WGPetGridLoading · sem overflow em várias larguras', () {
+    Future<void> expectNoOverflowAt(WidgetTester tester, Size size) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: WGPetGridLoading())),
+      );
+      await tester.pump();
+
+      // Overflow do RenderFlex viraria exceção capturada aqui (e falharia a
+      // expect) — a regressão do "erro de pixel" é detectada automaticamente.
+      expect(tester.takeException(), isNull);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    }
+
+    //504
+    testWidgets('1 coluna em 320×480', (tester) async {
+      await expectNoOverflowAt(tester, const Size(320, 480));
+    });
+
+    //505
+    testWidgets('2 colunas em 360×640 (cards baixos)', (tester) async {
+      await expectNoOverflowAt(tester, const Size(360, 640));
+    });
+
+    //506
+    testWidgets('3 colunas em 800×600', (tester) async {
+      await expectNoOverflowAt(tester, const Size(800, 600));
+    });
+
+    //507
+    testWidgets('1 coluna muito baixa em 200×600 (escala mínima)', (
+      tester,
+    ) async {
+      await expectNoOverflowAt(tester, const Size(200, 600));
+    });
+  });
+
+  group('WGResponsivePetGrid · loading inicial usa o spinner', () {
+    //508
     testWidgets(
-      'mostra o esqueleto durante o loading e some quando os pets chegam',
+      'mostra o spinner durante o loading e some quando os pets chegam',
       (tester) async {
         // Sem pets no banco nem no cache: o primeiro frame é o de
         // carregamento (o cache-first resolve em microtask e o grid entra
@@ -121,51 +153,16 @@ void main() {
           ),
         );
 
-        expect(find.byType(WGSkeletonPetGrid), findsOneWidget);
-        expect(find.byType(WGSkeletonPetCard), findsWidgets);
-        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.byType(WGPetGridLoading), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-        // O pet chega pela stream: o skeleton sai e o conteúdo entra.
+        // O pet chega pela stream: o spinner sai e o conteúdo entra.
         await db.collection('pets').doc('fido').set(petDoc('fido', now));
         await tester.pumpAndSettle();
 
-        expect(find.byType(WGSkeletonPetGrid), findsNothing);
+        expect(find.byType(WGPetGridLoading), findsNothing);
         expect(find.text('fido'), findsOneWidget);
       },
     );
-  });
-
-  group('WGSkeletonPetGrid · sem overflow em várias larguras', () {
-    Future<void> expectNoOverflowAt(WidgetTester tester, Size size) async {
-      tester.view.physicalSize = size;
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: WGSkeletonPetGrid())),
-      );
-      await tester.pump();
-
-      // Overflow do RenderFlex viraria exceção capturada aqui (e falharia a
-      // expect) — a regressão do "erro de pixel" é detectada automaticamente.
-      expect(tester.takeException(), isNull);
-      expect(find.byType(WGSkeletonPetCard), findsWidgets);
-    }
-
-    testWidgets('1 coluna em 320×480', (tester) async {
-      await expectNoOverflowAt(tester, const Size(320, 480));
-    });
-
-    testWidgets('2 colunas em 360×640 (cards baixos)', (tester) async {
-      await expectNoOverflowAt(tester, const Size(360, 640));
-    });
-
-    testWidgets('3 colunas em 800×600', (tester) async {
-      await expectNoOverflowAt(tester, const Size(800, 600));
-    });
-
-    testWidgets('1 coluna muito baixa em 200×600 (escala mínima)', (tester) async {
-      await expectNoOverflowAt(tester, const Size(200, 600));
-    });
   });
 }

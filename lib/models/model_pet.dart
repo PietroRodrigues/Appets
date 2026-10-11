@@ -92,13 +92,13 @@ class Pet {
         ageUnit: ageUnit,
       );
 
-  // Converte o pet em um mapa para persistência no Firestore.
+  // Campos editáveis compartilhados por [toMap] e [toUpdateMap]:
+  // dados comuns, tokens de filtro/busca e o peso (quando informado).
   //
-  // Os códigos de espécie, gênero, unidade de idade e tipo são gravados
-  // em tokens PT normalizados (ver [storage_tokens]).
-  Map<String, dynamic> toMap() {
+  // Ponto ÚNICO de manutenção dos campos persistidos — os dois mapas
+  // nunca saem de sincronia.
+  Map<String, dynamic> _commonFields() {
     return {
-      'ownerId': ownerId,
       'name': name,
       'age': age,
       'ageUnit': ageUnitStorageToken(ageUnit),
@@ -113,6 +113,17 @@ class Pet {
       if (weight != null) 'weight': weight,
       'searchTokens': buildSearchTokens(name: name, description: description),
       'specifications': specifications,
+    };
+  }
+
+  // Converte o pet em um mapa para persistência no Firestore.
+  //
+  // Os códigos de espécie, gênero, unidade de idade e tipo são gravados
+  // em tokens PT normalizados (ver [storage_tokens]).
+  Map<String, dynamic> toMap() {
+    return {
+      'ownerId': ownerId,
+      ..._commonFields(),
       'images': images,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -123,24 +134,7 @@ class Pet {
   // Diferente do [toMap]: não grava `id`, `ownerId` nem `createdAt`
   // (evita reordenar o feed) e não inclui `images` (quem as altera é o
   // fluxo de fotos, que atualiza o campo em um update separado).
-  Map<String, dynamic> toUpdateMap() {
-    return {
-      'name': name,
-      'age': age,
-      'ageUnit': ageUnitStorageToken(ageUnit),
-      'gender': genderStorageToken(gender),
-      'address': address,
-      'ownerPhone': ownerPhone,
-      'ownerAddress': ownerAddress,
-      'description': description ?? '',
-      'publicationType': publicationTypeStorageToken(publicationType),
-      'species': speciesStorageToken(species),
-      'race': race,
-      if (weight != null) 'weight': weight,
-      'searchTokens': buildSearchTokens(name: name, description: description),
-      'specifications': specifications,
-    };
-  }
+  Map<String, dynamic> toUpdateMap() => _commonFields();
 
   // Cria um pet a partir de um documento do Firestore.
   factory Pet.fromFirestore(DocumentSnapshot doc) {

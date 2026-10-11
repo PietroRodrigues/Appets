@@ -20,6 +20,7 @@ void main() {
     );
   }
 
+  //419
   testWidgets('inicia offline e mostra a faixa colorida', (tester) async {
     connectivity.debugOnline = false;
 
@@ -28,6 +29,7 @@ void main() {
     expect(find.byKey(stripKey), findsOneWidget);
   });
 
+  //420
   testWidgets('inicia online e não mostra a faixa', (tester) async {
     connectivity.debugOnline = true;
 
@@ -36,6 +38,7 @@ void main() {
     expect(find.byKey(stripKey), findsNothing);
   });
 
+  //421
   testWidgets(
     'reconecta: mostra a faixa e recolhe após o tempo',
     (tester) async {

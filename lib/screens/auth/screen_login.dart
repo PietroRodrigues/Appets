@@ -231,19 +231,7 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
             onFieldSubmitted: (_) {
               _login();
             },
-            validator: (value) {
-              final password = value ?? '';
-
-              if (password.isEmpty) {
-                return AuthStrings.PASSWORD_REQUIRED;
-              }
-
-              if (password.length < 6) {
-                return AuthStrings.PASSWORD_MIN_LENGTH;
-              }
-
-              return null;
-            },
+            validator: AppValidators.validatePassword,
           ),
 
           const SizedBox(height: 8),

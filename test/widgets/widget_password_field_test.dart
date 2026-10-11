@@ -10,6 +10,7 @@ void main() {
   bool obscureText(WidgetTester tester) =>
       tester.widget<TextField>(find.byType(TextField)).obscureText;
 
+  //469
   testWidgets('começa oculto e alterna a visibilidade no toque', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
@@ -34,6 +35,7 @@ void main() {
     expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
   });
 
+  //470
   testWidgets('olho expõe o tooltip de mostrar/ocultar senha (a11y)',
       (tester) async {
     final controller = TextEditingController();
@@ -53,6 +55,7 @@ void main() {
     expect(find.byTooltip(AuthStrings.HIDE_PASSWORD), findsOneWidget);
   });
 
+  //471
   testWidgets('exibe label, hint e prefixo informados', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
@@ -72,6 +75,7 @@ void main() {
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);
   });
 
+  //472
   testWidgets('usa o validator informado e mostra o erro', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
@@ -97,6 +101,7 @@ void main() {
     expect(find.text('obrigatório'), findsOneWidget);
   });
 
+  //473
   testWidgets('dispara onFieldSubmitted ao confirmar o campo', (tester) async {
     final controller = TextEditingController();
     addTearDown(controller.dispose);

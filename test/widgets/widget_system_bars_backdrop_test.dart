@@ -18,6 +18,7 @@ void main() {
     );
   }
 
+  //585
   testWidgets('mantém o conteúdo e pinta a faixa da barra de status',
       (tester) async {
     await tester.pumpWidget(build());
@@ -29,6 +30,7 @@ void main() {
     expect(backdrop.color, AppColors.light.statusBar);
   });
 
+  //586
   testWidgets('ocupa exatamente a altura da barra de status', (tester) async {
     await tester.pumpWidget(build(padding: const EdgeInsets.only(top: 32)));
 
@@ -39,6 +41,7 @@ void main() {
     expect(rect.left, 0);
   });
 
+  //587
   testWidgets('não pinta a faixa quando não há inset superior', (tester) async {
     await tester.pumpWidget(
       build(padding: const EdgeInsets.only(bottom: 24)),
@@ -48,6 +51,7 @@ void main() {
     expect(find.byKey(statusBarBackdropKey), findsNothing);
   });
 
+  //588
   testWidgets('pinta a faixa da barra de navegação na mesma cor',
       (tester) async {
     await tester.pumpWidget(build());
@@ -58,6 +62,7 @@ void main() {
     expect(backdrop.color, AppColors.light.statusBar);
   });
 
+  //589
   testWidgets('faixa da barra de navegação ocupa a base na altura do inset',
       (tester) async {
     await tester.pumpWidget(build(padding: const EdgeInsets.only(bottom: 16)));
@@ -67,6 +72,7 @@ void main() {
     expect(rect.left, 0);
   });
 
+  //590
   testWidgets('não pinta a faixa quando não há inset inferior', (tester) async {
     await tester.pumpWidget(
       build(padding: const EdgeInsets.only(top: 40)),

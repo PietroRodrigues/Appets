@@ -12,6 +12,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  //237
   testWidgets('exibe o título e as opções de configurações', (tester) async {
     await pumpSettings(tester);
 
@@ -21,6 +22,7 @@ void main() {
     expect(find.byType(WGOptionTile), findsNWidgets(2));
   });
 
+  //238
   testWidgets('"Compartilhar localização" avisa que está em desenvolvimento',
       (tester) async {
     await pumpSettings(tester);
@@ -37,6 +39,7 @@ void main() {
     );
   });
 
+  //239
   testWidgets('"Sobre o APPets" avisa que está em desenvolvimento',
       (tester) async {
     await pumpSettings(tester);

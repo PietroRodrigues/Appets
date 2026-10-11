@@ -4,6 +4,7 @@ import 'package:appets/core/backfill/pet_tokens_backfill_initializer.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/home_data_service.dart';
 import 'package:appets/core/services/session_state_cleaner.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
@@ -63,6 +64,11 @@ class _SplashScreenState extends State<SplashScreen> {
       SessionStateCleaner.instance.attach();
 
       if (authService.currentUser != null) {
+        // Pré-carrega os dados da Home para que ela entre já pronta, sem o
+        // "flash" da tela de loading logo após a splash. Best-effort: uma
+        // falha fica registrada no serviço e a Home exibe o estado de erro.
+        await HomeDataService.instance.load();
+        if (!mounted) return;
         Navigator.pushReplacementNamed(context, AppRoutes.home);
       } else {
         Navigator.pushReplacementNamed(context, AppRoutes.login);

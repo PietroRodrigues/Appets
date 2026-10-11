@@ -71,6 +71,7 @@ void main() {
   }
 
   group('PetService · leitura por dono', () {
+    //356
     test('getPetsByOwner retorna todos os pets do dono, inclusive os '
         'legados sem createdAt', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
@@ -82,6 +83,7 @@ void main() {
       expect(pets.map((p) => p.id).toSet(), {'p1', 'p2'});
     });
 
+    //357
     test('getOwnerPetDocuments retorna os documentos crus do dono, '
         'inclusive os legados sem createdAt', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
@@ -95,6 +97,7 @@ void main() {
   });
 
   group('PetService · batch e propagação de telefone', () {
+    //358
     test(
       'updatePetsBatch com mapa vazio retorna 0 sem atualizar nada',
       () async {
@@ -103,6 +106,7 @@ void main() {
       },
     );
 
+    //359
     test('updatePetsBatch atualiza vários pets e retorna a contagem', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
       await insertPet(petDoc('p2', ownerId: 'dono_a'));
@@ -119,6 +123,7 @@ void main() {
       expect(doc2.get('ownerPhone'), '888');
     });
 
+    //360
     test(
       'updateOwnerPhone propaga o telefone em batch para todos os pets',
       () async {
@@ -134,6 +139,7 @@ void main() {
       },
     );
 
+    //361
     test('updateOwnerPhone cobre também pets legados sem createdAt', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
       await insertPet(petDocLegacy('p2', ownerId: 'dono_a'));
@@ -146,12 +152,14 @@ void main() {
       expect(doc2.get('ownerPhone'), '(11) 99999-0000');
     });
 
+    //362
     test('updateOwnerPhone não falha quando o dono não tem pets', () async {
       await service.updateOwnerPhone('dono_sozinho', '(11) 99999-0000');
     });
   });
 
   group('PetService · CRUD', () {
+    //363
     test('createPet persiste o pet e retorna o ID gerado', () async {
       final id = await service.createPet(
         makePet('', ownerId: 'dono_a', name: 'Rex', age: 2),
@@ -162,6 +170,7 @@ void main() {
       expect(doc.exists, isTrue);
     });
 
+    //364
     test('updatePet atualiza apenas os campos informados', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
 
@@ -172,6 +181,7 @@ void main() {
       expect(doc.get('ownerId'), 'dono_a');
     });
 
+    //365
     test('deletePet remove o documento', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
 
@@ -183,10 +193,12 @@ void main() {
   });
 
   group('PetService · getPetsByIds', () {
+    //366
     test('devolve lista vazia quando não há IDs', () async {
       expect(await service.getPetsByIds([]), isEmpty);
     });
 
+    //367
     test('devolve os pets de uma lista pequena de IDs', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
       await insertPet(petDoc('p2', ownerId: 'dono_a'));
@@ -196,6 +208,7 @@ void main() {
       expect(pets.map((p) => p.id).toSet(), {'p1', 'p2'});
     });
 
+    //368
     test('divide em lotes de 10 quando há muitos IDs', () async {
       for (var i = 0; i < 25; i++) {
         await insertPet(petDoc('pet_$i', ownerId: 'dono_a'));
@@ -208,6 +221,7 @@ void main() {
       expect(pets, hasLength(25));
     });
 
+    //369
     test('devolve na ordem dos IDs, ignorando os inexistentes', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
       await insertPet(petDoc('p2', ownerId: 'dono_a'));
@@ -220,6 +234,7 @@ void main() {
       expect(pets.map((p) => p.id), ['p2', 'p1', 'p3']);
     });
 
+    //370
     test('não duplica pet quando o mesmo ID aparece repetido', () async {
       await insertPet(petDoc('p1', ownerId: 'dono_a'));
 
@@ -230,12 +245,14 @@ void main() {
   });
 
   group('PetService · busca por tokens', () {
+    //371
     test('devolve página vazia quando o termo não gera tokens', () async {
       final page = await service.searchPetsByTokens('a');
       expect(page.pets, isEmpty);
       expect(page.hasMore, isFalse);
     });
 
+    //372
     test('busca parcial por prefixo, insensível a caixa', () async {
       await insertPet(
         petDoc(
@@ -258,6 +275,7 @@ void main() {
       expect(page.hasMore, isFalse);
     });
 
+    //373
     test('considera múltiplos tokens e aplica o limite de página', () async {
       for (var i = 0; i < 22; i++) {
         await insertPet(
@@ -272,6 +290,7 @@ void main() {
       expect(page.lastDoc, isNotNull);
     });
 
+    //374
     test('searchPetsNextPage continua do cursor sem repetir pets', () async {
       final total = PetService.pageSize * 2 + 5;
       for (var i = 0; i < total; i++) {
@@ -307,6 +326,7 @@ void main() {
       expect(last.lastDoc, isNull);
     });
 
+    //375
     test('searchPetsNextPage com termo sem tokens devolve página vazia',
         () async {
       for (var i = 0; i < 22; i++) {
@@ -322,6 +342,7 @@ void main() {
       expect(page.hasMore, isFalse);
     });
 
+    //376
     test(
       'limita a busca às 10 primeiras palavras (limite do Firestore)',
       () async {
@@ -352,6 +373,7 @@ void main() {
   });
 
   group('PetService · paginação (getNextPage)', () {
+    //377
     test('detecta hasMore quando a página seguinte excede o limite', () async {
       for (var i = 0; i < 45; i++) {
         await insertPet(
@@ -377,6 +399,7 @@ void main() {
       expect(next.lastDoc, isNotNull);
     });
 
+    //378
     test('hasMore é false na última página', () async {
       for (var i = 0; i < PetService.pageSize + 5; i++) {
         await insertPet(

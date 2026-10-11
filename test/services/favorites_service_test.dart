@@ -23,17 +23,20 @@ void main() {
   });
 
   group('FavoritesService', () {
+    //287
     test('começa vazio e isFavorite retorna false', () {
       expect(service.current, isEmpty);
       expect(service.isFavorite('pet_a'), isFalse);
     });
 
+    //288
     test('isFavorite reflete o conjunto do notifier global', () {
       service.favoriteIds.value = {'pet_x'};
       expect(service.isFavorite('pet_x'), isTrue);
       expect(service.isFavorite('pet_y'), isFalse);
     });
 
+    //289
     test('removeLocal remove o pet e notifica ouvintes', () {
       service.favoriteIds.value = {'pet_a', 'pet_b'};
       expect(service.isFavorite('pet_a'), isTrue);
@@ -48,6 +51,7 @@ void main() {
       expect(notified, 1);
     });
 
+    //290
     test('removeLocal não notifica quando o pet não é favorito', () {
       service.favoriteIds.value = {'pet_a'};
 
@@ -60,6 +64,7 @@ void main() {
       expect(service.favoriteIds.value, {'pet_a'});
     });
 
+    //291
     test('removeLocalMany remove vários pets com uma única notificação', () {
       service.favoriteIds.value = {'pet_a', 'pet_b', 'pet_c', 'pet_d'};
 
@@ -75,6 +80,7 @@ void main() {
       expect(notified, 1);
     });
 
+    //292
     test('removeLocalMany não notifica quando nada é removido', () {
       service.favoriteIds.value = {'pet_a'};
 
@@ -87,6 +93,7 @@ void main() {
       expect(service.isFavorite('pet_a'), isTrue);
     });
 
+    //293
     test('removeLocalMany não notifica quando a lista é vazia', () {
       service.favoriteIds.value = {'pet_a'};
 
@@ -99,6 +106,7 @@ void main() {
       expect(service.favoriteIds.value, {'pet_a'});
     });
 
+    //294
     test('reset limpa todos os favoritos', () {
       service.favoriteIds.value = {'pet_a'};
       service.reset();
@@ -108,6 +116,7 @@ void main() {
     group('add/remove com persistência', () {
       // Sem Firebase inicializado, a persistência falha e o serviço deve
       // reverter o estado otimista e devolver `false`.
+      //295
       test(
         'add devolve false e reverte o estado quando o Firestore falha',
         () async {
@@ -121,6 +130,7 @@ void main() {
         },
       );
 
+      //296
       test('remove devolve false e restaura o favorito quando o Firestore '
           'falha', () async {
         service.favoriteIds.value = {'pet_a'};
@@ -131,6 +141,7 @@ void main() {
         expect(service.isFavorite('pet_a'), isTrue);
       });
 
+      //297
       test('add falha: rollback restaura o snapshot pré-escrita em vez de '
           'recalcular do estado atual', () async {
         service.favoriteIds.value = {'pet_a'};
@@ -145,6 +156,7 @@ void main() {
         expect(service.favoriteIds.value, {'pet_a'});
       });
 
+      //298
       test('remove falha: rollback restaura o snapshot pré-escrita em vez de '
           'recalcular do estado atual', () async {
         service.favoriteIds.value = {'pet_a', 'pet_b'};
@@ -179,6 +191,7 @@ void main() {
         FirestoreService.instance.debugRemoveFavoriteError = null;
       });
 
+      //299
       test('add com erro injetado reverte o estado e não persiste', () async {
         FirestoreService.instance.debugAddFavoriteError = StateError('falha');
 
@@ -190,6 +203,7 @@ void main() {
         expect(doc.get('favoritePetIds'), ['pet_a']);
       });
 
+      //300
       test('remove com erro injetado restaura o favorito e não persiste',
           () async {
         service.favoriteIds.value = {'pet_a'};
@@ -203,6 +217,7 @@ void main() {
         expect(doc.get('favoritePetIds'), ['pet_a']);
       });
 
+      //301
       test('remove com sucesso persiste a remoção no Firestore', () async {
         service.favoriteIds.value = {'pet_a'};
 
@@ -216,6 +231,7 @@ void main() {
     });
 
     group('cleanOrphans', () {
+      //302
       test('remove localmente os favoritos que não existem mais', () async {
         service.favoriteIds.value = {'pet_a', 'pet_b', 'pet_c'};
 
@@ -226,6 +242,7 @@ void main() {
         expect(service.isFavorite('pet_b'), isFalse);
       });
 
+      //303
       test('não altera nada quando não há órfãos', () async {
         service.favoriteIds.value = {'pet_a', 'pet_b'};
 
@@ -234,6 +251,7 @@ void main() {
         expect(service.favoriteIds.value, {'pet_a', 'pet_b'});
       });
 
+      //304
       test('não altera nada quando não há favoritos', () async {
         var notified = 0;
         service.favoriteIds.addListener(() => notified++);
@@ -244,6 +262,7 @@ void main() {
         expect(notified, 0);
       });
 
+      //305
       test('notifica uma única vez ao remover vários órfãos', () async {
         service.favoriteIds.value = {'pet_a', 'pet_b', 'pet_c', 'pet_d'};
 
@@ -256,6 +275,7 @@ void main() {
         expect(service.favoriteIds.value, {'pet_a', 'pet_b'});
       });
 
+      //306
       test('persiste a remoção no campo favoritePetIds', () async {
         final db = FakeFirebaseFirestore();
         FirestoreService.instance.debugDb = db;
@@ -274,6 +294,7 @@ void main() {
       });
     });
 
+    //307
     test('notifica ouvintes ao alterar favoriteIds.value', () {
       var notified = 0;
       void listener() => notified++;
@@ -286,12 +307,14 @@ void main() {
       expect(service.isFavorite('pet_x'), isTrue);
     });
 
+    //308
     test('current é uma visão mutável mas começa vazia', () {
       expect(service.current, isEmpty);
       expect(service.favoriteIds, isA<ValueNotifier<Set<String>>>());
     });
 
     group('applyUser', () {
+      //309
       test('preenche os favoritos a partir do UserModel', () {
         final user = UserModel(
           id: 'uid_1',
@@ -305,6 +328,7 @@ void main() {
         expect(service.favoriteIds.value, {'pet_a', 'pet_b'});
       });
 
+      //310
       test('user null zera o estado (lista vazia)', () {
         service.favoriteIds.value = {'pet_x'};
 
@@ -313,6 +337,7 @@ void main() {
         expect(service.current, isEmpty);
       });
 
+      //311
       test('não lê do Firestore (usa só o model recebido)', () {
         FirestoreService.instance.debugGetUserError =
             StateError('não deve ler');
@@ -347,6 +372,7 @@ void main() {
         FirestoreService.instance.debugDb = null;
       });
 
+      //312
       test('começa com o estado atual do pet', () {
         service.favoriteIds.value = {'pet_a'};
 
@@ -354,6 +380,7 @@ void main() {
         expect(service.isFavoriteListenable('pet_b').value, isFalse);
       });
 
+      //313
       test('add notifica o ouvinte do notifier do pet', () async {
         final notifier =
             service.isFavoriteListenable('pet_a') as ValueNotifier<bool>;
@@ -366,6 +393,7 @@ void main() {
         expect(notifier.value, isTrue);
       });
 
+      //314
       test('remove notifica o ouvinte do notifier do pet', () async {
         expect(await service.add('uid_1', 'pet_a'), isTrue);
         final notifier =
@@ -379,6 +407,7 @@ void main() {
         expect(notifier.value, isFalse);
       });
 
+      //315
       test('favoritar A não notifica o notifier de B', () async {
         final notifierB =
             service.isFavoriteListenable('pet_b') as ValueNotifier<bool>;
@@ -392,6 +421,7 @@ void main() {
         expect(notifierB.value, isFalse);
       });
 
+      //316
       test('add falho reverte o notifier do pet para false', () async {
         FirestoreService.instance.debugDb = null;
         final notifier =
@@ -405,6 +435,7 @@ void main() {
         expect(notifier.value, isFalse);
       });
 
+      //317
       test('remove falho restaura o notifier do pet para true', () async {
         service.favoriteIds.value = {'pet_a'};
         final notifier =
@@ -420,6 +451,7 @@ void main() {
         expect(notifier.value, isTrue);
       });
 
+      //318
       test('removeLocal sincroniza o notifier do pet', () {
         service.favoriteIds.value = {'pet_a', 'pet_b'};
         final notifier =
@@ -433,6 +465,7 @@ void main() {
         expect(notifier.value, isFalse);
       });
 
+      //319
       test('removeLocalMany sincroniza o notifier de cada pet', () {
         service.favoriteIds.value = {'pet_a', 'pet_b', 'pet_c'};
         final notifier =
@@ -446,6 +479,7 @@ void main() {
         expect(notifierC.value, isFalse);
       });
 
+      //320
       test('applyUser sincroniza os notifiers já criados', () {
         service.favoriteIds.value = {'pet_a'};
         final notifierA =
@@ -466,6 +500,7 @@ void main() {
         expect(notifierB.value, isTrue);
       });
 
+      //321
       test('reset zera todos os notifiers já criados', () {
         service.favoriteIds.value = {'pet_a', 'pet_b'};
         final notifier =

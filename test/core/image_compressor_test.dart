@@ -32,6 +32,7 @@ void main() {
       return file.writeAsBytes(Uint8List(size), flush: true);
     }
 
+    //19
     test('arquivo original inexistente: devolve null', () async {
       final result = await ImageCompressor.compressForUpload(
         '${tempDir.path}${Platform.pathSeparator}nao_existe.jpg',
@@ -40,6 +41,7 @@ void main() {
       expect(result, isNull);
     });
 
+    //20
     test('arquivo vazio (0 bytes): devolve null sem criar temporário',
         () async {
       final original = await createOriginal(0);
@@ -50,6 +52,7 @@ void main() {
       expect(File('${original.path}.webp').existsSync(), isFalse);
     });
 
+    //21
     test('para na primeira qualidade que cabe no teto', () async {
       final original = await createOriginal(5 * 1024 * 1024);
       final calls = <int>[];
@@ -75,6 +78,7 @@ void main() {
       expect(await result.length(), 300 * 1024);
     });
 
+    //22
     test('aceita tamanho exatamente igual ao teto', () async {
       final original = await createOriginal(700 * 1024);
       ImageCompressor.debugCompress = (source, quality) async =>
@@ -87,6 +91,7 @@ void main() {
       expect(await result.length(), ImageCompressor.targetMaxBytes);
     });
 
+    //23
     test('qualidade que falha é ignorada (não envenena a escolha)', () async {
       final original = await createOriginal(5 * 1024 * 1024);
       ImageCompressor.debugCompress = (source, quality) async {
@@ -108,6 +113,7 @@ void main() {
       expect(await result!.length(), 300 * 1024);
     });
 
+    //24
     test('nenhuma cabe no teto: usa a menor qualidade que ainda reduza',
         () async {
       final original = await createOriginal(5 * 1024 * 1024);
@@ -130,6 +136,7 @@ void main() {
       expect(await result!.length(), 400 * 1024);
     });
 
+    //25
     test('nada reduz: devolve null e apaga temporário órfão', () async {
       final original = await createOriginal(1 * 1024 * 1024);
       final orphan = File('${original.path}.webp');
@@ -144,6 +151,7 @@ void main() {
       expect(await orphan.exists(), isFalse);
     });
 
+    //26
     test('imagem já menor que o teto pode manter o original', () async {
       final original = await createOriginal(200 * 1024);
       ImageCompressor.debugCompress = (source, quality) async =>
@@ -171,6 +179,7 @@ void main() {
       }
     });
 
+    //27
     test('apaga só temporários `.webp` e ignora inexistentes/erros', () async {
       final a = File('${tempDir.path}${Platform.pathSeparator}a.webp');
       final png = File('${tempDir.path}${Platform.pathSeparator}foto.png');
@@ -189,10 +198,12 @@ void main() {
   });
 
   group('guarda de "imagem muito grande"', () {
+    //28
     test('limite é 5 MB (alinhado ao Storage)', () {
       expect(PublishStrings.IMAGE_TOO_LARGE_MAX_MB, 5);
     });
 
+    //29
     test('mensagem cita o limite em MB', () {
       final message = PublishStrings.photoTooLargeMessage();
 
@@ -202,12 +213,14 @@ void main() {
       );
     });
 
+    //30
     test('título do alerta', () {
       expect(PublishStrings.PHOTO_TOO_LARGE_TITLE, 'Imagem muito grande');
     });
   });
 
   group('AppImageCache', () {
+    //31
     test('configura 300 objetos e 30 dias de validade', () {
       expect(AppImageCache.maxNrOfCacheObjects, 300);
       expect(AppImageCache.stalePeriod, const Duration(days: 30));

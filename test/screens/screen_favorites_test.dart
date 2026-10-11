@@ -87,6 +87,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  //196
   testWidgets('estado vazio mostra o CTA de explorar e dispara onExplore',
       (tester) async {
     var explored = false;
@@ -101,6 +102,7 @@ void main() {
     expect(explored, isTrue);
   });
 
+  //197
   testWidgets('com favorito mostra o card e abre os detalhes ao tocar',
       (tester) async {
     FavoritesService.instance.favoriteIds.value = {'fido'};

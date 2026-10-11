@@ -519,9 +519,7 @@ class _AccountDataScreenState extends State<AccountDataScreen>
       hintText: ProfileStrings.CHANGE_PASSWORD_CURRENT_HINT,
       prefixIcon: Icons.lock_outline,
       obscureText: true,
-      validator: (value) => (value?.trim().isEmpty ?? true)
-          ? AuthStrings.PASSWORD_REQUIRED
-          : null,
+      validator: AppValidators.validatePassword,
     );
     if (currentPassword == null || !mounted) return;
 
@@ -548,13 +546,7 @@ class _AccountDataScreenState extends State<AccountDataScreen>
       hintText: ProfileStrings.CHANGE_PASSWORD_NEW_HINT,
       prefixIcon: Icons.lock_outline,
       obscureText: true,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return AuthStrings.PASSWORD_REQUIRED;
-        }
-        if (value.length < 6) return AuthStrings.PASSWORD_MIN_LENGTH;
-        return null;
-      },
+      validator: AppValidators.validatePassword,
     );
     if (newPassword == null || !mounted) return;
 
@@ -567,7 +559,7 @@ class _AccountDataScreenState extends State<AccountDataScreen>
       prefixIcon: Icons.lock_outline,
       obscureText: true,
       validator: (value) =>
-          value != newPassword ? AuthStrings.PASSWORD_MISMATCH : null,
+          AppValidators.validatePasswordConfirmation(value, newPassword),
     );
     if (confirmation == null || !mounted) return;
 

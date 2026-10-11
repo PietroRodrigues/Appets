@@ -59,6 +59,7 @@ void main() {
       );
     }
 
+    //222
     testWidgets('favoritar com sucesso não mostra aviso', (tester) async {
       await pumpScreen(tester);
 
@@ -75,6 +76,7 @@ void main() {
       );
     });
 
+    //223
     testWidgets('falha ao favoritar mostra aviso (e não o "salvar")', (
       tester,
     ) async {
@@ -100,6 +102,7 @@ void main() {
   });
 
   group('PetDetailsScreen → peso', () {
+    //224
     testWidgets('exibe o peso quando informado', (tester) async {
       final base = _createTestPet();
       final comPeso = Pet(
@@ -126,6 +129,7 @@ void main() {
       expect(find.byIcon(Icons.monitor_weight_outlined), findsOneWidget);
     });
 
+    //225
     testWidgets('não exibe o peso quando não informado', (tester) async {
       await tester.pumpWidget(
         MaterialApp(home: PetDetailsScreen(pet: _createTestPet())),

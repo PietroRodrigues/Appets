@@ -21,6 +21,7 @@ void main() {
     );
   }
 
+  //408
   testWidgets('exibe os quatro rótulos da navegação', (tester) async {
     await tester.pumpWidget(wrap(currentPage: AppPage.home, onTap: (_) {}));
 
@@ -30,6 +31,7 @@ void main() {
     expect(find.text(HomeStrings.NAV_PROFILE), findsOneWidget);
   });
 
+  //409
   testWidgets('tocar em cada item devolve a página correspondente', (
     tester,
   ) async {
@@ -49,6 +51,7 @@ void main() {
     ]);
   });
 
+  //410
   testWidgets('item ativo usa ícone preenchido; inativos usam contorno', (
     tester,
   ) async {
@@ -62,6 +65,7 @@ void main() {
     expect(find.byIcon(Icons.home), findsNothing);
   });
 
+  //411
   testWidgets('rótulos usam as cores de ativo/inativo da paleta', (
     tester,
   ) async {

@@ -5,6 +5,7 @@ import 'package:appets/models/enums/enums_app.dart';
 
 void main() {
   group('storage tokens (PT normalizado)', () {
+    //95
     test('espécie gera token PT normalizado para todos os valores', () {
       expect(speciesStorageToken(AppPetSpecies.dog), 'cachorro');
       expect(speciesStorageToken(AppPetSpecies.cat), 'gato');
@@ -16,6 +17,7 @@ void main() {
       expect(speciesStorageToken(AppPetSpecies.other), 'outro');
     });
 
+    //96
     test('gênero, unidade de idade e tipo geram tokens PT', () {
       expect(genderStorageToken(AppPetGender.male), 'macho');
       expect(genderStorageToken(AppPetGender.female), 'femea');
@@ -28,6 +30,7 @@ void main() {
   });
 
   group('fromStored (leitura tolerante)', () {
+    //97
     test('aceita o token PT atual', () {
       expect(speciesFromStored('cachorro'), AppPetSpecies.dog);
       expect(speciesFromStored('passaro'), AppPetSpecies.bird);
@@ -37,6 +40,7 @@ void main() {
       expect(publicationTypeFromStored('perdido'), AppPetPublicationType.lost);
     });
 
+    //98
     test('aceita o código legado em inglês', () {
       expect(speciesFromStored('dog'), AppPetSpecies.dog);
       expect(speciesFromStored('cat'), AppPetSpecies.cat);
@@ -48,6 +52,7 @@ void main() {
       expect(publicationTypeFromStored('lost'), AppPetPublicationType.lost);
     });
 
+    //99
     test('valor desconhecido usa o fallback padrão', () {
       expect(speciesFromStored('dragon'), AppPetSpecies.dog);
       expect(genderFromStored('mito'), AppPetGender.male);
@@ -55,6 +60,7 @@ void main() {
       expect(publicationTypeFromStored('emprestimo'), AppPetPublicationType.adoption);
     });
 
+    //100
     test('valor ausente ou não-string usa o fallback', () {
       expect(speciesFromStored(null), AppPetSpecies.dog);
       expect(speciesFromStored(123), AppPetSpecies.dog);
@@ -62,6 +68,7 @@ void main() {
       expect(ageUnitFromStored(0), AppPetAgeUnit.years);
     });
 
+    //101
     test('espécie prioriza o token PT mesmo parecido com legado', () {
       // 'other' é um nome legado de enum; o token PT de other é 'outro'.
       expect(speciesFromStored('outro'), AppPetSpecies.other);

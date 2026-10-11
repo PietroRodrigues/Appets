@@ -57,6 +57,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  //226
   testWidgets('sem erros: carrega e mostra o nome do usuário', (tester) async {
     await pumpProfile(tester);
 
@@ -64,6 +65,7 @@ void main() {
     expect(find.text(SharedStrings.LOAD_DATA_ERROR_TITLE), findsNothing);
   });
 
+  //227
   testWidgets('logout navega para o login mesmo se o Google falhar', (
     tester,
   ) async {
@@ -82,6 +84,7 @@ void main() {
     expect(find.text('login screen'), findsOneWidget);
   });
 
+  //228
   testWidgets('falha na carga mostra estado de erro e o retry recarrega', (
     tester,
   ) async {

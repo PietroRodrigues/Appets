@@ -95,11 +95,13 @@ void main() {
   }
 
   group('AccountPurgeService · isSessionRecent', () {
+    //244
     test('sessão sem histórico é considerada antiga', () {
       final user = _TrackingUser(uid: 'u', email: 'a@test.com');
       expect(service.isSessionRecent(user), isFalse);
     });
 
+    //245
     test('sessão recente é reconhecida', () {
       final user = _TrackingUser(
         uid: 'u',
@@ -111,6 +113,7 @@ void main() {
   });
 
   group('AccountPurgeService · deleteAccount', () {
+    //246
     test('sucesso com reautenticação para sessão antiga', () async {
       final user = await seedUser();
       var reauthCalled = 0;
@@ -136,6 +139,7 @@ void main() {
           isFalse);
     });
 
+    //247
     test('sucesso sem reautenticação quando a sessão é recente', () async {
       final user = await seedUser(metadata: _RecentUserMetadata());
       var reauthCalled = 0;
@@ -153,6 +157,7 @@ void main() {
       expect(user.deleteCalls, 1);
     });
 
+    //248
     test('exclui também pets legados sem createdAt (sem órfãos)', () async {
       final user = await seedUser(metadata: _RecentUserMetadata());
       // Pet legado: documento sem o campo createdAt. O Firestore real o
@@ -178,6 +183,7 @@ void main() {
       }
     });
 
+    //249
     test('reauth cancelado aborta a exclusão antes de apagar dados', () async {
       final user = await seedUser();
       favorites.favoriteIds.value = {'pet_1'};
@@ -194,6 +200,7 @@ void main() {
       expect(favorites.current, {'pet_1'});
     });
 
+    //250
     test('falha na limpeza dos dados aborta antes de excluir no Auth',
         () async {
       final user = await seedUser();
@@ -216,6 +223,7 @@ void main() {
       expect(reauthCalled, 1);
     });
 
+    //251
     test('requires-recent-login no Auth dispara reauth e tenta de novo',
         () async {
       final user = _RequiresReauthFirstUser();

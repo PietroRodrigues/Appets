@@ -37,6 +37,7 @@ Widget _host() {
 
 void main() {
   group('WGImageSlotsGrid', () {
+    //454
     testWidgets('erro do picker mostra aviso em vez de exceção não tratada', (
       tester,
     ) async {
@@ -68,6 +69,7 @@ void main() {
       expect(find.text(PublishStrings.MAIN_PHOTO_BADGE), findsNothing);
     });
 
+    //455
     testWidgets('cancelar a seleção não mostra aviso nem adiciona foto', (
       tester,
     ) async {
@@ -84,6 +86,7 @@ void main() {
       expect(find.text(PublishStrings.MAIN_PHOTO_BADGE), findsNothing);
     });
 
+    //456
     testWidgets('alvo de toque do X de remover foto é ≥ 48px', (tester) async {
       AppImageCache.instance.debugManager = _FailingCacheManager();
       addTearDown(() => AppImageCache.instance.debugManager = null);

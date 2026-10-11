@@ -155,26 +155,31 @@ void main() {
   });
 
   group('AuthService · estado deslogado', () {
+    //252
     test('currentUser é null e os provedores devolvem false', () {
       expect(service.currentUser, isNull);
       expect(service.usesPasswordProvider, isFalse);
       expect(service.usesGoogleProvider, isFalse);
     });
 
+    //253
     test('reauthenticateWithPassword sem usuário é um no-op', () async {
       await service.reauthenticateWithPassword('senha');
     });
 
+    //254
     test('reauthenticateWithGoogle sem usuário devolve false', () async {
       expect(await service.reauthenticateWithGoogle(), isFalse);
     });
 
+    //255
     test('deleteAccount sem usuário é um no-op', () async {
       await service.deleteAccount();
     });
   });
 
   group('AuthService · registro e login', () {
+    //256
     test('register cria a conta com e-mail/senha', () async {
       final credential = await service.register(
         email: 'a@test.com',
@@ -188,6 +193,7 @@ void main() {
       expect(service.usesGoogleProvider, isFalse);
     });
 
+    //257
     test('login autentica o usuário', () async {
       final credential = await service.login(
         email: 'a@test.com',
@@ -198,10 +204,12 @@ void main() {
       expect(service.currentUser, isNotNull);
     });
 
+    //258
     test('sendPasswordResetEmail conclui sem erro', () async {
       await service.sendPasswordResetEmail('a@test.com');
     });
 
+    //259
     test('loginWithGoogle devolve null quando o usuário cancela', () async {
       service.debugGoogle = _CancelGoogleSignIn();
 
@@ -238,6 +246,7 @@ void main() {
       addTearDown(() => GoogleSignInPlatform.instance = original);
     }
 
+    //260
     test('loginWithGoogle autentica com tokens e credencial do Google',
         () async {
       useFakePlatform(userData: googleUserData(), tokenData: googleTokenData());
@@ -250,6 +259,7 @@ void main() {
       expect(service.currentUser, isNotNull);
     });
 
+    //261
     test('loginWithGoogle propaga erro do signIn do Google', () async {
       useFakePlatform(userData: googleUserData(), failSignIn: true);
       service.debugGoogle = GoogleSignIn();
@@ -261,6 +271,7 @@ void main() {
       expect(service.currentUser, isNull);
     });
 
+    //262
     test('loginWithGoogle propaga erro ao obter os tokens', () async {
       useFakePlatform(userData: googleUserData(), failTokens: true);
       service.debugGoogle = GoogleSignIn();
@@ -272,6 +283,7 @@ void main() {
       expect(service.currentUser, isNull);
     });
 
+    //263
     test('reauthenticateWithGoogle cancelado devolve false', () async {
       service.debugAuth = MockFirebaseAuth(
         signedIn: true,
@@ -282,6 +294,7 @@ void main() {
       expect(await service.reauthenticateWithGoogle(), isFalse);
     });
 
+    //264
     test('reauthenticateWithGoogle reautentica com a credencial do Google',
         () async {
       useFakePlatform(userData: googleUserData(), tokenData: googleTokenData());
@@ -299,6 +312,7 @@ void main() {
       );
     });
 
+    //265
     test('reauthenticateWithGoogle com conta diferente lança user-mismatch',
         () async {
       useFakePlatform(userData: googleUserData(), tokenData: googleTokenData());
@@ -320,6 +334,7 @@ void main() {
   });
 
   group('AuthService · authStateChanges', () {
+    //266
     test('emite o usuário logado no stream', () async {
       service.debugAuth = MockFirebaseAuth(
         signedIn: true,
@@ -332,6 +347,7 @@ void main() {
       expect(user!.uid, 'uid_1');
     });
 
+    //267
     test('emite null sem usuário logado', () async {
       service.debugAuth = MockFirebaseAuth();
 
@@ -346,20 +362,24 @@ void main() {
       await service.register(email: 'a@test.com', password: '123456');
     });
 
+    //268
     test('reauthenticateWithPassword conclui com o usuário logado', () async {
       await service.reauthenticateWithPassword('123456');
     });
 
+    //269
     test('updateDisplayName atualiza o nome do usuário', () async {
       await service.updateDisplayName('Ana Silva');
 
       expect(service.currentUser!.displayName, 'Ana Silva');
     });
 
+    //270
     test('updatePassword conclui com o usuário logado', () async {
       await service.updatePassword('654321');
     });
 
+    //271
     test('changeEmail chama updateEmail do usuário', () async {
       service.debugAuth = MockFirebaseAuth(
         signedIn: true,
@@ -371,16 +391,19 @@ void main() {
       expect((service.currentUser! as _TrackingEmailUser).updateEmailCalls, 1);
     });
 
+    //272
     test('deleteAccount exclui a conta logada', () async {
       await service.deleteAccount();
     });
 
+    //273
     test('logout desconecta o Firebase Auth', () async {
       await service.logout();
 
       expect(service.currentUser, isNull);
     });
 
+    //274
     test('logout garante o signOut do Firebase mesmo se o Google falhar', () async {
       service.debugGoogle = _ThrowingGoogleSignIn();
 
@@ -392,6 +415,7 @@ void main() {
   });
 
   group('AuthService · waitFirstAuthState', () {
+    //275
     test('devolve o usuário da sessão restaurada', () async {
       // Sessão restaurada: o Firebase real re-emite o usuário atual no
       // subscribe; simulamos com mock já logado.
@@ -406,6 +430,7 @@ void main() {
       expect(user!.email, 'b@test.com');
     });
 
+    //276
     test('lança quando o hook debugAuthStateError está definido', () {
       service.debugAuthStateError = StateError('auth quebrado');
 
@@ -414,12 +439,14 @@ void main() {
   });
 
   group('AuthService · validateSession', () {
+    //277
     test('sem usuário não há sessão para validar', () async {
       service.debugAuth = MockFirebaseAuth();
 
       expect(await service.validateSession(), isFalse);
     });
 
+    //278
     test('sessão restaurada válida é mantida', () async {
       service.debugAuth = MockFirebaseAuth(
         signedIn: true,
@@ -430,6 +457,7 @@ void main() {
       expect(service.currentUser, isNotNull);
     });
 
+    //279
     test('conta excluída/revogada encerra a sessão', () async {
       service.debugAuth = MockFirebaseAuth(
         signedIn: true,
@@ -440,6 +468,7 @@ void main() {
       expect(service.currentUser, isNull);
     });
 
+    //280
     test('erro de rede mantém a sessão de cache', () async {
       service.debugAuth = MockFirebaseAuth(
         signedIn: true,
@@ -454,6 +483,7 @@ void main() {
   group('AuthService · ensureUserDocument', () {
     const user = UserModel(id: 'uid_1', name: 'Ana', email: 'ana@test.com');
 
+    //281
     test('cria o documento quando ele não existe', () async {
       final result = await service.ensureUserDocument(user);
 
@@ -463,6 +493,7 @@ void main() {
       expect(doc.get('name'), 'Ana');
     });
 
+    //282
     test('merge não sobrescreve favoritos e telefone já gravados', () async {
       await db.collection('users').doc('uid_1').set({
         'name': 'Nome Antigo',

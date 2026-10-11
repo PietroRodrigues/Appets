@@ -219,15 +219,7 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
             labelStyle: ThemeTextStyles.authBody(),
             hintText: AuthStrings.PASSWORD_HINT,
             textInputAction: TextInputAction.next,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return AuthStrings.PASSWORD_REQUIRED;
-              }
-              if (value.length < 6) {
-                return AuthStrings.PASSWORD_MIN_LENGTH;
-              }
-              return null;
-            },
+            validator: AppValidators.validatePassword,
           ),
 
           const SizedBox(height: 8),
@@ -239,15 +231,10 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
             labelStyle: ThemeTextStyles.authBody(),
             hintText: AuthStrings.CONFIRM_PASSWORD_HINT,
             textInputAction: TextInputAction.done,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return AuthStrings.PASSWORD_REQUIRED;
-              }
-              if (value != _passwordController.text) {
-                return AuthStrings.PASSWORD_MISMATCH;
-              }
-              return null;
-            },
+            validator: (value) => AppValidators.validatePasswordConfirmation(
+              value,
+              _passwordController.text,
+            ),
           ),
 
           const SizedBox(height: 12),

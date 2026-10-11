@@ -11,6 +11,7 @@ void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
   group('WGAuthButton', () {
+    //397
     testWidgets('renderiza o texto e dispara onPressed', (tester) async {
       var pressed = false;
       await tester.pumpWidget(
@@ -25,6 +26,7 @@ void main() {
   });
 
   group('WGAuthSecondaryButton', () {
+    //398
     testWidgets('renderiza o texto e dispara onPressed', (tester) async {
       var pressed = false;
       await tester.pumpWidget(
@@ -44,6 +46,7 @@ void main() {
   });
 
   group('WGAuthHeader', () {
+    //399
     testWidgets('padrão mostra o logo e o slogan', (tester) async {
       await tester.pumpWidget(wrap(const WGAuthHeader()));
 
@@ -51,6 +54,7 @@ void main() {
       expect(find.text(SharedStrings.SLOGAN), findsOneWidget);
     });
 
+    //400
     testWidgets('.auth mostra a headline e não o slogan', (tester) async {
       await tester.pumpWidget(
         wrap(const WGAuthHeader.auth(headline: 'Bem-vindo')),
@@ -61,6 +65,7 @@ void main() {
       expect(find.text(SharedStrings.SLOGAN), findsNothing);
     });
 
+    //401
     testWidgets('.auth sem headline não renderiza nenhum texto', (
       tester,
     ) async {
@@ -72,6 +77,7 @@ void main() {
   });
 
   group('WGAuthPageLayout', () {
+    //402
     testWidgets('renderiza o child dentro do Form associado ao formKey', (
       tester,
     ) async {

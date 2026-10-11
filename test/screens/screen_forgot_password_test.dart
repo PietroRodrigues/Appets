@@ -62,6 +62,7 @@ void main() {
     AuthService.instance.debugAuth = null;
   });
 
+  //198
   testWidgets('formulário vazio mostra o erro antes de chamar o Firebase',
       (tester) async {
     await _pumpForgot(tester);
@@ -72,6 +73,7 @@ void main() {
     expect(find.byType(WGProcessLoadingScreen), findsNothing);
   });
 
+  //199
   testWidgets('e-mail com formato inválido não chama o Firebase',
       (tester) async {
     await _pumpForgot(tester);
@@ -83,6 +85,7 @@ void main() {
     expect(find.byType(WGProcessLoadingScreen), findsNothing);
   });
 
+  //200
   testWidgets('e-mail não cadastrado mostra a mensagem específica',
       (tester) async {
     AuthService.instance.debugAuth = _FailingResetAuth('user-not-found');
@@ -94,6 +97,7 @@ void main() {
     expect(find.text(AuthStrings.EMAIL_NOT_REGISTERED), findsOneWidget);
   });
 
+  //201
   testWidgets('envio válido avisa o sucesso e volta para o login',
       (tester) async {
     AuthService.instance.debugAuth = MockFirebaseAuth();
@@ -110,6 +114,7 @@ void main() {
     expect(find.text('payload_login'), findsOneWidget);
   });
 
+  //202
   testWidgets('voltar retorna para a tela anterior', (tester) async {
     await _pumpForgot(tester);
 

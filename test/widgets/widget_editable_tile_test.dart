@@ -6,6 +6,7 @@ import 'package:appets/widgets/fields/widget_phone_field.dart';
 
 void main() {
   group('WGPhoneField', () {
+    //432
     testWidgets('aplica máscara (XX) XXXXX-XXXX ao digitar', (tester) async {
       final controller = TextEditingController();
 
@@ -54,6 +55,7 @@ void main() {
       );
     }
 
+    //433
     testWidgets('exibe o valor commitado fora do modo edição', (tester) async {
       await tester.pumpWidget(
         buildTile(
@@ -68,6 +70,7 @@ void main() {
       expect(find.text('Rex'), findsOneWidget);
     });
 
+    //434
     testWidgets('leading: substitui o ícone pela imagem fornecida', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -96,6 +99,7 @@ void main() {
       expect(find.byIcon(Icons.email_outlined), findsNothing);
     });
 
+    //435
     testWidgets('primary: fica mais alto que o normal', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -149,6 +153,7 @@ void main() {
       );
     });
 
+    //436
     testWidgets('blocked (enabled false) nao abre edicao e mostra cadeado', (
       tester,
     ) async {
@@ -184,6 +189,7 @@ void main() {
       expect(tester.widget<Icon>(find.byIcon(Icons.lock_outline)).size, 34);
     });
 
+    //437
     testWidgets('entra em edição e devolve o valor via onCommit', (
       tester,
     ) async {

@@ -6,6 +6,7 @@ import 'package:appets/core/theme/theme_app.dart';
 
 void main() {
   group('AppTheme.lightTheme', () {
+    //113
     test('carrega a paleta clara e o fundo correspondente', () {
       expect(
         AppTheme.lightTheme.extension<AppColors>(),
@@ -19,6 +20,7 @@ void main() {
     });
   });
 
+  //114
   testWidgets('o tema do app resolve a paleta clara', (tester) async {
     AppColors? resolved;
     await tester.pumpWidget(

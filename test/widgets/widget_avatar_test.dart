@@ -45,6 +45,7 @@ void main() {
       tester.widget<CircleAvatar>(find.byType(CircleAvatar));
 
   group('WGAvatar → sem imagem', () {
+    //403
     testWidgets('sem URL mostra o ícone de pessoa', (tester) async {
       await tester.pumpWidget(wrap());
 
@@ -52,6 +53,7 @@ void main() {
       expect(avatarOf(tester).backgroundImage, isNull);
     });
 
+    //404
     testWidgets('URL vazia mostra o ícone de pessoa', (tester) async {
       await tester.pumpWidget(wrap(imageUrl: ''));
 
@@ -61,6 +63,7 @@ void main() {
   });
 
   group('WGAvatar → imagem que falha', () {
+    //405
     testWidgets('começa com a imagem e reverte para o ícone no erro',
         (tester) async {
       await tester.pumpWidget(wrap(debugImageProvider: failingProvider));
@@ -77,6 +80,7 @@ void main() {
       expect(find.byIcon(Icons.person), findsOneWidget);
     });
 
+    //406
     testWidgets('com URL e sem rede não deixa círculo vazio', (tester) async {
       await tester.pumpWidget(
         wrap(
@@ -93,6 +97,7 @@ void main() {
   });
 
   group('WGAvatar → imagem presente', () {
+    //407
     testWidgets('mantém o background enquanto carrega', (tester) async {
       await tester.pumpWidget(
         wrap(imageUrl: 'https://lh3.googleusercontent.com/foto.jpg'),

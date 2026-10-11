@@ -6,6 +6,7 @@ import 'package:appets/widgets/feedback/widget_dialogs.dart';
 /// Testa o diálogo modular [WGDialog] nas três APIs tipadas.
 void main() {
   group('WGDialog.showConfirm', () {
+    //422
     testWidgets('exibe os botões padrão "Não" e "Sim"', (tester) async {
       await tester.pumpWidget(_host((context) async {
         await WGDialog.showConfirm(
@@ -26,6 +27,7 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
     });
 
+    //423
     testWidgets('retorna true ao confirmar', (tester) async {
       bool? result;
 
@@ -50,6 +52,7 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
     });
 
+    //424
     testWidgets('retorna false ao cancelar', (tester) async {
       bool? result;
 
@@ -72,6 +75,7 @@ void main() {
       expect(result, isFalse);
     });
 
+    //425
     testWidgets('exibe a mensagem completa com destaque', (tester) async {
       await tester.pumpWidget(_host((context) async {
         await WGDialog.showConfirm(
@@ -94,6 +98,7 @@ void main() {
   });
 
   group('WGDialog.showAction', () {
+    //426
     testWidgets('exibe um único botão padrão "OK"', (tester) async {
       await tester.pumpWidget(_host((context) async {
         await WGDialog.showAction(
@@ -115,6 +120,7 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
     });
 
+    //427
     testWidgets('retorna true ao tocar em uma ação única', (tester) async {
       bool? result;
 
@@ -140,6 +146,7 @@ void main() {
       expect(result, isTrue);
     });
 
+    //428
     testWidgets('retorna false ao dispensar pela barreira', (tester) async {
       bool? result;
 
@@ -163,6 +170,7 @@ void main() {
   });
 
   group('WGDialog.showInput', () {
+    //429
     testWidgets('devolve o texto digitado ao confirmar', (tester) async {
       String? result;
 
@@ -190,6 +198,7 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
     });
 
+    //430
     testWidgets('valida o campo vazio e não fecha o diálogo', (tester) async {
       String? result;
 
@@ -219,6 +228,7 @@ void main() {
       expect(find.text('Informe a senha'), findsOneWidget);
     });
 
+    //431
     testWidgets('retorna null ao cancelar', (tester) async {
       String? result;
 

@@ -15,6 +15,7 @@ void main() {
     label: 'Fêmea',
   );
 
+  //34
   test('inicia vazio e inativo', () {
     final controller = PetFiltersController();
     expect(controller.value, isEmpty);
@@ -22,6 +23,7 @@ void main() {
     controller.dispose();
   });
 
+  //35
   test('expõe os valores das opções ativas quando há filtros', () {
     final controller = PetFiltersController();
     controller.value = [dog, female];
@@ -30,6 +32,7 @@ void main() {
     controller.dispose();
   });
 
+  //36
   test('remove apaga apenas a opção indicada', () {
     final controller = PetFiltersController();
     controller.value = [dog, female];
@@ -41,6 +44,7 @@ void main() {
     controller.dispose();
   });
 
+  //37
   test('clear limpa e notifica os ouvintes', () {
     final controller = PetFiltersController();
     controller.value = [dog];

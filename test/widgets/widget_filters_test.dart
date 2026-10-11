@@ -59,6 +59,7 @@ void main() {
           find.widgetWithText(WGFilterOptionTile, label),
         );
 
+    //441
     testWidgets('exibe as categorias com opções', (tester) async {
       final handle = tester.ensureSemantics();
       await openDialog(tester, onResult: (_) {});
@@ -83,6 +84,7 @@ void main() {
       handle.dispose();
     });
 
+    //442
     testWidgets('linhas de opção têm alvo de toque ≥ 48px', (tester) async {
       await openDialog(tester, onResult: (_) {});
 
@@ -93,6 +95,7 @@ void main() {
       expect(size.height, greaterThanOrEqualTo(48));
     });
 
+    //443
     testWidgets('X fecha e aplica a seleção (igual a tocar fora)',
         (tester) async {
       List<PetFilterOption>? result;
@@ -109,6 +112,7 @@ void main() {
       expect(find.text('Espécie'), findsNothing);
     });
 
+    //444
     testWidgets('reduced motion: reduzir animações abre e interage (smoke)',
         (tester) async {
       List<PetFilterOption>? result;
@@ -128,6 +132,7 @@ void main() {
       expect(result!.single.id, 'species:gato');
     });
 
+    //445
     testWidgets('fechar tocando fora aplica as opções marcadas',
         (tester) async {
       List<PetFilterOption>? result;
@@ -150,6 +155,7 @@ void main() {
       expect(find.text('Espécie'), findsNothing);
     });
 
+    //446
     testWidgets('barreira (outro ponto fora) aplica a seleção atual',
         (tester) async {
       List<PetFilterOption>? result;
@@ -166,6 +172,7 @@ void main() {
       expect(find.text('Espécie'), findsNothing);
     });
 
+    //447
     testWidgets('abrir com pré-aplicados e desmarcar um mantém o resto',
         (tester) async {
       List<PetFilterOption>? result;
@@ -202,6 +209,7 @@ void main() {
       expect(result!.single.id, 'age:adulto');
     });
 
+    //448
     testWidgets('desmarcar todos e fechar devolve lista vazia', (tester) async {
       List<PetFilterOption>? result;
       const applied = [
@@ -231,6 +239,7 @@ void main() {
       expect(result, isEmpty);
     });
 
+    //449
     testWidgets('reaplica filtros já aplicados como marcados ao abrir',
         (tester) async {
       List<PetFilterOption>? result;
@@ -266,6 +275,7 @@ void main() {
       expect(result![1].id, 'age:adulto');
     });
 
+    //450
     testWidgets('Limpar tudo desmarca e fechar aplica vazio', (tester) async {
       List<PetFilterOption>? result;
       const applied = [
@@ -307,6 +317,7 @@ void main() {
   });
 
   group('WGFilterChipsBar', () {
+    //451
     testWidgets('exibe os chips aplicados', (tester) async {
       await tester.pumpWidget(
         wrap(
@@ -333,6 +344,7 @@ void main() {
       expect(find.byIcon(Icons.close), findsNWidgets(2));
     });
 
+    //452
     testWidgets('tocar no X chama onRemove com o chip certo', (tester) async {
       final option = PetFilterOptions.ageOptions.first;
       PetFilterOption? removed;
@@ -352,6 +364,7 @@ void main() {
       expect(removed, same(option));
     });
 
+    //453
     testWidgets('X do chip tem alvo de toque ≥ 48px', (tester) async {
       final option = PetFilterOptions.ageOptions.first;
 

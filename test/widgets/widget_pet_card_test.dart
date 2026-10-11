@@ -46,6 +46,7 @@ void main() {
       FirestoreService.instance.debugAddFavoriteError = null;
       FirestoreService.instance.debugRemoveFavoriteError = null;
     });
+    //474
     testWidgets('exibe o nome do pet', (tester) async {
       final pet = _createTestPet(name: 'Thor');
 
@@ -58,6 +59,7 @@ void main() {
       expect(find.text('Thor'), findsOneWidget);
     });
 
+    //475
     testWidgets('exibe o ícone do gênero feminino', (tester) async {
       final pet = _createTestPet(gender: AppPetGender.female);
 
@@ -70,6 +72,7 @@ void main() {
       expect(find.byIcon(Icons.female), findsOneWidget);
     });
 
+    //476
     testWidgets('exibe a idade', (tester) async {
       final pet = _createTestPet(age: 3);
 
@@ -82,6 +85,7 @@ void main() {
       expect(find.text('3 anos'), findsOneWidget);
     });
 
+    //477
     testWidgets('exibe tipo de publicação "Adoção"', (tester) async {
       final pet = _createTestPet(
         publicationType: AppPetPublicationType.adoption,
@@ -96,6 +100,7 @@ void main() {
       expect(find.text('Adoção'), findsOneWidget);
     });
 
+    //478
     testWidgets('exibe tipo de publicação "Perdido"', (tester) async {
       final pet = _createTestPet(publicationType: AppPetPublicationType.lost);
 
@@ -108,6 +113,7 @@ void main() {
       expect(find.text('Perdido'), findsOneWidget);
     });
 
+    //479
     testWidgets('chama onTap ao tocar no card', (tester) async {
       var tapped = false;
       final pet = _createTestPet();
@@ -126,6 +132,7 @@ void main() {
       expect(tapped, isTrue);
     });
 
+    //480
     testWidgets('exibe botão de edição quando isMyPublication é true', (
       tester,
     ) async {
@@ -140,6 +147,7 @@ void main() {
       expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
     });
 
+    //481
     testWidgets('não exibe botão de edição quando isMyPublication é false', (
       tester,
     ) async {
@@ -154,6 +162,7 @@ void main() {
       expect(find.byIcon(Icons.edit_outlined), findsNothing);
     });
 
+    //482
     testWidgets('exibe botão de excluir quando isMyPublication é true', (
       tester,
     ) async {
@@ -168,6 +177,7 @@ void main() {
       expect(find.byIcon(Icons.close), findsOneWidget);
     });
 
+    //483
     testWidgets('não exibe botão de excluir quando isMyPublication é false', (
       tester,
     ) async {
@@ -182,6 +192,7 @@ void main() {
       expect(find.byIcon(Icons.close), findsNothing);
     });
 
+    //484
     testWidgets('chama onDelete ao tocar no X', (tester) async {
       var deleted = false;
       final pet = _createTestPet();
@@ -202,6 +213,7 @@ void main() {
       expect(deleted, isTrue);
     });
 
+    //485
     testWidgets('exibe estrela preenchida quando o pet já é favorito', (
       tester,
     ) async {
@@ -217,6 +229,7 @@ void main() {
       expect(find.byIcon(Icons.star_rounded), findsOneWidget);
     });
 
+    //486
     testWidgets('exibe estrela vazia quando o pet não é favorito', (
       tester,
     ) async {
@@ -231,6 +244,7 @@ void main() {
       expect(find.byIcon(Icons.star_border_rounded), findsOneWidget);
     });
 
+    //487
     testWidgets('estrela de favorito fica ancorada no lado esquerdo', (
       tester,
     ) async {
@@ -253,6 +267,7 @@ void main() {
       expect(positioned.right, isNull);
     });
 
+    //488
     testWidgets('sincroniza a estrela quando o favorito muda externamente', (
       tester,
     ) async {
@@ -283,6 +298,7 @@ void main() {
       expect(find.byIcon(Icons.star_rounded), findsOneWidget);
     });
 
+    //489
     testWidgets('favoritar offline mostra aviso e não altera o favorito', (
       tester,
     ) async {
@@ -312,6 +328,7 @@ void main() {
       );
     });
 
+    //490
     testWidgets('favoritar falha mostra aviso e mantém a estrela vazia', (
       tester,
     ) async {
@@ -350,6 +367,7 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    //491
     testWidgets('alvo de toque de editar/excluir é ≥ 48px', (tester) async {
       final pet = _createTestPet();
 
@@ -378,6 +396,7 @@ void main() {
       expect(deleteSize.height, greaterThanOrEqualTo(48));
     });
 
+    //492
     testWidgets('alvo de toque da estrela é ≥ 48px', (tester) async {
       final pet = _createTestPet();
       FavoritesService.instance.favoriteIds.value = {pet.id};

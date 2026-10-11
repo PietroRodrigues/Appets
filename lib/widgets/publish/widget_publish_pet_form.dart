@@ -223,10 +223,6 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
     });
   }
 
-  /// Valida o celular de contato (obrigatório, 11 dígitos, WhatsApp).
-  String? _validatePhone(String? value) =>
-      AppValidators.validateCellPhone(value);
-
   /// Monta o pet com os dados atuais do formulário.
   Pet _buildPet(String ownerId) {
     return Pet(
@@ -243,7 +239,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
       ownerAddress: _addressController.text.trim(),
       description: _descriptionController.text.trim(),
       publicationType: _selectedPublicationType,
-      weight: _parseWeight(_weightController.text.trim()),
+      weight: AppValidators.parseWeight(_weightController.text.trim()),
       images: _isEditing ? widget.pet!.images : [],
     );
   }
@@ -254,25 +250,6 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
         ? weight.round().toString()
         : weight.toString().replaceAll('.', ',');
     return label;
-  }
-
-  /// Converte o texto do campo de peso em doubles; texto inválido vira
-  /// `null` (a validação do formulário reporta o erro).
-  double? _parseWeight(String input) {
-    final cleaned = input.trim().replaceAll(',', '.');
-    if (cleaned.isEmpty) return null;
-    return double.tryParse(cleaned);
-  }
-
-  /// Valida o peso opcional: vazio passa; presente precisa ser `0 < x ≤ 200`.
-  String? _validateWeight(String? value) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) return null;
-    final weight = _parseWeight(text);
-    if (weight == null || weight <= 0 || weight > 200) {
-      return PublishStrings.WEIGHT_INVALID;
-    }
-    return null;
   }
 
   /// Indica se o valor é uma URL remota (foto já existente) ou um
@@ -568,8 +545,9 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
   List<String> _missingRequiredFields() {
     final problems = <String>[];
 
-    if ((_nameController.text.trim().length) < 2) {
-      problems.add(PublishStrings.PET_NAME_REQUIRED);
+    final nameError = AppValidators.validatePetName(_nameController.text);
+    if (nameError != null) {
+      problems.add(nameError);
     }
 
     final phoneError = AppValidators.validateCellPhone(_phoneController.text);
@@ -577,8 +555,9 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
       problems.add(phoneError);
     }
 
-    if (_addressController.text.trim().isEmpty) {
-      problems.add(PublishStrings.ADDRESS_REQUIRED);
+    final addressError = AppValidators.validateAddress(_addressController.text);
+    if (addressError != null) {
+      problems.add(addressError);
     }
 
     return problems;
@@ -586,11 +565,15 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
 
   // Indica se os campos obrigatórios (à exceção das fotos) estão ok.
   bool get _requiredFieldsFilled {
-    if ((_nameController.text.trim().length) < 2) return false;
+    if (AppValidators.validatePetName(_nameController.text) != null) {
+      return false;
+    }
     if (AppValidators.validateCellPhone(_phoneController.text) != null) {
       return false;
     }
-    if (_addressController.text.trim().isEmpty) return false;
+    if (AppValidators.validateAddress(_addressController.text) != null) {
+      return false;
+    }
     return true;
   }
 
@@ -704,12 +687,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
                   _raceFocusNode.requestFocus();
                 },
 
-                validator: (value) {
-                  if ((value?.trim().length ?? 0) < 2) {
-                    return PublishStrings.PET_NAME_REQUIRED;
-                  }
-                  return null;
-                },
+                validator: AppValidators.validatePetName,
               ),
 
               const SizedBox(height: 20),
@@ -790,7 +768,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
                 onFieldSubmitted: (_) {
                   _phoneFocusNode.requestFocus();
                 },
-                validator: _validateWeight,
+                validator: AppValidators.validateWeight,
               ),
 
               const SizedBox(height: 20),
@@ -815,7 +793,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
                 onFieldSubmitted: (_) {
                   _addressFocusNode.requestFocus();
                 },
-                validator: _validatePhone,
+                validator: AppValidators.validateCellPhone,
               ),
 
               const SizedBox(height: 20),
@@ -832,12 +810,7 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
                 onFieldSubmitted: (_) {
                   _descriptionFocusNode.requestFocus();
                 },
-                validator: (value) {
-                  if ((value?.trim().isEmpty ?? true)) {
-                    return PublishStrings.ADDRESS_REQUIRED;
-                  }
-                  return null;
-                },
+                validator: AppValidators.validateAddress,
               ),
 
               const SizedBox(height: 20),

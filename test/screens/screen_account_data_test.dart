@@ -252,6 +252,7 @@ void main() {
   tearDown(() => FirestoreService.instance.debugGetUserError = null);
   tearDown(() => PetService.instance.debugDb = null);
   tearDown(() => ConnectivityService.instance.reset());
+  //179
   testWidgets('conta Google: secao de seguranca fica invisivel (sem senha)', (
     tester,
   ) async {
@@ -262,6 +263,7 @@ void main() {
     expect(find.text(ProfileStrings.SECURITY_SECTION), findsNothing);
   });
 
+  //180
   testWidgets('conta com senha: fluxo completo altera a senha', (tester) async {
     final tracking = _TrackingUser(
       uid: 'uid_1',
@@ -286,6 +288,7 @@ void main() {
     expect(tracking.updatePasswordCalls, 1);
   });
 
+  //181
   testWidgets('conta com senha: senha atual incorreta aborta o fluxo', (
     tester,
   ) async {
@@ -307,6 +310,7 @@ void main() {
     expect(failing.updatePasswordCalls, 0);
   });
 
+  //182
   testWidgets('conta Google: e-mail fica bloqueado com cadeado (item 12)', (
     tester,
   ) async {
@@ -344,6 +348,7 @@ void main() {
     );
   });
 
+  //183
   testWidgets('ordenacao: e-mail vem antes do nome e fica em destaque', (
     tester,
   ) async {
@@ -387,6 +392,7 @@ void main() {
     );
   });
 
+  //184
   testWidgets('salvar nome alterado sincroniza o nome no Auth (item 12)', (
     tester,
   ) async {
@@ -415,6 +421,7 @@ void main() {
     expect(saved?.name, 'Ana Nova');
   });
 
+  //185
   testWidgets('falha ao sincronizar nome mostra aviso best-effort (item 12)', (
     tester,
   ) async {
@@ -443,6 +450,7 @@ void main() {
     expect(saved?.name, 'Ana Nova');
   });
 
+  //186
   testWidgets('conta com senha: trocar e-mail reautentica e grava (item 42)', (
     tester,
   ) async {
@@ -474,6 +482,7 @@ void main() {
     expect(saved?.email, 'novo@test.com');
   });
 
+  //187
   testWidgets('conta com senha: cancelar reauth aborta sem gravar (item 42)', (
     tester,
   ) async {
@@ -506,6 +515,7 @@ void main() {
     expect(saved?.email, 'a@test.com');
   });
 
+  //188
   testWidgets(
     'falha na carga sai do loading e mostra estado de erro com retry',
     (tester) async {
@@ -525,6 +535,7 @@ void main() {
     },
   );
 
+  //189
   testWidgets('salvar dados offline não tenta gravar e mostra aviso', (
     tester,
   ) async {
@@ -545,6 +556,7 @@ void main() {
     expect(saved?.phone, '(11) 99999-9999');
   });
 
+  //190
   testWidgets('trocar e-mail para um já cadastrado mostra erro específico', (
     tester,
   ) async {
@@ -576,6 +588,7 @@ void main() {
     expect(saved?.email, 'a@test.com');
   });
 
+  //191
   testWidgets('alterar telefone propaga para as publicações ao confirmar', (
     tester,
   ) async {
@@ -610,6 +623,7 @@ void main() {
     expect(petDoc.data()!['ownerPhone'], '(11) 98888-7777');
   });
 
+  //192
   testWidgets('voltar com alterações não salvas pede confirmação', (
     tester,
   ) async {
@@ -643,6 +657,7 @@ void main() {
     expect(find.text('origem'), findsOneWidget);
   });
 
+  //193
   testWidgets('excluir conta: cancelar a primeira confirmação não exclui', (
     tester,
   ) async {
@@ -669,6 +684,7 @@ void main() {
     expect(saved, isNotNull);
   });
 
+  //194
   testWidgets('excluir conta: duas confirmações excluem e vão para o login', (
     tester,
   ) async {
@@ -711,6 +727,7 @@ void main() {
     expect(await FirestoreService.instance.getUser('uid_1'), isNull);
   });
 
+  //195
   testWidgets('excluir conta offline avisa e não exclui', (tester) async {
     ConnectivityService.instance.debugOnline = false;
     final user = _DeletableUser();

@@ -94,6 +94,7 @@ void main() {
   final service = StorageService.instance;
 
   group('StorageService · caminho das fotos', () {
+    //382
     test('petImagePath constrói o padrão dono→pet→índice', () {
       expect(
         StorageService.petImagePath('dono_1', 'pet_1', 0),
@@ -105,6 +106,7 @@ void main() {
       );
     });
 
+    //383
     test('petImagePath aceita uma extensão customizada', () {
       expect(
         StorageService.petImagePath('dono_1', 'pet_1', 2, 'webp'),
@@ -118,6 +120,7 @@ void main() {
   });
 
   group('StorageService · upload', () {
+    //384
     test('envia com a extensão do arquivo e devolve a URL', () async {
       final storage = _FakeStorage('https://cdn.example.com/foto.webp');
       service.debugStorage = storage;
@@ -137,6 +140,7 @@ void main() {
       expect(storage.lastMetadata?.contentType, 'image/webp');
     });
 
+    //385
     test('normaliza a extensão para minúsculas (PNG → image/png)', () async {
       final storage = _FakeStorage('https://cdn.example.com/foto.png');
       service.debugStorage = storage;
@@ -148,6 +152,7 @@ void main() {
       expect(storage.lastMetadata?.contentType, 'image/png');
     });
 
+    //386
     test('extensão desconhecida usa image/jpeg', () async {
       final storage = _FakeStorage('https://cdn.example.com/foto');
       service.debugStorage = storage;
@@ -159,6 +164,7 @@ void main() {
       expect(storage.lastMetadata?.contentType, 'image/jpeg');
     });
 
+    //387
     test('sem extensão usa jpg e contentType jpeg', () async {
       final storage = _FakeStorage('https://cdn.example.com/foto.jpg');
       service.debugStorage = storage;
@@ -173,10 +179,12 @@ void main() {
   });
 
   group('StorageService · exclusão em melhor esforço', () {
+    //388
     test('deletePetImagesByUrls com lista vazia é inofensivo', () async {
       await service.deletePetImagesByUrls([]);
     });
 
+    //389
     test('deletePetImagesByUrls ignora falhas de URLs inválidas', () async {
       // Sem Firebase inicializado, qualquer operação de Storage lança;
       // o método deve engolir cada falha e completar normalmente.
@@ -186,6 +194,7 @@ void main() {
       ]);
     });
 
+    //390
     test('deletePetImagesByUrls dispara as exclusões em paralelo', () async {
       service.debugDeleteDelay = const Duration(milliseconds: 20);
       service.debugMaxConcurrentDeletes = 0;

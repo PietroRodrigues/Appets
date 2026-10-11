@@ -42,6 +42,7 @@ Map<String, dynamic> _legacyPet() => {
 };
 
 void main() {
+  //4
   test(
     'attach: migra no login, ignora uid repetido, reseta no logout e re-migra',
     () async {

@@ -237,7 +237,7 @@ class _PetCardImage extends StatelessWidget {
               icon: Icon(
                 favorited ? Icons.star_rounded : Icons.star_border_rounded,
                 color: favorited
-                    ? context.appColors.warning
+                    ? context.appColors.primary
                     : context.appColors.hint,
                 size: 30,
                 shadows: [

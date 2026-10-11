@@ -29,6 +29,7 @@ void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
   group('WGPetImage · URL vazia', () {
+    //509
     testWidgets('mostra o placeholder com o ícone de pets', (tester) async {
       await tester.pumpWidget(wrap(const WGPetImage(url: '')));
 
@@ -38,6 +39,7 @@ void main() {
   });
 
   group('WGPetImage · caminho local', () {
+    //510
     testWidgets('usa Image.asset para caminhos que não são URL', (tester) async {
       await tester.pumpWidget(
         wrap(const WGPetImage(url: 'assets/images/dog.png')),
@@ -61,6 +63,7 @@ void main() {
       AppImageCache.instance.debugManager = null;
     });
 
+    //511
     testWidgets('renderiza via CachedNetworkImage com o memCacheWidth',
         (tester) async {
       await tester.pumpWidget(
@@ -79,6 +82,7 @@ void main() {
       expect(cached.memCacheWidth, 480);
     });
 
+    //512
     testWidgets('mostra o placeholder quando a rede falha', (tester) async {
       await tester.pumpWidget(
         wrap(const WGPetImage(url: 'https://exemplo.com/foto.jpg')),

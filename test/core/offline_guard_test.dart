@@ -10,6 +10,7 @@ void main() {
     ConnectivityService.instance.reset();
   });
 
+  //32
   testWidgets('offline: devolve false e mostra o aviso "Sem conexão"', (
     tester,
   ) async {
@@ -31,6 +32,7 @@ void main() {
     expect(captured.value, isFalse);
   });
 
+  //33
   testWidgets('online: devolve true sem mostrar o aviso', (tester) async {
     ConnectivityService.instance.debugOnline = true;
     final captured = ValueNotifier<bool?>(null);

@@ -11,6 +11,7 @@ void main() {
 
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
+  //438
   testWidgets(
     'estado de erro usa título/descrição parametrizados e o retry dispara',
     (tester) async {
@@ -38,6 +39,7 @@ void main() {
     },
   );
 
+  //439
   testWidgets('estado de carregamento mostra o WGPageLoading com o cabeçalho', (
     tester,
   ) async {
@@ -58,6 +60,7 @@ void main() {
     expect(find.text('Meus Pets'), findsWidgets);
   });
 
+  //440
   testWidgets('limpa a busca ao trocar de aba (selectedPage)', (tester) async {
     final key = GlobalKey<WGFeedPageState>();
 

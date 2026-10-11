@@ -1,5 +1,5 @@
-import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/theme/app_colors.dart';
+import 'package:appets/core/validators/validators.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:flutter/material.dart';
 
@@ -94,10 +94,7 @@ class _WGAgeFieldsState extends State<WGAgeFields> {
 
               _notifyChanged();
             },
-            validator: (value) {
-              if (value == null) return PublishStrings.AGE_REQUIRED;
-              return null;
-            },
+            validator: AppValidators.validatePetAge,
             items: [
               for (var i = 1; i <= _maxValue; i++)
                 DropdownMenuItem<int>(value: i, child: Text(i.toString())),

@@ -46,6 +46,7 @@ void main() {
     await db.collection('pets').doc('p2').set(pet('p2', name: 'Mia', species: AppPetSpecies.cat).toMap());
   }
 
+  //2
   test('backfill cura pet legado sem createdAt e não mexe no pet atual',
       () async {
     await seedOwnerPets();
@@ -83,6 +84,7 @@ void main() {
     expect(doc2.get('searchTokens'), ['mia']);
   });
 
+  //3
   test('backfill é idempotente: segunda execução não grava nada', () async {
     await seedOwnerPets();
 

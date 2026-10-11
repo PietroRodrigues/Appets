@@ -79,6 +79,7 @@ void main() {
       return button.style?.backgroundColor?.resolve(<WidgetState>{});
     }
 
+    //529
     testWidgets('exibe todos os campos do formulário', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
@@ -94,12 +95,14 @@ void main() {
       expect(find.text('Fotos do pet'), findsOneWidget);
     });
 
+    //530
     testWidgets('exibe botão de publicar', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
       expect(find.text('Publicar Pet'), findsOneWidget);
     });
 
+    //531
     testWidgets('campo nome aceita texto', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
@@ -113,6 +116,7 @@ void main() {
       expect(find.text('Rex'), findsOneWidget);
     });
 
+    //532
     testWidgets('campo endereço aceita texto', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
@@ -126,6 +130,7 @@ void main() {
       expect(find.text('São Paulo'), findsOneWidget);
     });
 
+    //533
     testWidgets('campo descrição aceita texto', (tester) async {
       await tester.pumpWidget(createTestWidget());
 
@@ -139,6 +144,7 @@ void main() {
       expect(find.text('描述 um pet muito bom'), findsOneWidget);
     });
 
+    //534
     testWidgets('botão de publicar começa cinza (formulário incompleto)', (
       tester,
     ) async {
@@ -147,6 +153,7 @@ void main() {
       expect(publishButtonColor(tester), AppColors.light.disabled);
     });
 
+    //535
     testWidgets('botão fica cinza sem foto mesmo com formulário preenchido', (
       tester,
     ) async {
@@ -173,6 +180,7 @@ void main() {
       expect(publishButtonColor(tester), AppColors.light.disabled);
     });
 
+    //536
     testWidgets('exibe dica de foto obrigatória quando falta apenas a foto', (
       tester,
     ) async {
@@ -195,6 +203,7 @@ void main() {
       expect(find.text(PublishStrings.PHOTO_REQUIRED_HINT), findsOneWidget);
     });
 
+    //537
     testWidgets('botão continua cinza com celular inválido (fixo/10 dígitos)', (
       tester,
     ) async {
@@ -218,6 +227,7 @@ void main() {
       expect(publishButtonColor(tester), AppColors.light.disabled);
     });
 
+    //538
     testWidgets('publicar sem foto mostra aviso em vez de falhar em silêncio', (
       tester,
     ) async {
@@ -267,6 +277,7 @@ void main() {
       );
     });
 
+    //539
     testWidgets('publicar sem nome mostra aviso em vez de falhar em silêncio', (
       tester,
     ) async {
@@ -308,6 +319,7 @@ void main() {
       );
     });
 
+    //540
     testWidgets('publicar com telefone inválido mostra aviso específico', (
       tester,
     ) async {
@@ -346,6 +358,7 @@ void main() {
       );
     });
 
+    //541
     testWidgets('peso inválido mostra erro inline sem travar o formulário', (
       tester,
     ) async {
@@ -369,6 +382,7 @@ void main() {
       expect(find.text(PublishStrings.WEIGHT_INVALID), findsOneWidget);
     });
 
+    //542
     testWidgets('peso vazio é aceito (campo opcional)', (tester) async {
       _signInUser();
 
@@ -393,6 +407,7 @@ void main() {
       expect(find.text(PublishStrings.WEIGHT_INVALID), findsNothing);
     });
 
+    //543
     testWidgets('publicar lista nome e endereço faltando no aviso', (
       tester,
     ) async {
@@ -439,6 +454,7 @@ void main() {
   });
 
   group('WGPublishPetForm (publicação com foto)', () {
+    //544
     testWidgets(
       'publicar notifica "Minhas Publicações" só depois de anexar as fotos',
       (tester) async {
@@ -565,6 +581,7 @@ void main() {
       },
     );
 
+    //545
     testWidgets('publica o pet gravando o peso informado', (tester) async {
       _signInUser();
       MyPublicationsService.instance.reset();
@@ -701,6 +718,7 @@ void main() {
       );
     }
 
+    //546
     testWidgets('exibe botão "Salvar Alterações" em vez de "Publicar Pet"', (
       tester,
     ) async {
@@ -710,6 +728,7 @@ void main() {
       expect(find.text('Publicar Pet'), findsNothing);
     });
 
+    //547
     testWidgets('pré-preenche os campos com os dados do pet', (tester) async {
       await tester.pumpWidget(createEditWidget());
 
@@ -722,6 +741,7 @@ void main() {
       expect(find.text('(11) 98765-4321'), findsWidgets);
     });
 
+    //548
     testWidgets('pré-preenche o peso na edição quando informado', (
       tester,
     ) async {
@@ -736,6 +756,7 @@ void main() {
       expect(find.text('12,5'), findsOneWidget);
     });
 
+    //549
     testWidgets('edição grava o peso informado quando o pet não tinha', (
       tester,
     ) async {
@@ -775,6 +796,7 @@ void main() {
       expect(snap.data()!['weight'], 12.5);
     });
 
+    //550
     testWidgets('peso inválido na edição não atualiza o doc nem abre erro', (
       tester,
     ) async {
@@ -818,6 +840,7 @@ void main() {
       expect(snap.data()!.containsKey('weight'), isFalse);
     });
 
+    //551
     testWidgets('botão "Salvar Alterações" começa verde (formulário válido)', (
       tester,
     ) async {
@@ -833,6 +856,7 @@ void main() {
       expect(color, AppColors.light.success);
     });
 
+    //552
     testWidgets('carrega as fotos existentes do pet nos slots', (tester) async {
       final pet = Pet(
         id: 'pet_001',
@@ -860,6 +884,7 @@ void main() {
       expect(find.byIcon(Icons.close), findsNWidgets(3));
     });
 
+    //553
     testWidgets('excluir foto existente pede confirmação antes de remover', (
       tester,
     ) async {
@@ -891,6 +916,7 @@ void main() {
       expect(find.text(PublishStrings.PHOTO_REMOVE_TITLE), findsOneWidget);
     });
 
+    //554
     testWidgets('remover a única foto deixa o botão cinza e mostra a dica', (
       tester,
     ) async {
@@ -923,6 +949,7 @@ void main() {
       expect(find.text(PublishStrings.PHOTO_REQUIRED_HINT), findsOneWidget);
     });
 
+    //555
     testWidgets('descrição vazia pergunta se quer continuar ou preencher', (
       tester,
     ) async {
@@ -985,6 +1012,7 @@ void main() {
       );
     }
 
+    //556
     testWidgets('fotos removidas só são apagadas do Storage após o commit', (
       tester,
     ) async {
@@ -1039,6 +1067,7 @@ void main() {
       );
     });
 
+    //557
     testWidgets(
       'salvar na edição passa pela tela de carregamento (unificado)',
       (tester) async {
@@ -1095,6 +1124,7 @@ void main() {
       },
     );
 
+    //558
     testWidgets(
       'falha no salvar desfaz uploads novos sem apagar fotos antigas',
       (tester) async {

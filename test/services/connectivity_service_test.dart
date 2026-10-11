@@ -9,17 +9,20 @@ void main() {
 
   tearDown(() => service.reset());
 
+  //283
   test('antes do init assume online por padrão', () {
     expect(service.isOnline, isTrue);
     expect(service.isOnlineNotifier.value, isTrue);
   });
 
+  //284
   test('debugOnline=false reflete offline e atualiza o notifier', () {
     service.debugOnline = false;
     expect(service.isOnline, isFalse);
     expect(service.isOnlineNotifier.value, isFalse);
   });
 
+  //285
   test('reset restaura o estado online padrão', () {
     service.debugOnline = false;
     service.reset();
@@ -27,6 +30,7 @@ void main() {
     expect(service.isOnlineNotifier.value, isTrue);
   });
 
+  //286
   test('notifier emite mudanças relevantes de valor', () {
     final values = <bool>[];
     void listener() => values.add(service.isOnlineNotifier.value);

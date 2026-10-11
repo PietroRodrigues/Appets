@@ -8,6 +8,7 @@ void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
   group('WGButton', () {
+    //412
     testWidgets('renderiza o texto e dispara onPressed', (tester) async {
       var pressed = false;
 
@@ -21,6 +22,7 @@ void main() {
       expect(pressed, isTrue);
     });
 
+    //413
     testWidgets('isLoading mostra o indicador e bloqueia o toque', (
       tester,
     ) async {
@@ -47,6 +49,7 @@ void main() {
       expect(pressed, isFalse);
     });
 
+    //414
     testWidgets('respeita width e height informados', (tester) async {
       await tester.pumpWidget(
         wrap(
@@ -64,6 +67,7 @@ void main() {
   });
 
   group('WGOutlinedButton', () {
+    //415
     testWidgets('renderiza texto e ícone e dispara onPressed', (tester) async {
       var pressed = false;
 
@@ -84,6 +88,7 @@ void main() {
       expect(pressed, isTrue);
     });
 
+    //416
     testWidgets('sem ícone não renderiza nenhum Icon', (tester) async {
       await tester.pumpWidget(
         wrap(WGOutlinedButton(text: 'Voltar', onPressed: () {})),
@@ -95,6 +100,7 @@ void main() {
   });
 
   group('WGGoogleButton', () {
+    //417
     testWidgets('usa o texto padrão e renderiza o logo', (tester) async {
       await tester.pumpWidget(wrap(WGGoogleButton(onPressed: () {})));
 
@@ -102,6 +108,7 @@ void main() {
       expect(find.byType(Image), findsOneWidget);
     });
 
+    //418
     testWidgets('aceita texto customizado e dispara onPressed', (tester) async {
       var pressed = false;
 

@@ -6,6 +6,7 @@ import 'package:appets/widgets/display/widget_info_row.dart';
 void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
+  //457
   testWidgets('endereço longo quebra em linhas sem overflow', (tester) async {
     const longAddress =
         'Rua Marquês de São Vicente, 2534 - Vila Olímpia, '
@@ -33,6 +34,7 @@ void main() {
         greaterThan(20));
   });
 
+  //458
   testWidgets('texto curto continua em linha única', (tester) async {
     await tester.pumpWidget(
       wrap(

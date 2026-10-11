@@ -8,6 +8,7 @@ import 'package:appets/models/model_pet.dart';
 
 void main() {
   group('Pet model', () {
+    //139
     test('cria pet com campos obrigatórios', () {
       final pet = Pet(
         id: 'pet_001',
@@ -35,6 +36,7 @@ void main() {
       expect(pet.ownerAddress, isEmpty);
     });
 
+    //140
     test('cria pet com campos opcionais', () {
       final pet = Pet(
         id: 'pet_002',
@@ -81,6 +83,7 @@ void main() {
       map = original.toMap();
     });
 
+    //141
     test('toMap inclui todos os campos persistidos', () {
       expect(map['ownerId'], 'user_001');
       expect(map['name'], 'Rex');
@@ -96,10 +99,12 @@ void main() {
       expect(map['createdAt'], isNotNull);
     });
 
+    //142
     test('toMap omite weight quando não informado', () {
       expect(map.containsKey('weight'), isFalse);
     });
 
+    //143
     test('toMap grava weight quando definido', () {
       final comPeso = Pet(
         id: 'pet_002',
@@ -116,10 +121,12 @@ void main() {
       expect(comPeso.toMap()['weight'], 12.5);
     });
 
+    //144
     test('toMap persiste specifications (1 token por categoria, em PT)', () {
       expect(map['specifications'], ['cachorro', 'macho', 'adocao', 'jovem']);
     });
 
+    //145
     test('pet.specifications deriva dos campos atuais', () {
       expect(original.specifications, ['cachorro', 'macho', 'adocao', 'jovem']);
 
@@ -138,12 +145,14 @@ void main() {
       expect(diferente.specifications, ['gato', 'femea', 'perdido', 'adulto']);
     });
 
+    //146
     test('toMap persiste searchTokens normalizados para a busca', () {
       final tokens = map['searchTokens'] as List;
       expect(tokens, containsAll(buildSearchTokens(name: 'Rex')));
       expect(tokens, contains('docil'));
     });
 
+    //147
     test('fromMap restaura os campos persistidos', () {
       final pet = Pet.fromMap('pet_001', map);
 
@@ -161,6 +170,7 @@ void main() {
       expect(pet.images, ['a.png', 'b.png']);
     });
 
+    //148
     test('fromMap restaura weight (double) e tolera int/ausência', () {
       final fromDouble = Pet.fromMap('pet_001', {
         ...map,
@@ -179,6 +189,7 @@ void main() {
       expect(semPeso.weight, isNull);
     });
 
+    //149
     test('fromMap usa padrões quando os campos de espécie/raça faltam', () {
       final legacy = Pet.fromMap('pet_001', {
         'ownerId': 'user_001',
@@ -194,6 +205,7 @@ void main() {
       expect(legacy.specifications, ['cachorro', 'macho', 'adocao', 'jovem']);
     });
 
+    //150
     test('fromMap tolera os códigos legados em inglês', () {
       final legacy = Pet.fromMap('pet_001', {
         'ownerId': 'user_001',
@@ -213,6 +225,7 @@ void main() {
       expect(legacy.specifications, ['cachorro', 'macho', 'adocao', 'jovem']);
     });
 
+    //151
     test('fromMap ignora espécie desconhecida com fallback', () {
       final pet = Pet.fromMap('pet_001', {
         'ownerId': 'user_001',
@@ -226,6 +239,7 @@ void main() {
       expect(pet.species, AppPetSpecies.dog);
     });
 
+    //152
     test('fromMap lê imagens quando a lista é válida', () {
       final pet = Pet.fromMap('pet_001', {
         'ownerId': 'user_001',
@@ -241,6 +255,7 @@ void main() {
       expect(pet.images, ['a.png', 'b.png']);
     });
 
+    //153
     test(
       'fromMap ignora elementos não-string em images (dados corrompidos)',
       () {
@@ -257,6 +272,7 @@ void main() {
       },
     );
 
+    //154
     test('fromMap não lança quando images falta ou não é uma lista', () {
       final withoutImages = Pet.fromMap('pet_001', {
         'ownerId': 'user_001',
@@ -301,6 +317,7 @@ void main() {
       map = pet.toUpdateMap();
     });
 
+    //155
     test('inclui os dados editáveis', () {
       expect(map['name'], 'Rex');
       expect(map['age'], 2);
@@ -315,6 +332,7 @@ void main() {
       expect(map['ownerAddress'], isEmpty);
     });
 
+    //156
     test('persiste specifications e searchTokens atualizados', () {
       expect(map['specifications'], ['cachorro', 'macho', 'adocao', 'jovem']);
       final tokens = map['searchTokens'] as List;
@@ -322,15 +340,29 @@ void main() {
       expect(tokens, contains('docil'));
     });
 
+    //157
     test('exclui id, ownerId, createdAt e images (não alteráveis na edição)', () {
       expect(map.containsKey('id'), isFalse);
       expect(map.containsKey('ownerId'), isFalse);
       expect(map.containsKey('createdAt'), isFalse);
       expect(map.containsKey('images'), isFalse);
     });
+
+    //158
+    test('compartilha os mesmos campos editáveis do toMap', () {
+      // A unificação (helper comum) garante que todo campo do update
+      // existe no create com o MESMO valor — só ownerId/images/createdAt
+      // são exclusivos do create.
+      final create = pet.toMap();
+      expect(create.keys.toSet().containsAll(map.keys.toSet()), isTrue);
+      for (final key in map.keys) {
+        expect(create[key], map[key], reason: 'campo divergente: $key');
+      }
+    });
   });
 
   group('ageLabel extension', () {
+    //159
     test('retorna "1 ano" para age=1 e years', () {
       final pet = Pet(
         id: 'pet_001',
@@ -346,6 +378,7 @@ void main() {
       expect(pet.ageLabel, '1 ano');
     });
 
+    //160
     test('retorna "3 anos" para age=3 e years', () {
       final pet = Pet(
         id: 'pet_001',
@@ -361,6 +394,7 @@ void main() {
       expect(pet.ageLabel, '3 anos');
     });
 
+    //161
     test('retorna "1 mês" para age=1 e months', () {
       final pet = Pet(
         id: 'pet_001',
@@ -376,6 +410,7 @@ void main() {
       expect(pet.ageLabel, '1 mês');
     });
 
+    //162
     test('retorna "6 meses" para age=6 e months', () {
       final pet = Pet(
         id: 'pet_001',
@@ -391,6 +426,7 @@ void main() {
       expect(pet.ageLabel, '6 meses');
     });
 
+    //163
     test('retorna "1 dia" para age=1 e days', () {
       final pet = Pet(
         id: 'pet_001',
@@ -406,6 +442,7 @@ void main() {
       expect(pet.ageLabel, '1 dia');
     });
 
+    //164
     test('retorna "15 dias" para age=15 e days', () {
       final pet = Pet(
         id: 'pet_001',
@@ -423,6 +460,7 @@ void main() {
   });
 
   group('genderLabel extension', () {
+    //165
     test('retorna "Macho" para male', () {
       final pet = Pet(
         id: 'pet_001',
@@ -437,6 +475,7 @@ void main() {
       expect(pet.genderLabel, 'Macho');
     });
 
+    //166
     test('retorna "Fêmea" para female', () {
       final pet = Pet(
         id: 'pet_001',
@@ -453,6 +492,7 @@ void main() {
   });
 
   group('weightLabel extension', () {
+    //167
     test('formata peso decimal com vírgula e "kg"', () {
       final pet = Pet(
         id: 'pet_001',
@@ -468,6 +508,7 @@ void main() {
       expect(pet.weightLabel, '12,5 kg');
     });
 
+    //168
     test('peso inteiro sem ",0" e null quando não informado', () {
       final inteiro = Pet(
         id: 'pet_001',
@@ -495,6 +536,7 @@ void main() {
   });
 
   group('speciesRaceLabel extension', () {
+    //169
     test('retorna apenas a espécie quando a raça não foi informada', () {
       final pet = Pet(
         id: 'pet_001',
@@ -510,6 +552,7 @@ void main() {
       expect(pet.speciesRaceLabel, 'Cachorro');
     });
 
+    //170
     test('ignora espaços em branco na raça', () {
       final pet = Pet(
         id: 'pet_001',
@@ -526,6 +569,7 @@ void main() {
       expect(pet.speciesRaceLabel, 'Cachorro');
     });
 
+    //171
     test('retorna "Espécie · Raça" quando a raça é informada', () {
       final pet = Pet(
         id: 'pet_001',
@@ -544,6 +588,7 @@ void main() {
   });
 
   group('shareText extension', () {
+    //172
     test('adoção: anúncio completo procurando um novo lar', () {
       const pet = Pet(
         id: 'pet_001',
@@ -578,6 +623,7 @@ void main() {
       expect(pet.shareText, expected);
     });
 
+    //173
     test('perdido: apelo mostrando que o dono procura o pet', () {
       const pet = Pet(
         id: 'pet_002',
@@ -612,6 +658,7 @@ void main() {
       expect(pet.shareText, expected);
     });
 
+    //174
     test('sem raça mantém apenas a espécie na identidade', () {
       const pet = Pet(
         id: 'pet_003',
@@ -630,6 +677,7 @@ void main() {
       expect(pet.shareText, isNot(contains('· ·')));
     });
 
+    //175
     test('inclui o peso na identidade quando informado', () {
       const pet = Pet(
         id: 'pet_005',
@@ -648,6 +696,7 @@ void main() {
       expect(pet.shareText, contains('Cachorro · 2 anos · Macho · 12,5 kg'));
     });
 
+    //176
     test('sem descrição, sem endereço e sem telefone omite as linhas', () {
       const pet = Pet(
         id: 'pet_004',
@@ -670,6 +719,7 @@ void main() {
   });
 
   group('AppPetSpecies', () {
+    //177
     test('expõe todas as espécies com rótulos', () {
       expect(AppPetSpecies.values, hasLength(8));
       expect(AppPetSpecies.dog.label, 'Cachorro');

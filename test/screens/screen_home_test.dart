@@ -9,11 +9,13 @@ import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/services/home_data_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/screens/screen_home.dart';
+import 'package:appets/widgets/feedback/widget_page_states.dart';
 
 void main() {
   final connectivity = ConnectivityService.instance;
@@ -27,6 +29,7 @@ void main() {
     PetService.instance.debugFirstPageError = null;
     FavoritesService.instance.reset();
     MyPublicationsService.instance.reset();
+    HomeDataService.instance.reset();
     connectivity.debugOnline = true;
   });
 
@@ -35,6 +38,7 @@ void main() {
     FirestoreService.instance.debugGetUserError = null;
     PetService.instance.debugDb = null;
     PetService.instance.debugFirstPageError = null;
+    HomeDataService.instance.reset();
     connectivity.reset();
   });
 
@@ -58,6 +62,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  //203
   testWidgets('falha na carga inicial mostra estado de erro com retry', (
     tester,
   ) async {
@@ -68,6 +73,7 @@ void main() {
     expect(find.text(SharedStrings.LOAD_DATA_ERROR_TITLE), findsOneWidget);
   });
 
+  //204
   testWidgets('retry após a falha recarrega e sai do estado de erro', (
     tester,
   ) async {
@@ -82,6 +88,7 @@ void main() {
     expect(find.text(SharedStrings.LOAD_DATA_ERROR_TITLE), findsNothing);
   });
 
+  //205
   testWidgets('a única leitura do usuário alimenta favoritos e publicações', (
     tester,
   ) async {
@@ -133,6 +140,36 @@ void main() {
     expect(MyPublicationsService.instance.isMine('pet_pub'), isTrue);
   });
 
+  //206
+  testWidgets(
+    'Home monta sem a tela de loading quando os dados já estão prontos',
+    (tester) async {
+      AuthService.instance.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'uid_1'),
+      );
+      await db.collection('users').doc('uid_1').set({
+        'name': 'Ana',
+        'email': 'ana@test.com',
+        'phone': '',
+        'address': 'São Paulo',
+        'photoUrl': '',
+        'favoritePetIds': <String>[],
+        'myPublishedPetIds': <String>[],
+      });
+
+      // Simula a pré-carga feita pela splash antes de navegar.
+      await HomeDataService.instance.load();
+
+      await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
+      await tester.pump();
+
+      expect(find.byType(WGPageLoading), findsNothing);
+      expect(find.text(HomeStrings.DEFAULT_USER_NAME), findsNothing);
+    },
+  );
+
+  //207
   testWidgets(
     'aba oculta suspende o feed da Home e voltar recarrega',
     (tester) async {

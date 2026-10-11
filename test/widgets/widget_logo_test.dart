@@ -6,6 +6,7 @@ import 'package:appets/widgets/display/widget_logo.dart';
 void main() {
   Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
+  //462
   testWidgets('exibe a imagem do logo institucional', (tester) async {
     await tester.pumpWidget(wrap(const WGLogo()));
 
@@ -13,6 +14,7 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
   });
 
+  //463
   testWidgets('logo expõe o rótulo "APPets" na árvore semântica (a11y)',
       (tester) async {
     final handle = tester.ensureSemantics();
