@@ -193,6 +193,23 @@ void main() {
         expect(notified, 1);
         expect(service.myPetIds.value, {'pet_a', 'pet_b'});
       });
+
+      test('persiste a remoção no campo myPublishedPetIds', () async {
+        final db = FakeFirebaseFirestore();
+        FirestoreService.instance.debugDb = db;
+        addTearDown(() => FirestoreService.instance.debugDb = null);
+        await db.collection('users').doc('uid_1').set({
+          'favoritePetIds': <String>[],
+          'myPublishedPetIds': <String>['pet_a', 'pet_b'],
+        });
+        service.myPetIds.value = {'pet_a', 'pet_b'};
+
+        await service.cleanOrphans('uid_1', ['pet_a']);
+
+        final doc = await db.collection('users').doc('uid_1').get();
+        expect(doc.get('myPublishedPetIds'), ['pet_a']);
+        expect(doc.get('favoritePetIds'), isEmpty);
+      });
     });
 
     test('notifica ouvintes ao alterar myPetIds.value', () {

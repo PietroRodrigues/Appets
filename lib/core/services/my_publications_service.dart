@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/core/services/user_pet_ids_service.dart';
 import 'package:appets/models/user_model.dart';
 
 /// Fonte única e reativa das publicações do usuário logado, mantida em
@@ -12,28 +13,25 @@ import 'package:appets/models/user_model.dart';
 /// dos pets publicados (persistida em `users/{uid}.myPublishedPetIds`) e
 /// notifica a interface via [ValueNotifier] quando a lista muda.
 ///
+/// Estende [UserPetIdsService]: toda a mecânica otimista e de limpeza de
+/// órfãos vem da base; aqui ficam só o campo persistido, as escritas do
+/// Firestore e o *backfill* de [applyUser].
+///
 /// Durante [applyUser] é feito um *backfill*: busca os pets do dono
-  /// (pelo `ownerId`) e grava na lista quaisquer IDs que ainda não constem,
-  /// migrando publicações antigas criadas antes deste campo existir e se
-  /// auto-reparando caso a lista fique dessincronizada.
-class MyPublicationsService {
-  MyPublicationsService._();
+/// (pelo `ownerId`) e grava na lista quaisquer IDs que ainda não constem,
+/// migrando publicações antigas criadas antes deste campo existir e se
+/// auto-reparando caso a lista fique dessincronizada.
+class MyPublicationsService extends UserPetIdsService {
+  MyPublicationsService._() : super('myPublishedPetIds');
 
   static final MyPublicationsService instance = MyPublicationsService._();
 
-  final ValueNotifier<Set<String>> _myPetIds = ValueNotifier<Set<String>>(
-    <String>{},
-  );
-
   /// Notificador do conjunto de IDs de pets publicados. Escute para reagir
   /// às mudanças em qualquer tela.
-  ValueNotifier<Set<String>> get myPetIds => _myPetIds;
-
-  /// Conjunto atual de IDs de pets publicados.
-  Set<String> get current => _myPetIds.value;
+  ValueNotifier<Set<String>> get myPetIds => ids;
 
   /// Indica se o pet é uma publicação do usuário logado.
-  bool isMine(String petId) => _myPetIds.value.contains(petId);
+  bool isMine(String petId) => contains(petId);
 
   /// Carrega as publicações a partir do [user] já buscado (única leitura do
   /// documento do usuário, feita por quem chama — não há getUser aqui).
@@ -46,12 +44,12 @@ class MyPublicationsService {
     final uid = user?.id;
     final stored = (user?.myPublishedPetIds ?? const <String>[]).toSet();
     if (uid == null) {
-      _myPetIds.value = stored;
+      applyIds(stored);
       return;
     }
     final known = await _fetchOwnedPetIds(uid);
     final merged = stored.union(known);
-    _myPetIds.value = merged;
+    applyIds(merged);
 
     final missing = known.difference(stored);
     if (missing.isEmpty) return;
@@ -65,88 +63,20 @@ class MyPublicationsService {
     }
   }
 
+  @override
+  Future<void> persistAdd(String uid, String petId) =>
+      FirestoreService.instance.addMyPet(uid, petId);
+
+  @override
+  Future<void> persistRemove(String uid, String petId) =>
+      FirestoreService.instance.removeMyPet(uid, petId);
+
   Future<Set<String>> _fetchOwnedPetIds(String uid) async {
     try {
       final pets = await PetService.instance.getPetsByOwner(uid);
       return pets.map((p) => p.id).toSet();
     } catch (_) {
       return <String>{};
-    }
-  }
-
-  /// Adiciona um pet às publicações de forma otimista, persistindo no
-  /// Firestore. Devolve `true` em caso de sucesso; `false` (com o estado
-  /// local revertido ao snapshot capturado antes da escrita) se a
-  /// persistência falhar.
-  Future<bool> add(String uid, String petId) async {
-    final snapshot = Set<String>.from(_myPetIds.value);
-    final next = Set<String>.from(snapshot)..add(petId);
-    _myPetIds.value = next;
-    try {
-      await FirestoreService.instance.addMyPet(uid, petId);
-      return true;
-    } catch (_) {
-      _myPetIds.value = snapshot;
-      return false;
-    }
-  }
-
-  /// Remove um pet das publicações de forma otimista, persistindo no
-  /// Firestore. Devolve `true` em caso de sucesso; `false` (com o
-  /// estado local revertido ao snapshot capturado antes da escrita) se
-  /// a persistência falhar.
-  Future<bool> remove(String uid, String petId) async {
-    final snapshot = Set<String>.from(_myPetIds.value);
-    final next = Set<String>.from(snapshot)..remove(petId);
-    _myPetIds.value = next;
-    try {
-      await FirestoreService.instance.removeMyPet(uid, petId);
-      return true;
-    } catch (_) {
-      _myPetIds.value = snapshot;
-      return false;
-    }
-  }
-
-  /// Remove um pet do estado local, sem persistir.
-  void removeLocal(String petId) {
-    if (!_myPetIds.value.contains(petId)) return;
-    final next = Set<String>.from(_myPetIds.value)..remove(petId);
-    _myPetIds.value = next;
-  }
-
-  /// Remove vários pets do estado local de uma só vez (uma única
-  /// notificação).
-  void removeLocalMany(Iterable<String> petIds) {
-    final ids = petIds.toSet();
-    if (ids.isEmpty) return;
-    final next = Set<String>.from(_myPetIds.value)..removeAll(ids);
-    if (next.length == _myPetIds.value.length) return;
-    _myPetIds.value = next;
-  }
-
-  /// Zera o estado (uso em testes e ao deslogar).
-  void reset() {
-    _myPetIds.value = <String>{};
-  }
-
-  /// Remove das publicações (local + Firestore) os IDs que não constam mais
-  /// entre os pets existentes.
-  Future<void> cleanOrphans(String uid, Iterable<String> existingIds) async {
-    final known = existingIds.toSet();
-    final orphans = _myPetIds.value.difference(known).toList();
-
-    if (orphans.isEmpty) return;
-
-    removeLocalMany(orphans);
-
-    try {
-      await FirestoreService.instance.updateUser(uid, {
-        'myPublishedPetIds': FieldValue.arrayRemove(orphans),
-      });
-    } catch (_) {
-      // Melhor esforço: a remoção local já foi feita; se a escrita no
-      // Firestore falhar, a lista voltará ao normal ao recarregar.
     }
   }
 }

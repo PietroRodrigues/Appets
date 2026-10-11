@@ -67,7 +67,7 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | google_fonts | ^8.1.0 | Fonte Poppins (empacotada, sem fetch em runtime) |
 | share_plus | ^13.3.0 | Compartilhamento de pets (share sheet) |
 | flutter_lints | ^6.0.0 | Qualidade de código |
-| flutter_test | SDK | 568 testes automatizados |
+| flutter_test | SDK | 570 testes automatizados |
 
 Versão atual do app: **1.0.0+1** · Orientação fixa **retrato**.
 
@@ -143,7 +143,7 @@ flutter run
 ### Testes
 
 ```bash
-flutter test        # 568 testes
+flutter test        # 570 testes
 flutter analyze     # sem issues
 ```
 
@@ -165,7 +165,7 @@ primeiro com o nome do Auth como best-effort e remoção de conta fantasma
 quando a persistência falha). Já é possível **trocar o e-mail**
 (reauth por senha; contas Google veem o campo bloqueado). Faltam: troca de
 avatar, GPS e permissão de câmera.
-Suíte com 568 testes (serviços de backend
+Suíte com 570 testes (serviços de backend
 cobertos com fakes em memória via `@visibleForTesting`). O plano detalhado
 está em [`BACKLOG.txt`](./BACKLOG.txt).
 

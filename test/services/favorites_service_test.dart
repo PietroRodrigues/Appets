@@ -255,6 +255,23 @@ void main() {
         expect(notified, 1);
         expect(service.favoriteIds.value, {'pet_a', 'pet_b'});
       });
+
+      test('persiste a remoção no campo favoritePetIds', () async {
+        final db = FakeFirebaseFirestore();
+        FirestoreService.instance.debugDb = db;
+        addTearDown(() => FirestoreService.instance.debugDb = null);
+        await db.collection('users').doc('uid_1').set({
+          'favoritePetIds': <String>['pet_a', 'pet_b'],
+          'myPublishedPetIds': <String>[],
+        });
+        service.favoriteIds.value = {'pet_a', 'pet_b'};
+
+        await service.cleanOrphans('uid_1', ['pet_a']);
+
+        final doc = await db.collection('users').doc('uid_1').get();
+        expect(doc.get('favoritePetIds'), ['pet_a']);
+        expect(doc.get('myPublishedPetIds'), isEmpty);
+      });
     });
 
     test('notifica ouvintes ao alterar favoriteIds.value', () {
