@@ -37,6 +37,33 @@ class _ProcessHostState extends State<_ProcessHost>
   }
 }
 
+/// Anfitrião com uma tarefa que fica pendente até ser liberada pelo [gate],
+/// para exercitar o lock de duplo disparo do [WGProcessMixin].
+class _PendingHost extends StatefulWidget {
+  const _PendingHost();
+
+  @override
+  State<_PendingHost> createState() => _PendingHostState();
+}
+
+class _PendingHostState extends State<_PendingHost>
+    with WGProcessMixin<_PendingHost> {
+  final Completer<WGProcessResult> gate = Completer<WGProcessResult>();
+
+  Future<WGProcessResult?> run() {
+    return pushProcess(message: 'Processando...', task: () => gate.future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: ElevatedButton(onPressed: run, child: const Text('iniciar')),
+      ),
+    );
+  }
+}
+
 void main() {
   tearDown(() {
     ConnectivityService.instance.reset();
@@ -188,6 +215,30 @@ void main() {
     expect(find.byType(WGProcessLoadingScreen), findsNothing);
     final host = tester.state<_ProcessHostState>(find.byType(_ProcessHost));
     expect(host.result?.status, WGProcessStatus.success);
+  });
+
+  testWidgets('pushProcess ignora a segunda chamada enquanto a primeira roda', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: _PendingHost()));
+
+    // Dispara o primeiro processo; a tarefa fica presa no gate.
+    await tester.tap(find.text('iniciar'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(WGProcessLoadingScreen), findsOneWidget);
+
+    // Lock ativo: a segunda chamada é ignorada (retorna null) sem abrir
+    // outra tela de processo.
+    final host = tester.state<_PendingHostState>(find.byType(_PendingHost));
+    final second = await host.run();
+    expect(second, isNull);
+
+    // Libera a primeira e o desfecho chega normalmente.
+    host.gate.complete(const WGProcessResult.success());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(WGProcessLoadingScreen), findsNothing);
   });
 
   group('WGProcessResult.userFacingMessage', () {

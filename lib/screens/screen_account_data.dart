@@ -36,11 +36,11 @@ class AccountDataScreen extends StatefulWidget {
   State<AccountDataScreen> createState() => _AccountDataScreenState();
 }
 
-class _AccountDataScreenState extends State<AccountDataScreen> {
+class _AccountDataScreenState extends State<AccountDataScreen>
+    with WGProcessMixin<AccountDataScreen> {
   UserModel? _user;
   bool _isLoading = true;
   bool _loadError = false;
-  bool _isDeleting = false;
   bool _isSaving = false;
 
   // Rascunhos editáveis (valores ainda não salvos no Firestore).
@@ -371,27 +371,12 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
 
     if (!finalConfirmed || !mounted) return;
 
-    // Excluir conta exige rede: sem conexão não há como apagar os dados.
-    if (!await ensureOnline(context)) {
-      return;
-    }
-    if (!mounted) return;
-
-    setState(() => _isDeleting = true);
-    FocusManager.instance.primaryFocus?.unfocus();
-
-    final result = await Navigator.push<WGProcessResult>(
-      context,
-      MaterialPageRoute<WGProcessResult>(
-        builder: (_) => WGProcessLoadingScreen(
-          message: DeleteAccountStrings.DELETE_ACCOUNT_LOADING,
-          task: _deleteAccountTask,
-        ),
-      ),
+    final result = await pushProcess(
+      message: DeleteAccountStrings.DELETE_ACCOUNT_LOADING,
+      task: _deleteAccountTask,
     );
 
     if (!mounted) return;
-    setState(() => _isDeleting = false);
 
     switch (result?.status) {
       case WGProcessStatus.success:
@@ -687,7 +672,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                               width: 20,
                               height: 20,
                             )
-                          : null, 
+                          : null,
                       onStartEditing: () => _startEditing('email'),
                       onCommit: (v) => _commitField('email', v),
                       keyboardType: TextInputType.emailAddress,
@@ -778,7 +763,7 @@ class _AccountDataScreenState extends State<AccountDataScreen> {
                       icon: Icons.delete_outline,
                       title: DeleteAccountStrings.DELETE_ACCOUNT,
                       isDestructive: true,
-                      onTap: _isDeleting ? () {} : _onDeleteAccountPressed,
+                      onTap: _onDeleteAccountPressed,
                     ),
                   ],
                 ),

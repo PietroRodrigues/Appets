@@ -35,7 +35,9 @@ class _FailingCacheManager implements BaseCacheManager {
     Map<String, String>? headers,
     bool withProgress = false,
   }) {
-    return Stream<FileResponse>.error(StateError('rede indisponível em testes'));
+    return Stream<FileResponse>.error(
+      StateError('rede indisponível em testes'),
+    );
   }
 
   // Métodos não usados pelo CachedNetworkImage nestes testes.
@@ -190,10 +192,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(
-        find.text(PublishStrings.PHOTO_REQUIRED_HINT),
-        findsOneWidget,
-      );
+      expect(find.text(PublishStrings.PHOTO_REQUIRED_HINT), findsOneWidget);
     });
 
     testWidgets('botão continua cinza com celular inválido (fixo/10 dígitos)', (
@@ -459,13 +458,15 @@ void main() {
 
         // Conta do dono com o mesmo contato do formulário (evita o aviso
         // de "atualizar todas as publicações" após o sucesso).
-        await FirestoreService.instance.createUser(UserModel(
-          id: 'user_test_001',
-          name: 'Usuária Teste',
-          email: 'teste@email.com',
-          phone: '(11) 98765-4321',
-          address: 'São Paulo',
-        ));
+        await FirestoreService.instance.createUser(
+          UserModel(
+            id: 'user_test_001',
+            name: 'Usuária Teste',
+            email: 'teste@email.com',
+            phone: '(11) 98765-4321',
+            address: 'São Paulo',
+          ),
+        );
 
         // Foto local temporária usada pelo slot.
         final tempDir = Directory.systemTemp.createTempSync('appets_photo');
@@ -491,25 +492,26 @@ void main() {
         addTearDown(() => ImageCompressor.debugCompress = null);
 
         // Abre o formulário como rota empurrada (o sucesso faz pop).
-        await tester.pumpWidget(MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => Center(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.push<void>(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => const Scaffold(
-                        body: WGPublishPetForm(),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => Center(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.push<void>(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            const Scaffold(body: WGPublishPetForm()),
                       ),
                     ),
+                    child: const Text('abrir'),
                   ),
-                  child: const Text('abrir'),
                 ),
               ),
             ),
           ),
-        ));
+        );
         await tester.tap(find.text('abrir'));
         await tester.pumpAndSettle();
 
@@ -559,10 +561,7 @@ void main() {
         expect(petDoc.exists, isTrue);
         final images = (petDoc.data()! as Map)['images'];
         expect(images, isNotEmpty);
-        expect(
-          MyPublicationsService.instance.current.contains(petId),
-          isTrue,
-        );
+        expect(MyPublicationsService.instance.current.contains(petId), isTrue);
       },
     );
 
@@ -580,13 +579,15 @@ void main() {
         PetService.instance.debugDb = null;
       });
 
-      await FirestoreService.instance.createUser(UserModel(
-        id: 'user_test_001',
-        name: 'Usuária Teste',
-        email: 'teste@email.com',
-        phone: '(11) 98765-4321',
-        address: 'São Paulo',
-      ));
+      await FirestoreService.instance.createUser(
+        UserModel(
+          id: 'user_test_001',
+          name: 'Usuária Teste',
+          email: 'teste@email.com',
+          phone: '(11) 98765-4321',
+          address: 'São Paulo',
+        ),
+      );
 
       final tempDir = Directory.systemTemp.createTempSync('appets_photo');
       final photoPath = '${tempDir.path}/photo_1.jpg';
@@ -603,25 +604,25 @@ void main() {
       ImagePickerPlatform.instance = _PickerReturnsFile(photoPath);
       addTearDown(() => ImagePickerPlatform.instance = originalPicker);
 
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => Center(
-              child: ElevatedButton(
-                onPressed: () => Navigator.push<void>(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => const Scaffold(
-                      body: WGPublishPetForm(),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push<void>(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => const Scaffold(body: WGPublishPetForm()),
                     ),
                   ),
+                  child: const Text('abrir'),
                 ),
-                child: const Text('abrir'),
               ),
             ),
           ),
         ),
-      ));
+      );
       await tester.tap(find.text('abrir'));
       await tester.pumpAndSettle();
 
@@ -724,9 +725,13 @@ void main() {
     testWidgets('pré-preenche o peso na edição quando informado', (
       tester,
     ) async {
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(body: WGPublishPetForm(pet: createEditPet(weight: 12.5))),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WGPublishPetForm(pet: createEditPet(weight: 12.5)),
+          ),
+        ),
+      );
 
       expect(find.text('12,5'), findsOneWidget);
     });
@@ -749,9 +754,11 @@ void main() {
       final pet = _editPetWithoutWeight();
       await db.collection('pets').doc(pet.id).set(pet.toMap());
 
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(body: WGPublishPetForm(pet: pet)),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPublishPetForm(pet: pet)),
+        ),
+      );
 
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Ex.: 12,5'),
@@ -786,9 +793,11 @@ void main() {
       final pet = _editPetWithoutWeight();
       await db.collection('pets').doc(pet.id).set(pet.toMap());
 
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(body: WGPublishPetForm(pet: pet)),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPublishPetForm(pet: pet)),
+        ),
+      );
 
       // Peso acima do limite permitido (0 < x ≤ 200).
       await tester.enterText(
@@ -841,9 +850,11 @@ void main() {
         race: 'Poodle',
         images: _networkImages(5),
       );
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(body: WGPublishPetForm(pet: pet)),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPublishPetForm(pet: pet)),
+        ),
+      );
 
       // A edição trunca para o máximo de 3 slots visíveis (X por slot).
       expect(find.byIcon(Icons.close), findsNWidgets(3));
@@ -868,17 +879,16 @@ void main() {
         race: 'Poodle',
         images: _networkImages(3),
       );
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(body: WGPublishPetForm(pet: pet)),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPublishPetForm(pet: pet)),
+        ),
+      );
 
       await tester.tap(find.byIcon(Icons.close).first);
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(PublishStrings.PHOTO_REMOVE_TITLE),
-        findsOneWidget,
-      );
+      expect(find.text(PublishStrings.PHOTO_REMOVE_TITLE), findsOneWidget);
     });
 
     testWidgets('remover a única foto deixa o botão cinza e mostra a dica', (
@@ -920,11 +930,13 @@ void main() {
       ConnectivityService.instance.debugOnline = false;
       addTearDown(() => ConnectivityService.instance.debugOnline = null);
 
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: WGPublishPetForm(pet: createEditPet(description: '')),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WGPublishPetForm(pet: createEditPet(description: '')),
+          ),
         ),
-      ));
+      );
 
       await tester.ensureVisible(find.text('Salvar Alterações'));
       await tester.pumpAndSettle();
@@ -933,10 +945,7 @@ void main() {
 
       // Aviso de descrição vazia com as duas opções.
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(
-        find.text(PublishStrings.EMPTY_DESCRIPTION_TITLE),
-        findsOneWidget,
-      );
+      expect(find.text(PublishStrings.EMPTY_DESCRIPTION_TITLE), findsOneWidget);
       expect(find.text(PublishStrings.CONTINUE_BUTTON), findsOneWidget);
       expect(find.text(PublishStrings.FILL_BUTTON), findsOneWidget);
 
@@ -998,9 +1007,11 @@ void main() {
       StorageService.instance.debugStorage = storage;
       addTearDown(() => StorageService.instance.debugStorage = null);
 
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(body: WGPublishPetForm(pet: pet)),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: WGPublishPetForm(pet: pet)),
+        ),
+      );
 
       // Remove a segunda foto (X -> confirma "Sim").
       await tester.tap(find.byIcon(Icons.close).at(1));
@@ -1028,92 +1039,154 @@ void main() {
       );
     });
 
-    testWidgets('falha no salvar desfaz uploads novos sem apagar fotos antigas', (
-      tester,
-    ) async {
-      _signInUser();
-      ConnectivityService.instance.debugOnline = true;
-      addTearDown(() => ConnectivityService.instance.debugOnline = null);
+    testWidgets(
+      'salvar na edição passa pela tela de carregamento (unificado)',
+      (tester) async {
+        _signInUser();
+        ConnectivityService.instance.debugOnline = true;
+        addTearDown(() => ConnectivityService.instance.debugOnline = null);
 
-      final db = FakeFirebaseFirestore();
-      FirestoreService.instance.debugDb = db;
-      PetService.instance.debugDb = db;
-      addTearDown(() {
-        FirestoreService.instance.debugDb = null;
-        PetService.instance.debugDb = null;
-      });
+        final db = FakeFirebaseFirestore();
+        FirestoreService.instance.debugDb = db;
+        PetService.instance.debugDb = db;
+        addTearDown(() {
+          FirestoreService.instance.debugDb = null;
+          PetService.instance.debugDb = null;
+        });
 
-      final pet = editPetWithImages(2);
-      await db.collection('pets').doc(pet.id).set(pet.toMap());
+        final pet = editPetWithImages(2);
+        await db.collection('pets').doc(pet.id).set(pet.toMap());
 
-      final storage = _EditOrderStorage(db: db, petId: pet.id);
-      StorageService.instance.debugStorage = storage;
-      addTearDown(() => StorageService.instance.debugStorage = null);
+        // Storage fake + atraso na exclusão das fotos removidas: o processo
+        // fica aberto o suficiente para observarmos a WGProcessLoadingScreen.
+        final storage = _EditOrderStorage(db: db, petId: pet.id);
+        StorageService.instance.debugStorage = storage;
+        StorageService.instance.debugDeleteDelay = const Duration(seconds: 2);
+        addTearDown(() {
+          StorageService.instance.debugStorage = null;
+          StorageService.instance.debugDeleteDelay = null;
+        });
 
-      // Foto local temporária usada pelo slot.
-      final tempDir = Directory.systemTemp.createTempSync('appets_edit_photo');
-      final photoPath = '${tempDir.path}/photo_1.jpg';
-      File(photoPath).writeAsBytesSync(List<int>.filled(64, 1));
-      addTearDown(() {
-        if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
-      });
-      final originalPicker = ImagePickerPlatform.instance;
-      ImagePickerPlatform.instance = _PickerReturnsFile(photoPath);
-      addTearDown(() => ImagePickerPlatform.instance = originalPicker);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: WGPublishPetForm(pet: pet)),
+          ),
+        );
 
-      // Commit falha: o updatePen no Firestore lança.
-      PetService.instance.debugUpdatePetError = Exception('falha no commit');
-      addTearDown(() => PetService.instance.debugUpdatePetError = null);
+        // Remove a segunda foto (X -> confirma "Sim").
+        await tester.tap(find.byIcon(Icons.close).at(1));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(SharedStrings.YES));
+        await tester.pumpAndSettle();
 
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(body: WGPublishPetForm(pet: pet)),
-      ));
+        // Salvar: a tela de processo abre com a exclusão presa no atraso.
+        await tester.ensureVisible(find.text('Salvar Alterações'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Salvar Alterações'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
 
-      // Remove a segunda foto (X -> confirma "Sim").
-      await tester.tap(find.byIcon(Icons.close).at(1));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(SharedStrings.YES));
-      await tester.pumpAndSettle();
+        expect(find.text(PublishStrings.SAVE_LOADING), findsOneWidget);
 
-      // Adiciona uma foto nova (I/O real: roda fora do FakeAsync).
-      await tester.ensureVisible(find.byIcon(Icons.add_a_photo_outlined));
-      await tester.pumpAndSettle();
-      await tester.runAsync(() async {
-        await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
-        await Future<void>.delayed(const Duration(milliseconds: 1000));
-      });
-      await _pumpUntil(
-        tester,
-        () => find.text(PublishStrings.photoSlotLabel(2)).evaluate().isEmpty,
-      );
+        // Libera o atraso e o desfecho de sucesso chega.
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+        expect(find.text(PublishStrings.PET_UPDATED), findsOneWidget);
+      },
+    );
 
-      // Salvar: o commit falha e o erro é informado.
-      await tester.ensureVisible(find.text('Salvar Alterações'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Salvar Alterações'));
-      await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
+    testWidgets(
+      'falha no salvar desfaz uploads novos sem apagar fotos antigas',
+      (tester) async {
+        _signInUser();
+        ConnectivityService.instance.debugOnline = true;
+        addTearDown(() => ConnectivityService.instance.debugOnline = null);
 
-      // Rollback: a foto NOVA enviada foi apagada do Storage...
-      expect(storage.deletedUrls, storage.uploadedUrls);
-      expect(storage.uploadedUrls, isNotEmpty);
-      // ...mas a foto antiga removida NÃO foi apagada (Firestore intacto).
-      expect(
-        storage.deletedUrls.contains('https://exemplo.com/foto_1.jpg'),
-        isFalse,
-      );
-      final snap = await db.collection('pets').doc(pet.id).get();
-      final images = ((snap.data()?['images'] as List?) ?? []).cast<String>();
-      expect(images, ['https://exemplo.com/foto_0.jpg', 'https://exemplo.com/foto_1.jpg']);
-    });
+        final db = FakeFirebaseFirestore();
+        FirestoreService.instance.debugDb = db;
+        PetService.instance.debugDb = db;
+        addTearDown(() {
+          FirestoreService.instance.debugDb = null;
+          PetService.instance.debugDb = null;
+        });
+
+        final pet = editPetWithImages(2);
+        await db.collection('pets').doc(pet.id).set(pet.toMap());
+
+        final storage = _EditOrderStorage(db: db, petId: pet.id);
+        StorageService.instance.debugStorage = storage;
+        addTearDown(() => StorageService.instance.debugStorage = null);
+
+        // Foto local temporária usada pelo slot.
+        final tempDir = Directory.systemTemp.createTempSync(
+          'appets_edit_photo',
+        );
+        final photoPath = '${tempDir.path}/photo_1.jpg';
+        File(photoPath).writeAsBytesSync(List<int>.filled(64, 1));
+        addTearDown(() {
+          if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
+        });
+        final originalPicker = ImagePickerPlatform.instance;
+        ImagePickerPlatform.instance = _PickerReturnsFile(photoPath);
+        addTearDown(() => ImagePickerPlatform.instance = originalPicker);
+
+        // Commit falha: o updatePen no Firestore lança.
+        PetService.instance.debugUpdatePetError = Exception('falha no commit');
+        addTearDown(() => PetService.instance.debugUpdatePetError = null);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: WGPublishPetForm(pet: pet)),
+          ),
+        );
+
+        // Remove a segunda foto (X -> confirma "Sim").
+        await tester.tap(find.byIcon(Icons.close).at(1));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(SharedStrings.YES));
+        await tester.pumpAndSettle();
+
+        // Adiciona uma foto nova (I/O real: roda fora do FakeAsync).
+        await tester.ensureVisible(find.byIcon(Icons.add_a_photo_outlined));
+        await tester.pumpAndSettle();
+        await tester.runAsync(() async {
+          await tester.tap(find.byIcon(Icons.add_a_photo_outlined));
+          await Future<void>.delayed(const Duration(milliseconds: 1000));
+        });
+        await _pumpUntil(
+          tester,
+          () => find.text(PublishStrings.photoSlotLabel(2)).evaluate().isEmpty,
+        );
+
+        // Salvar: o commit falha e o erro é informado.
+        await tester.ensureVisible(find.text('Salvar Alterações'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Salvar Alterações'));
+        await tester.pumpAndSettle();
+        expect(find.byType(AlertDialog), findsOneWidget);
+
+        // Rollback: a foto NOVA enviada foi apagada do Storage...
+        expect(storage.deletedUrls, storage.uploadedUrls);
+        expect(storage.uploadedUrls, isNotEmpty);
+        // ...mas a foto antiga removida NÃO foi apagada (Firestore intacto).
+        expect(
+          storage.deletedUrls.contains('https://exemplo.com/foto_1.jpg'),
+          isFalse,
+        );
+        final snap = await db.collection('pets').doc(pet.id).get();
+        final images = ((snap.data()?['images'] as List?) ?? []).cast<String>();
+        expect(images, [
+          'https://exemplo.com/foto_0.jpg',
+          'https://exemplo.com/foto_1.jpg',
+        ]);
+      },
+    );
   });
 }
 
 /// URLs remotas fictícias usadas como fotos já publicadas em testes.
 List<String> _networkImages(int count) {
-  return [
-    for (int i = 0; i < count; i++) 'https://exemplo.com/foto_$i.jpg',
-  ];
+  return [for (int i = 0; i < count; i++) 'https://exemplo.com/foto_$i.jpg'];
 }
 
 /// Pet de edição com imagem remota e sem peso, para os testes de peso.
@@ -1190,7 +1263,8 @@ class _PublishOrderReference implements Reference {
     expect(
       MyPublicationsService.instance.current.contains(petId),
       isFalse,
-      reason: 'o pet não pode entrar em "Minhas Publicações" antes de as '
+      reason:
+          'o pet não pode entrar em "Minhas Publicações" antes de as '
           'fotos serem enviadas/anexadas',
     );
     return _PublishOrderUploadTask();
@@ -1205,7 +1279,7 @@ class _PublishOrderReference implements Reference {
 
 class _PublishOrderUploadTask implements UploadTask {
   _PublishOrderUploadTask()
-      : _future = Future<TaskSnapshot>.value(_FakeTaskSnapshot());
+    : _future = Future<TaskSnapshot>.value(_FakeTaskSnapshot());
 
   // UploadTask é um Future<TaskSnapshot>: o upload "conclui" e o fluxo segue.
   final Future<TaskSnapshot> _future;
@@ -1214,15 +1288,13 @@ class _PublishOrderUploadTask implements UploadTask {
   Future<R> then<R>(
     FutureOr<R> Function(TaskSnapshot) onValue, {
     Function? onError,
-  }) =>
-      _future.then(onValue, onError: onError);
+  }) => _future.then(onValue, onError: onError);
 
   @override
   Future<TaskSnapshot> catchError(
     Function onError, {
     bool Function(Object)? test,
-  }) =>
-      _future.catchError(onError, test: test);
+  }) => _future.catchError(onError, test: test);
 
   @override
   Future<TaskSnapshot> whenComplete(FutureOr<void> Function() action) =>
@@ -1232,8 +1304,7 @@ class _PublishOrderUploadTask implements UploadTask {
   Future<TaskSnapshot> timeout(
     Duration timeLimit, {
     FutureOr<TaskSnapshot> Function()? onTimeout,
-  }) =>
-      _future.timeout(timeLimit, onTimeout: onTimeout);
+  }) => _future.timeout(timeLimit, onTimeout: onTimeout);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
@@ -1267,8 +1338,7 @@ class _EditOrderStorage implements FirebaseStorage {
   Reference ref([String? path]) => _EditOrderReference(this, path: path);
 
   @override
-  Reference refFromURL(String url) =>
-      _EditOrderReference(this, fromUrl: url);
+  Reference refFromURL(String url) => _EditOrderReference(this, fromUrl: url);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
@@ -1276,8 +1346,8 @@ class _EditOrderStorage implements FirebaseStorage {
 
 class _EditOrderReference implements Reference {
   _EditOrderReference(this.storage, {this.path, String? fromUrl})
-      : _fromUrl = fromUrl,
-        assert(fromUrl == null || path == null);
+    : _fromUrl = fromUrl,
+      assert(fromUrl == null || path == null);
 
   @override
   final _EditOrderStorage storage;
