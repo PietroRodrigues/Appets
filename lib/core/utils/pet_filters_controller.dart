@@ -11,10 +11,6 @@ class PetFiltersController extends ValueNotifier<List<PetFilterOption>> {
 
   bool get isActive => value.isNotEmpty;
 
-  /// Valores normalizados das opções (1 por categoria selecionada),
-  /// usados como tokens do pré-filtro do servidor.
-  List<String> get tags => [for (final option in value) option.value];
-
   /// Abre o popover de filtros ancorado no botão ([anchor]); aplica o
   /// resultado ao fechar.
   Future<void> openDialog(BuildContext anchor) async {

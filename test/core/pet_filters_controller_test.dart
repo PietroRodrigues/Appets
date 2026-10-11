@@ -19,14 +19,13 @@ void main() {
     final controller = PetFiltersController();
     expect(controller.value, isEmpty);
     expect(controller.isActive, isFalse);
-    expect(controller.tags, isEmpty);
     controller.dispose();
   });
 
-  test('tags expõe os valores das opções ativas', () {
+  test('expõe os valores das opções ativas quando há filtros', () {
     final controller = PetFiltersController();
     controller.value = [dog, female];
-    expect(controller.tags, ['dog', 'female']);
+    expect(controller.value.map((o) => o.value), ['dog', 'female']);
     expect(controller.isActive, isTrue);
     controller.dispose();
   });

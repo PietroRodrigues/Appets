@@ -102,26 +102,6 @@ void main() {
     });
   });
 
-  group('containsTokens', () {
-    test('encontra termo no meio da frase (parcial)', () {
-      expect(containsTokens('Poodle dócil', 'poo'), isTrue);
-      expect(containsTokens('Poodle dócil', 'oodle'), isTrue);
-    });
-
-    test('é insensível a maiúsculas e acentos', () {
-      expect(containsTokens('Poodle', 'POODLE'), isTrue);
-      expect(containsTokens('Dócil', 'docil'), isTrue);
-    });
-
-    test('retorna true para termo vazio', () {
-      expect(containsTokens('Rex', ''), isTrue);
-    });
-
-    test('retorna false quando não encontra', () {
-      expect(containsTokens('Rex', 'gato'), isFalse);
-    });
-  });
-
   group('searchWords', () {
     test('divide o termo em palavras normalizadas', () {
       expect(searchWords('  Poodle Preto  '), ['poodle', 'preto']);

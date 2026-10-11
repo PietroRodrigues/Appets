@@ -93,17 +93,6 @@ List<String> buildSearchTokens({required String name, String? description}) {
   return tokens.take(kMaxSearchTokens).toList();
 }
 
-/// Verifica se [text] contém o termo de busca [term] (client-side).
-///
-/// Diferente do servidor (palavra completa), aqui é usado `contains`,
-/// permitindo digitação parcial ("poo" encontra "poodle").
-bool containsTokens(String text, String term) {
-  final normalizedText = normalizeText(text);
-  final normalizedTerm = normalizeText(term);
-  if (normalizedTerm.isEmpty) return true;
-  return normalizedText.contains(normalizedTerm);
-}
-
 /// Divide o termo em palavras pesquisáveis (normalizadas, com 2+
 /// caracteres). Palavras isoladas de 1 caractere são ignoradas, assim
 /// como em [buildSearchTokens].
