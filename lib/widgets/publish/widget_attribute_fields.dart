@@ -83,7 +83,6 @@ class _WGAgeFieldsState extends State<WGAgeFields> {
       children: [
         // VALOR
         Expanded(
-          flex: 1,
           child: DropdownButtonFormField<int>(
             initialValue: _selectedValue,
             decoration: _decoration(context.appColors),
@@ -106,7 +105,6 @@ class _WGAgeFieldsState extends State<WGAgeFields> {
 
         // UNIDADE
         Expanded(
-          flex: 1,
           child: DropdownButtonFormField<AppPetAgeUnit>(
             initialValue: _selectedUnit,
             decoration: _decoration(context.appColors),

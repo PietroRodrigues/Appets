@@ -51,7 +51,7 @@ class PetTokensBackfillInitializer {
   Future<void> _migrate(String uid) async {
     try {
       final docs = await PetService.instance.getOwnerPetDocuments(uid);
-      final pets = docs.map((doc) => Pet.fromFirestore(doc)).toList();
+      final pets = docs.map(Pet.fromFirestore).toList();
       final stored = <String, Map<String, dynamic>>{
         for (final doc in docs)
           if (doc.data() is Map<String, dynamic>)

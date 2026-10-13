@@ -19,7 +19,7 @@ import 'package:appets/widgets/filters/widget_pet_filters_sheet.dart';
 void main() {
   final service = PetService.instance;
   final connectivity = ConnectivityService.instance;
-  final now = DateTime(2024, 1, 1);
+  final now = DateTime(2024);
   late FakeFirebaseFirestore db;
 
   setUp(() {
@@ -82,7 +82,7 @@ void main() {
       'race': '',
       'searchTokens': const ['token'],
       'specifications': [species, gender, 'adocao', 'jovem'],
-      'images': const [],
+      'images': const <String>[],
       'createdAt': createdAt,
     };
   }

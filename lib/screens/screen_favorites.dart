@@ -57,7 +57,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
+              MaterialPageRoute<void>(
                 builder: (_) => PetDetailsScreen(pet: pet),
               ),
             );

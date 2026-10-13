@@ -114,14 +114,12 @@ void main() {
           ownerId: ownerId,
           name: 'Rex',
           age: 2,
-          ageUnit: AppPetAgeUnit.years,
           gender: AppPetGender.male,
           address: 'São Paulo',
           ownerPhone: '(11) 98765-4321',
           ownerAddress: 'São Paulo',
           description: 'Muito dócil.',
           publicationType: AppPetPublicationType.lost,
-          species: AppPetSpecies.dog,
           race: 'Poodle',
           images: const [],
         );
@@ -130,7 +128,7 @@ void main() {
           .collection('pets')
           .doc(p.id)
           .set(Map<String, dynamic>.of(p.toMap())
-            ..['createdAt'] = DateTime(2024, 1, 1));
+            ..['createdAt'] = DateTime(2024));
     }
 
     await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
@@ -178,14 +176,12 @@ void main() {
             ownerId: 'outro',
             name: id,
             age: 2,
-            ageUnit: AppPetAgeUnit.years,
             gender: AppPetGender.male,
             address: 'São Paulo',
             ownerPhone: '(11) 98765-4321',
             ownerAddress: 'São Paulo',
             description: 'Muito dócil.',
             publicationType: AppPetPublicationType.lost,
-            species: AppPetSpecies.dog,
             race: 'Poodle',
             images: const [],
           );
@@ -197,7 +193,7 @@ void main() {
               ..['createdAt'] = createdAt);
       }
 
-      await seedPet('fido', createdAt: DateTime(2024, 1, 1));
+      await seedPet('fido', createdAt: DateTime(2024));
       await pumpHome(tester);
       expect(find.text('fido'), findsOneWidget);
 

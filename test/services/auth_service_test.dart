@@ -434,7 +434,7 @@ void main() {
     test('lança quando o hook debugAuthStateError está definido', () {
       service.debugAuthStateError = StateError('auth quebrado');
 
-      expect(() => service.waitFirstAuthState(), throwsA(isA<StateError>()));
+      expect(service.waitFirstAuthState, throwsA(isA<StateError>()));
     });
   });
 

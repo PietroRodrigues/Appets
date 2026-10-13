@@ -6,9 +6,7 @@ import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 
 void main() {
-  tearDown(() {
-    ConnectivityService.instance.reset();
-  });
+  tearDown(ConnectivityService.instance.reset);
 
   //32
   testWidgets('offline: devolve false e mostra o aviso "Sem conexão"', (

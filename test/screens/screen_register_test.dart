@@ -165,7 +165,7 @@ void main() {
     AuthService.instance.debugAuth = MockFirebaseAuth();
 
     await _pumpRegister(tester);
-    await _fillForm(tester, name: 'Ana Teste', email: 'ana@test.com');
+    await _fillForm(tester);
     await _tapCreate(tester);
 
     expect(find.text(AuthStrings.ACCOUNT_CREATED), findsOneWidget);
@@ -194,7 +194,7 @@ void main() {
     FirestoreService.instance.debugDb = db;
 
     await _pumpRegister(tester);
-    await _fillForm(tester, name: 'Ana Teste', email: 'ana@test.com');
+    await _fillForm(tester);
     await _tapCreate(tester);
 
     expect(find.text(AuthStrings.ACCOUNT_CREATED), findsOneWidget);

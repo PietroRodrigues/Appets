@@ -61,13 +61,14 @@ class UserModel {
     final data = doc.data() as Map<String, dynamic>;
     return UserModel(
       id: doc.id,
-      name: data['name'] ?? '',
-      email: data['email'] ?? '',
-      phone: data['phone'] ?? '',
-      address: data['address'] ?? data['city'] ?? '',
-      photoUrl: data['photoUrl'] ?? '',
-      favoritePetIds: List<String>.from(data['favoritePetIds'] ?? []),
-      myPublishedPetIds: List<String>.from(data['myPublishedPetIds'] ?? []),
+      name: data['name'] as String? ?? '',
+      email: data['email'] as String? ?? '',
+      phone: data['phone'] as String? ?? '',
+      address: data['address'] as String? ?? data['city'] as String? ?? '',
+      photoUrl: data['photoUrl'] as String? ?? '',
+      favoritePetIds: List<String>.from(data['favoritePetIds'] as List? ?? const []),
+      myPublishedPetIds:
+          List<String>.from(data['myPublishedPetIds'] as List? ?? const []),
     );
   }
 

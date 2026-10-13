@@ -251,7 +251,7 @@ Future<void> _enterTextAndConfirm(WidgetTester tester, String text) async {
 void main() {
   tearDown(() => FirestoreService.instance.debugGetUserError = null);
   tearDown(() => PetService.instance.debugDb = null);
-  tearDown(() => ConnectivityService.instance.reset());
+  tearDown(ConnectivityService.instance.reset);
   //179
   testWidgets('conta Google: secao de seguranca fica invisivel (sem senha)', (
     tester,

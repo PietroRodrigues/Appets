@@ -9,7 +9,7 @@ import 'package:appets/models/model_pet.dart';
 /// [specifications], devem estar em PT normalizado. O `searchTokens`
 /// guarda os termos pesquisáveis (palavra inteira e prefixos) usados pela
 /// busca da Home. A migração usa exatamente esta lista.
-Map<String, dynamic> petTokenFields(Pet pet) => {
+Map<String, Object> petTokenFields(Pet pet) => {
       'species': speciesStorageToken(pet.species),
       'gender': genderStorageToken(pet.gender),
       'ageUnit': ageUnitStorageToken(pet.ageUnit),

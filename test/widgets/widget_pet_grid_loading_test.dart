@@ -11,7 +11,7 @@ import 'package:appets/widgets/feed/widget_responsive_pet_grid.dart';
 void main() {
   final service = PetService.instance;
   final connectivity = ConnectivityService.instance;
-  final now = DateTime(2024, 1, 1);
+  final now = DateTime(2024);
   late FakeFirebaseFirestore db;
 
   setUp(() {
@@ -44,7 +44,7 @@ void main() {
       'race': '',
       'searchTokens': const ['token'],
       'specifications': const ['cachorro', 'macho', 'adocao', 'jovem'],
-      'images': const [],
+      'images': const <String>[],
       'createdAt': createdAt,
     };
   }

@@ -5,9 +5,9 @@ import 'package:appets/core/services/connectivity_service.dart';
 void main() {
   final service = ConnectivityService.instance;
 
-  setUp(() => service.reset());
+  setUp(service.reset);
 
-  tearDown(() => service.reset());
+  tearDown(service.reset);
 
   //283
   test('antes do init assume online por padrão', () {

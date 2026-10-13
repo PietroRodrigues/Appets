@@ -57,9 +57,9 @@ void main() {
       'species': 'cachorro',
       'race': '',
       'searchTokens': searchTokens,
-      'specifications': const [],
-      'images': const [],
-      'createdAt': createdAt ?? DateTime(2024, 1, 1),
+      'specifications': const <String>[],
+      'images': const <String>[],
+      'createdAt': createdAt ?? DateTime(2024),
     };
   }
 
@@ -299,7 +299,7 @@ void main() {
             'pet_$i',
             ownerId: 'dono_a',
             searchTokens: ['golden'],
-            createdAt: DateTime(2024, 1, 1).add(Duration(minutes: i)),
+            createdAt: DateTime(2024).add(Duration(minutes: i)),
           ),
         );
       }
@@ -380,7 +380,7 @@ void main() {
           petDoc(
             'pet_$i',
             ownerId: 'dono_a',
-            createdAt: DateTime(2024, 1, 1).add(Duration(minutes: i)),
+            createdAt: DateTime(2024).add(Duration(minutes: i)),
           ),
         );
       }
@@ -406,7 +406,7 @@ void main() {
           petDoc(
             'pet_$i',
             ownerId: 'dono_a',
-            createdAt: DateTime(2024, 1, 1).add(Duration(minutes: i)),
+            createdAt: DateTime(2024).add(Duration(minutes: i)),
           ),
         );
       }

@@ -62,7 +62,7 @@ class PetService {
         .collection('pets')
         .where('ownerId', isEqualTo: ownerId)
         .get();
-    return snapshot.docs.map((doc) => Pet.fromFirestore(doc)).toList();
+    return snapshot.docs.map(Pet.fromFirestore).toList();
   }
 
   // Retorna os documentos crus dos pets publicados por um dono (UID).
@@ -163,7 +163,7 @@ class PetService {
 
     final results = <Pet>[
       for (final snapshot in snapshots)
-        ...snapshot.docs.map((doc) => Pet.fromFirestore(doc)),
+        ...snapshot.docs.map(Pet.fromFirestore),
     ];
 
     final byId = {for (final pet in results) pet.id: pet};
@@ -185,7 +185,7 @@ class PetService {
         .orderBy('createdAt', descending: true)
         .limit(pageSize + 1)
         .snapshots()
-        .map((snapshot) => _toPage(snapshot));
+        .map(_toPage);
   }
 
   // ── Primeira página do feed lida do cache local ──────────────────
@@ -215,7 +215,7 @@ class PetService {
         .orderBy('createdAt', descending: true)
         .limit(pageSize + 1)
         .snapshots()
-        .map((snapshot) => _toPage(snapshot));
+        .map(_toPage);
   }
 
   // ── Primeira página do feed filtrado lida do cache local ────────
@@ -307,7 +307,7 @@ class PetService {
     final hasMore = snapshot.docs.length > pageSize;
     final docs = hasMore ? snapshot.docs.take(pageSize) : snapshot.docs;
     return PetsPage(
-      pets: docs.map((doc) => Pet.fromFirestore(doc)).toList(),
+      pets: docs.map(Pet.fromFirestore).toList(),
       lastDoc: hasMore ? snapshot.docs[pageSize - 1] : null,
       hasMore: hasMore,
     );

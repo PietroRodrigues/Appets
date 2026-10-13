@@ -615,7 +615,6 @@ class _AccountDataScreenState extends State<AccountDataScreen>
               Expanded(
                 child: WGErrorState(
                   title: SharedStrings.LOAD_DATA_ERROR_TITLE,
-                  description: SharedStrings.LOAD_DATA_ERROR_DESCRIPTION,
                   onAction: _retryLoad,
                 ),
               ),

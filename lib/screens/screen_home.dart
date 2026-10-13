@@ -93,7 +93,6 @@ class _HomeScreenState extends State<HomeScreen> {
       isLoading: _isLoading,
       loadError: _loadError,
       errorTitle: SharedStrings.LOAD_DATA_ERROR_TITLE,
-      errorDescription: SharedStrings.LOAD_DATA_ERROR_DESCRIPTION,
       onRetry: _retryLoad,
       onRefresh: () async {
         await _loadData(force: true);
@@ -110,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
+              MaterialPageRoute<void>(
                 builder: (_) => PetDetailsScreen(pet: pet),
               ),
             );

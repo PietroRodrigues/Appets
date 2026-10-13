@@ -65,9 +65,7 @@ class _PendingHostState extends State<_PendingHost>
 }
 
 void main() {
-  tearDown(() {
-    ConnectivityService.instance.reset();
-  });
+  tearDown(ConnectivityService.instance.reset);
   // Empurra a tela de processo e captura o WGProcessResult devolvido.
   Future<void> pushLoading(
     WidgetTester tester,

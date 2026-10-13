@@ -14,13 +14,9 @@ void main() {
   // no fake via `debugDb` não é reconhecida).
   FakeFirebaseFirestore();
 
-  setUp(() {
-    service.reset();
-  });
+  setUp(service.reset);
 
-  tearDown(() {
-    service.reset();
-  });
+  tearDown(service.reset);
 
   group('FavoritesService', () {
     //287

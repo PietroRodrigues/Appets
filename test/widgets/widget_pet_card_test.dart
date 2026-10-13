@@ -74,7 +74,7 @@ void main() {
 
     //476
     testWidgets('exibe a idade', (tester) async {
-      final pet = _createTestPet(age: 3);
+      final pet = _createTestPet();
 
       await tester.pumpWidget(
         MaterialApp(
@@ -88,7 +88,7 @@ void main() {
     //477
     testWidgets('exibe tipo de publicação "Adoção"', (tester) async {
       final pet = _createTestPet(
-        publicationType: AppPetPublicationType.adoption,
+        
       );
 
       await tester.pumpWidget(
@@ -155,7 +155,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(body: WGPetCard(pet: pet, isMyPublication: false)),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 
@@ -185,7 +185,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(body: WGPetCard(pet: pet, isMyPublication: false)),
+          home: Scaffold(body: WGPetCard(pet: pet)),
         ),
       );
 

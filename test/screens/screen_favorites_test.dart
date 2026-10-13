@@ -68,7 +68,7 @@ void main() {
       'searchTokens': const ['token'],
       'specifications': const ['cachorro', 'macho', 'adocao', 'jovem'],
       'images': const <String>[],
-      'createdAt': DateTime(2024, 1, 1),
+      'createdAt': DateTime(2024),
     };
   }
 

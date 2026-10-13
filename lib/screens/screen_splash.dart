@@ -38,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (mounted && _error) setState(() => _error = false);
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(seconds: 1));
 
       final authService = AuthService.instance;
       // Aguarda o primeiro evento do stream para capturar a sessão

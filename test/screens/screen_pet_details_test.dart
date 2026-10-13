@@ -18,11 +18,9 @@ Pet _createTestPet() {
     ownerId: 'user_test_001',
     name: 'Rex',
     age: 2,
-    ageUnit: AppPetAgeUnit.years,
     gender: AppPetGender.male,
     address: 'São Paulo',
     description: 'Pet de teste.',
-    publicationType: AppPetPublicationType.adoption,
     images: const [],
   );
 }

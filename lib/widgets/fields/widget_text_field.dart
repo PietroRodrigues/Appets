@@ -55,7 +55,7 @@ class WGTextField extends StatelessWidget {
 
   final List<TextInputFormatter> inputFormatters;
 
-  final dynamic maxLines;
+  final int? maxLines;
 
   @override
   Widget build(BuildContext context) {

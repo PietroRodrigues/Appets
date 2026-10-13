@@ -104,14 +104,12 @@ void main() {
       ownerId: 'user_test_001',
       name: 'Rex',
       age: 2,
-      ageUnit: AppPetAgeUnit.years,
       gender: AppPetGender.male,
       address: 'São Paulo',
       ownerPhone: '(11) 98765-4321',
       ownerAddress: 'São Paulo',
       description: 'Muito dócil.',
       publicationType: AppPetPublicationType.lost,
-      species: AppPetSpecies.dog,
       race: 'Poodle',
       images: images,
     );
@@ -134,7 +132,7 @@ void main() {
         .collection('pets')
         .doc(pet.id)
         .set(Map<String, dynamic>.of(pet.toMap())
-          ..['createdAt'] = DateTime(2024, 1, 1));
+          ..['createdAt'] = DateTime(2024));
 
     await MyPublicationsService.instance.applyUser(user);
   }

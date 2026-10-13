@@ -42,7 +42,7 @@ Future<void> _pumpForgot(WidgetTester tester) async {
     ),
   );
   navKey.currentState!.push(
-    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+    MaterialPageRoute<void>(builder: (_) => const ForgotPasswordScreen()),
   );
   await tester.pumpAndSettle();
 }

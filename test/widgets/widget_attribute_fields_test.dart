@@ -12,7 +12,7 @@ void main() {
     //391
     testWidgets('mostra a idade e a unidade iniciais', (tester) async {
       await tester.pumpWidget(
-        wrap(const WGAgeFields(initialValue: 2, initialUnit: AppPetAgeUnit.years)),
+        wrap(const WGAgeFields(initialValue: 2)),
       );
 
       expect(find.text('2'), findsOneWidget);
@@ -53,7 +53,6 @@ void main() {
         wrap(
           WGAgeFields(
             initialValue: 50,
-            initialUnit: AppPetAgeUnit.years,
             onChanged: (v, u) {
               value = v;
               unit = u;

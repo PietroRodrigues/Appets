@@ -15,7 +15,7 @@ void main() {
     // Evita tocar plugin de conectividade e Firebase de verdade: a splash
     // resolve como visitante (sem usuário) e segue para o login.
     ConnectivityService.instance.debugOnline = true;
-    AuthService.instance.debugAuth = MockFirebaseAuth(signedIn: false);
+    AuthService.instance.debugAuth = MockFirebaseAuth();
   });
 
   tearDown(() {

@@ -133,7 +133,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: _loadError
               ? WGErrorState(
                   title: SharedStrings.LOAD_DATA_ERROR_TITLE,
-                  description: SharedStrings.LOAD_DATA_ERROR_DESCRIPTION,
                   onAction: _retryLoad,
                 )
               : SingleChildScrollView(
@@ -148,9 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             radius: 45,
                             imageUrl: _user?.photoUrl,
                             borderColor: context.appColors.primary,
-                            borderWidth: 3,
                             shadowColor: context.appColors.shadowButton,
-                            shadowBlurRadius: 8,
                           ),
 
                           // BOTÃO FLUTUANTE PARA ALTERAR O AVATAR

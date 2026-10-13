@@ -655,7 +655,6 @@ class _WGPublishPetFormState extends State<WGPublishPetForm>
                 initialImageUrls: (widget.pet?.images ?? const [])
                     .take(_maximumImageCount)
                     .toList(),
-                maxImages: _maximumImageCount,
                 onChanged: _onImageSlotsChanged,
               ),
 

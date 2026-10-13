@@ -142,7 +142,7 @@ class _MyPublicationsScreenState extends State<MyPublicationsScreen>
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
+              MaterialPageRoute<void>(
                 builder: (_) => PetDetailsScreen(pet: pet),
               ),
             );

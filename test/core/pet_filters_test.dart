@@ -66,7 +66,6 @@ void main() {
           gender: AppPetGender.female,
           publicationType: AppPetPublicationType.lost,
           age: 6,
-          ageUnit: AppPetAgeUnit.years,
         ),
         ['cachorro', 'femea', 'perdido', 'adulto'],
       );
@@ -98,7 +97,7 @@ void main() {
         opt(PetFilterCategory.species, 'cachorro'),
         opt(PetFilterCategory.species, 'gato'),
       ];
-      expect(petMatchesFilters(makePet(species: AppPetSpecies.dog), dogOrCat), isTrue);
+      expect(petMatchesFilters(makePet(), dogOrCat), isTrue);
       expect(petMatchesFilters(makePet(species: AppPetSpecies.cat), dogOrCat), isTrue);
       expect(
         petMatchesFilters(makePet(species: AppPetSpecies.bird), dogOrCat),
@@ -116,7 +115,7 @@ void main() {
       ];
       expect(
         petMatchesFilters(
-          makePet(species: AppPetSpecies.dog, gender: AppPetGender.male),
+          makePet(),
           filters,
         ),
         isFalse,
@@ -142,7 +141,7 @@ void main() {
       );
       expect(
         petMatchesFilters(
-          makePet(type: AppPetPublicationType.adoption),
+          makePet(),
           lost,
         ),
         isFalse,
@@ -153,11 +152,11 @@ void main() {
     test('idade compara a faixa derivada, não a idade bruta', () {
       final adult = [opt(PetFilterCategory.age, 'adulto')];
       expect(
-        petMatchesFilters(makePet(age: 6, ageUnit: AppPetAgeUnit.years), adult),
+        petMatchesFilters(makePet(age: 6), adult),
         isTrue,
       );
       expect(
-        petMatchesFilters(makePet(age: 3, ageUnit: AppPetAgeUnit.years), adult),
+        petMatchesFilters(makePet(), adult),
         isFalse,
       );
     });
@@ -170,7 +169,7 @@ void main() {
       ];
       expect(
         petMatchesFilters(
-          makePet(gender: AppPetGender.male, species: AppPetSpecies.dog),
+          makePet(),
           filters,
         ),
         isTrue,
@@ -179,8 +178,6 @@ void main() {
       expect(
         petMatchesFilters(
           makePet(
-            gender: AppPetGender.male,
-            species: AppPetSpecies.dog,
             age: 8,
             type: AppPetPublicationType.lost,
           ),
@@ -215,7 +212,7 @@ void main() {
 
     //52
     test('sem descrição busca apenas pelo nome', () {
-      final pet = makePet(name: 'Rex');
+      final pet = makePet();
       expect(petMatchesSearch(pet, 'rex'), isTrue);
       expect(petMatchesSearch(pet, 'rex gato'), isFalse);
     });
@@ -223,9 +220,9 @@ void main() {
 
   group('applyLocalFilters', () {
     final pets = [
-      makePet(name: 'Poodle', species: AppPetSpecies.dog, gender: AppPetGender.female),
-      makePet(name: 'Gato', species: AppPetSpecies.cat, gender: AppPetGender.male),
-      makePet(name: 'Poodle Preto', species: AppPetSpecies.dog, gender: AppPetGender.male),
+      makePet(name: 'Poodle', gender: AppPetGender.female),
+      makePet(name: 'Gato', species: AppPetSpecies.cat),
+      makePet(name: 'Poodle Preto'),
     ];
 
     //53

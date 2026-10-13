@@ -8,9 +8,9 @@ void main() {
   final connectivity = ConnectivityService.instance;
   final stripKey = const ValueKey<String>('connectivity_strip');
 
-  setUp(() => connectivity.reset());
+  setUp(connectivity.reset);
 
-  tearDown(() => connectivity.reset());
+  tearDown(connectivity.reset);
 
   Future<void> pumpBanner(WidgetTester tester) async {
     await tester.pumpWidget(

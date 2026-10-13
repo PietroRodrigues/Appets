@@ -15,13 +15,9 @@ void main() {
   // fábrica de FieldValue na primeira chamada; precisa ser a do fake).
   FakeFirebaseFirestore();
 
-  setUp(() {
-    service.reset();
-  });
+  setUp(service.reset);
 
-  tearDown(() {
-    service.reset();
-  });
+  tearDown(service.reset);
 
   group('MyPublicationsService', () {
     //332

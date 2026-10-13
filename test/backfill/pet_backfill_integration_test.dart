@@ -55,7 +55,7 @@ void main() {
     final docs = await service.getOwnerPetDocuments('uid_test');
     expect(docs.map((d) => d.id).toSet(), {'p1', 'p2'});
 
-    final pets = docs.map((doc) => Pet.fromFirestore(doc)).toList();
+    final pets = docs.map(Pet.fromFirestore).toList();
     final stored = <String, Map<String, dynamic>>{
       for (final doc in docs)
         if (doc.data() is Map<String, dynamic>)
@@ -89,7 +89,7 @@ void main() {
     await seedOwnerPets();
 
     final docs = await service.getOwnerPetDocuments('uid_test');
-    final pets = docs.map((doc) => Pet.fromFirestore(doc)).toList();
+    final pets = docs.map(Pet.fromFirestore).toList();
     final stored = <String, Map<String, dynamic>>{
       for (final doc in docs)
         if (doc.data() is Map<String, dynamic>)
@@ -102,7 +102,7 @@ void main() {
     final first = await runner.run(pets, stored);
 
     final docsAfter = await service.getOwnerPetDocuments('uid_test');
-    final petsAfter = docsAfter.map((doc) => Pet.fromFirestore(doc)).toList();
+    final petsAfter = docsAfter.map(Pet.fromFirestore).toList();
     final storedAfter = <String, Map<String, dynamic>>{
       for (final doc in docsAfter)
         if (doc.data() is Map<String, dynamic>)

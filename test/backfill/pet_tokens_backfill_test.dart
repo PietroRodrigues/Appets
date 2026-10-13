@@ -16,8 +16,6 @@ Pet _pet(String id, {AppPetSpecies species = AppPetSpecies.dog}) {
     gender: AppPetGender.male,
     address: 'Endereço',
     images: const <String>[],
-    ageUnit: AppPetAgeUnit.years,
-    publicationType: AppPetPublicationType.adoption,
     species: species,
   );
 }
@@ -39,7 +37,7 @@ void main() {
   // Campos de token já migrados (PT) de um documento que TAMBÉM tem a
   // data de criação — caso típico de pets criados pelo app.
   Map<String, dynamic> migratedFields(Pet pet) =>
-      petTokenFields(pet)..['createdAt'] = DateTime(2024, 1, 1);
+      petTokenFields(pet)..['createdAt'] = DateTime(2024);
 
   group('petTokenFields', () {
     //5
@@ -68,7 +66,7 @@ void main() {
           'ageUnit': 'years',
           'publicationType': 'adoption',
           'specifications': ['dog', 'male', 'adoption', 'young'],
-          'createdAt': DateTime(2024, 1, 1),
+          'createdAt': DateTime(2024),
         },
       };
 
@@ -107,7 +105,7 @@ void main() {
           'publicationType': 'adocao',
           'specifications': ['dog', 'male', 'adoption', 'young'],
           'searchTokens': ['rex'],
-          'createdAt': DateTime(2024, 1, 1),
+          'createdAt': DateTime(2024),
         },
       };
 
@@ -190,7 +188,7 @@ void main() {
             'gender': 'male',
             'ageUnit': 'years',
             'publicationType': 'adoption',
-            'createdAt': DateTime(2024, 1, 1),
+            'createdAt': DateTime(2024),
           },
         },
       );

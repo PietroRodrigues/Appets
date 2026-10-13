@@ -37,7 +37,6 @@ void main() {
             ? MediaQuery(
                 data: const MediaQueryData(
                   size: Size(800, 600),
-                  devicePixelRatio: 1.0,
                   disableAnimations: true,
                 ),
                 child: wrap(button),

@@ -140,7 +140,6 @@ class _WGEditableTileState extends State<WGEditableTile> {
             vertical: widget.primary ? 18 : 12,
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // ÍCONE
               Container(

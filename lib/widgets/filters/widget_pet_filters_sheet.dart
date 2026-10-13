@@ -187,13 +187,9 @@ class WGPetFiltersDialog extends StatefulWidget {
 
     return showGeneralDialog<List<PetFilterOption>>(
       context: context,
-      // Fechar é feito pelo próprio popover (tocar fora/voltar), aplicando
-      // a seleção atual.
-      barrierDismissible: false,
       barrierLabel:
           MaterialLocalizations.of(context).modalBarrierDismissLabel,
       barrierColor: context.appColors.scrimDark,
-      transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (_, _, _) =>
           WGPetFiltersDialog(initialOptions: initialOptions, anchorRect: anchorRect),
       transitionBuilder: (_, animation, _, child) {
@@ -400,7 +396,6 @@ class _WGPetFiltersDialogState extends State<WGPetFiltersDialog>
                     borderRadius: BorderRadius.circular(18),
                     clipBehavior: Clip.antiAlias,
                   child: Column(
-                    mainAxisSize: MainAxisSize.max,
                     children: [
                       // ── "Limpar tudo" (à esquerda) + Fechar X (à direita) ────
                       Material(
