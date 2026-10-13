@@ -122,7 +122,9 @@ lib/
 - **Cache de leitura em duas camadas** — `AppImageCache` (via
   flutter_cache_manager, 300 objetos com validade de 30 dias) no disco +
   `CachedNetworkImage` com `memCacheWidth` por superfície (cards 480 ·
-  galeria 1080), evitando re-download e reduzindo a RAM das miniaturas.
+  galeria 1080), evitando re-download e reduzindo a RAM das miniaturas. O
+  cache em disco é esvaziado ao encerrar a sessão (logout, exclusão de conta
+  ou sessão revogada), para não vazar fotos num aparelho compartilhado.
 - **UI responsiva** — grid que alterna 1/2/3 colunas conforme a largura,
   tipografia Poppins e widgets reutilizáveis por tema.
 

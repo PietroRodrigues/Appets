@@ -1,11 +1,25 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_publish.dart';
 import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/image_compressor.dart';
+
+/// Cache de imagens falso que só registra as chamadas de limpeza.
+class _RecordingImageCache implements BaseCacheManager {
+  int emptyCacheCalls = 0;
+
+  @override
+  Future<void> emptyCache() async {
+    emptyCacheCalls++;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
 
 void main() {
   group('compressForUpload', () {
@@ -225,6 +239,17 @@ void main() {
       expect(AppImageCache.maxNrOfCacheObjects, 300);
       expect(AppImageCache.stalePeriod, const Duration(days: 30));
       expect(AppImageCache.cacheKey, 'petImageCache');
+    });
+
+    //598
+    test('clear esvazia o cache em disco', () async {
+      final manager = _RecordingImageCache();
+      AppImageCache.instance.debugManager = manager;
+      addTearDown(() => AppImageCache.instance.debugManager = null);
+
+      await AppImageCache.instance.clear();
+
+      expect(manager.emptyCacheCalls, 1);
     });
   });
 }

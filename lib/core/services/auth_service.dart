@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/models/user_model.dart';
 
@@ -169,6 +170,7 @@ class AuthService {
   /// Exclui a conta do usuário logado no Firebase Auth.
   Future<void> deleteAccount() async {
     await _auth.currentUser?.delete();
+    await _clearSessionCaches();
   }
 
   /// Revalida a sessão restaurada no cold start com o Identity Platform,
@@ -193,13 +195,23 @@ class AuthService {
       return true;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'network-request-failed') return true;
-      await _auth.signOut();
+      await _signOutAndClear();
       return false;
     } catch (_) {
-      await _auth.signOut();
+      await _signOutAndClear();
       return false;
     }
   }
+
+  // Encerra a sessão no Auth e limpa os caches locais.
+  Future<void> _signOutAndClear() async {
+    await _auth.signOut();
+    await _clearSessionCaches();
+  }
+
+  // Remove o cache em disco das fotos: sem isso, as imagens vistas na
+  // sessão continuariam no aparelho (vazamento em aparelho compartilhado).
+  Future<void> _clearSessionCaches() => AppImageCache.instance.clear();
 
   // Desconecta o usuário do Google e do Firebase Auth.
   //
@@ -209,7 +221,7 @@ class AuthService {
     try {
       await _google.signOut();
     } finally {
-      await _auth.signOut();
+      await _signOutAndClear();
     }
   }
 }

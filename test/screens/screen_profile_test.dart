@@ -1,10 +1,12 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/screens/screen_profile.dart';
@@ -16,6 +18,15 @@ class _ThrowingGoogleSignIn extends GoogleSignIn {
       throw StateError('google fora');
 }
 
+/// Cache de imagens falso: não toca disco/plugin nos testes.
+class _FakeImageCache implements BaseCacheManager {
+  @override
+  Future<void> emptyCache() async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
 void main() {
   late FakeFirebaseFirestore db;
 
@@ -23,11 +34,13 @@ void main() {
     db = FakeFirebaseFirestore();
     FirestoreService.instance.debugDb = db;
     FirestoreService.instance.debugGetUserError = null;
+    AppImageCache.instance.debugManager = _FakeImageCache();
   });
 
   tearDown(() {
     FirestoreService.instance.debugDb = null;
     FirestoreService.instance.debugGetUserError = null;
+    AppImageCache.instance.debugManager = null;
   });
 
   Future<void> pumpProfile(WidgetTester tester) async {

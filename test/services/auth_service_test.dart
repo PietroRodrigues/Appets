@@ -1,11 +1,13 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:firebase_auth_mocks/src/mock_user_credential.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 
+import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/models/user_model.dart';
@@ -140,18 +142,39 @@ class _OfflineUser extends MockUser {
   }
 }
 
+/// Cache de imagens falso que só registra as chamadas de limpeza.
+class _RecordingImageCache implements BaseCacheManager {
+  int emptyCacheCalls = 0;
+
+  @override
+  Future<void> emptyCache() async {
+    emptyCacheCalls++;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
 void main() {
   late MockFirebaseAuth auth;
   late FakeFirebaseFirestore db;
+  late _RecordingImageCache imageCache;
   final service = AuthService.instance;
 
   setUp(() {
     auth = MockFirebaseAuth();
     db = FakeFirebaseFirestore();
+    imageCache = _RecordingImageCache();
     service.debugAuth = auth;
     service.debugGoogle = _FakeGoogleSignIn();
     service.debugAuthStateError = null;
     FirestoreService.instance.debugDb = db;
+    // Evita que a limpeza do cache de imagens toque o disco nos testes.
+    AppImageCache.instance.debugManager = imageCache;
+  });
+
+  tearDown(() {
+    AppImageCache.instance.debugManager = null;
   });
 
   group('AuthService · estado deslogado', () {
@@ -396,11 +419,25 @@ void main() {
       await service.deleteAccount();
     });
 
+    //599
+    test('deleteAccount limpa o cache de imagens', () async {
+      await service.deleteAccount();
+
+      expect(imageCache.emptyCacheCalls, 1);
+    });
+
     //273
     test('logout desconecta o Firebase Auth', () async {
       await service.logout();
 
       expect(service.currentUser, isNull);
+    });
+
+    //600
+    test('logout limpa o cache de imagens', () async {
+      await service.logout();
+
+      expect(imageCache.emptyCacheCalls, 1);
     });
 
     //274
@@ -466,6 +503,17 @@ void main() {
 
       expect(await service.validateSession(), isFalse);
       expect(service.currentUser, isNull);
+    });
+
+    //601
+    test('sessão revogada limpa o cache de imagens', () async {
+      service.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: _RevokedUser(uid: 'uid_1', email: 'b@test.com'),
+      );
+
+      expect(await service.validateSession(), isFalse);
+      expect(imageCache.emptyCacheCalls, 1);
     });
 
     //280

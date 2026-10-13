@@ -34,6 +34,17 @@ class AppImageCache {
     );
   }
 
+  /// Remove todas as imagens do cache em disco.
+  ///
+  /// Melhor esforço: uma falha na limpeza nunca deve impedir o logout.
+  Future<void> clear() async {
+    try {
+      await manager.emptyCache();
+    } catch (_) {
+      // Ignorado de propósito.
+    }
+  }
+
   /// Permite injetar um cache de teste (ex.: para evitar rede).
   @visibleForTesting
   set debugManager(BaseCacheManager? manager) => _manager = manager;
