@@ -6,16 +6,21 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 /// Comprime uma imagem local antes do upload.
 ///
-/// Estratégia "uma qualidade por vez": tenta webp em 1280px pelas
-/// qualidades [qualityCandidates] em ordem decrescente e PARA assim que uma
-/// couber no teto [targetMaxBytes] e for menor que o original. Qualidade que
-/// falha (null/vazia) é ignorada e a próxima é tentada; se nenhuma couber,
-/// fica com a menor qualidade que ainda reduza o arquivo (melhor esforço).
-/// Se nada compensar (imagem pequena) devolve `null` — o chamador mantém o
-/// original — e apaga qualquer temporário `.webp` deixado por uma tentativa
-/// anterior do mesmo arquivo.
+/// Estratégia "uma qualidade por vez": tenta webp na dimensão informada
+/// pelas qualidades [qualityCandidates] em ordem decrescente e PARA assim
+/// que uma couber no teto [targetMaxBytes] e for menor que o original.
+/// Qualidade que falha (null/vazia) é ignorada e a próxima é tentada; se
+/// nenhuma couber, fica com a menor qualidade que ainda reduza o arquivo
+/// (melhor esforço). Se nada compensar (imagem pequena) devolve `null` — o
+/// chamador mantém o original — e apaga qualquer temporário `.webp` deixado
+/// por uma tentativa anterior do mesmo arquivo.
+///
+/// Dois perfis prontos: [compressForUpload] (fotos de pets, 1280px/350 KB)
+/// e [compressAvatar] (foto de perfil, 256px/40 KB).
 class ImageCompressor {
   ImageCompressor._();
+
+  // ── Fotos de pets (padrão) ─────────────────────────────
 
   /// Teto máximo do arquivo comprimido (~350 KB).
   static const int targetMaxBytes = 350 * 1024;
@@ -26,12 +31,49 @@ class ImageCompressor {
   /// Qualidades tentadas em ordem decrescente.
   static const List<int> qualityCandidates = [85, 70, 60];
 
+  // ── Foto de perfil (avatar) ────────────────────────────
+
+  /// Teto máximo do avatar (~40 KB): é uma imagem minúscula na tela.
+  static const int avatarMaxBytes = 40 * 1024;
+
+  /// Dimensão máxima do avatar (256px cobre o avatar de 90px em telas 3x).
+  static const int avatarMaxDimension = 256;
+
+  /// Qualidades tentadas em ordem decrescente para o avatar.
+  static const List<int> avatarQualityCandidates = [70, 55, 40];
+
   /// Comprimidor injetável em testes (no lugar do plugin).
   @visibleForTesting
   static Future<Uint8List?> Function(String sourcePath, int quality)?
   debugCompress;
 
-  static Future<File?> compressForUpload(String sourcePath) async {
+  /// Dimensão usada na última compressão (testes provam o perfil aplicado).
+  @visibleForTesting
+  static int? debugLastMaxDimension;
+
+  /// Comprime uma foto de pet com o perfil padrão (1280px / 350 KB).
+  static Future<File?> compressForUpload(String sourcePath) => _run(
+    sourcePath,
+    targetMaxBytes: targetMaxBytes,
+    maxDimension: maxDimension,
+    qualityCandidates: qualityCandidates,
+  );
+
+  /// Comprime uma foto de perfil com o perfil leve (256px / 40 KB).
+  static Future<File?> compressAvatar(String sourcePath) => _run(
+    sourcePath,
+    targetMaxBytes: avatarMaxBytes,
+    maxDimension: avatarMaxDimension,
+    qualityCandidates: avatarQualityCandidates,
+  );
+
+  // Núcleo da compressão, parametrizado por perfil.
+  static Future<File?> _run(
+    String sourcePath, {
+    required int targetMaxBytes,
+    required int maxDimension,
+    required List<int> qualityCandidates,
+  }) async {
     final original = File(sourcePath);
     if (!await original.exists()) return null;
     final originalBytes = await original.length();
@@ -39,7 +81,7 @@ class ImageCompressor {
 
     Uint8List? chosenBytes;
     for (final quality in qualityCandidates) {
-      final bytes = await _compress(sourcePath, quality);
+      final bytes = await _compress(sourcePath, quality, maxDimension);
       // Qualidade que falhou (null/vazia) não participa da escolha.
       if (bytes == null || bytes.isEmpty) continue;
       // Como já tem bytes, só faz sentido se realmente reduzir o arquivo.
@@ -70,7 +112,7 @@ class ImageCompressor {
     }
   }
 
-  /// Apaga os arquivos temporários `.webp` gerados por [compressForUpload].
+  /// Apaga os arquivos temporários `.webp` gerados pelo compressor.
   ///
   /// Best-effort e conservador: mexe apenas em paths que terminam em
   /// `.webp`, nunca no arquivo original; erros são ignorados. Use depois
@@ -97,7 +139,12 @@ class ImageCompressor {
   }
 
   // Comprime o arquivo em webp e devolve os bytes (ou null se falhar).
-  static Future<Uint8List?> _compress(String sourcePath, int quality) async {
+  static Future<Uint8List?> _compress(
+    String sourcePath,
+    int quality,
+    int maxDimension,
+  ) async {
+    debugLastMaxDimension = maxDimension;
     final fake = debugCompress;
     if (fake != null) return fake(sourcePath, quality);
 

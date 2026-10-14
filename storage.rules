@@ -26,5 +26,23 @@ service firebase.storage {
       // DELETE: só o dono (sem validar request.resource, que é null).
       allow delete: if isOwner(ownerId);
     }
+
+    // Avatares dos usuários: avatars/{uid}/avatar.webp.
+    // O uid no caminho permite exigir que cada um só altere o seu.
+    match /avatars/{uid}/{fileName} {
+      // LEITURA: qualquer usuário logado vê o avatar de qualquer um
+      // (mesmo comportamento das fotos dos pets: read se logado).
+      allow read: if isSignedIn();
+
+      // ESCRITA (upload): só o DONO do avatar, e só imagens de até 1 MB.
+      // O teto é folgado porque a imagem chega comprimida (~40 KB); serve
+      // de rede de segurança caso a compressão falhe.
+      allow write: if isOwner(uid)
+        && request.resource.size <= 1 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+
+      // DELETE: só o dono (sem validar request.resource, que é null).
+      allow delete: if isOwner(uid);
+    }
   }
 }

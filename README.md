@@ -47,6 +47,7 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | 📤 **Compartilhar** | Botão em Detalhes abre o share sheet com um anúncio do pet; o texto varia conforme o tipo (adoção → novo lar; perdido → dono procurando) |
 | 📄 **Minhas publicações** | Aba dedicada com FAB de publicar, busca local e sincronização reativa (backfill automático) |
 | 👤 **Perfil / Conta** | Edição inline de nome, telefone e endereço; exclusão de conta com confirmação em duas etapas e sem deixar pets órfãos |
+| 📷 **Foto de perfil (avatar)** | Troca/remoção da foto pela galeria (webp ~40 KB, 256px) numa tela de loading que bloqueia a interface; regras próprias no Storage; contas Google veem aviso de que a foto é do provedor |
 
 ---
 
@@ -67,7 +68,7 @@ integração com o ecossistema Firebase e UI responsiva em Flutter.
 | google_fonts | ^8.1.0 | Fonte Poppins (empacotada, sem fetch em runtime) |
 | share_plus | ^13.3.0 | Compartilhamento de pets (share sheet) |
 | flutter_lints | ^6.0.0 | Qualidade de código |
-| flutter_test | SDK | 572 testes automatizados |
+| flutter_test | SDK | 621 testes automatizados |
 
 Versão atual do app: **1.0.0+1** · Orientação fixa **retrato**.
 
@@ -145,7 +146,7 @@ flutter run
 ### Testes
 
 ```bash
-flutter test        # 572 testes
+flutter test        # 621 testes
 flutter analyze     # sem issues
 ```
 
@@ -165,9 +166,14 @@ etapas; contas Google veem o botão bloqueado) e o **cadastro de conta** é
 robusto (validação por campo, mensagens específicas por erro, Firestore
 primeiro com o nome do Auth como best-effort e remoção de conta fantasma
 quando a persistência falha). Já é possível **trocar o e-mail**
-(reauth por senha; contas Google veem o campo bloqueado). Faltam: troca de
-avatar, GPS e permissão de câmera.
-Suíte com 572 testes (serviços de backend
+(reauth por senha; contas Google veem o campo bloqueado) e **trocar/remover a
+foto de perfil (avatar)** pela galeria (webp 256px/~40 KB, regras próprias em
+`avatars/{uid}` — deploy via `firebase deploy --only storage`; contas Google
+ficam bloqueadas). A troca/remoção roda numa **tela de loading full-screen**
+(`pushProcess`) que bloqueia toda a interface — inclusive as abas — enquanto
+comprime, envia e grava, com mensagens de erro contextualizadas (permissão,
+rede ou genérica). Faltam: GPS e permissão de câmera.
+Suíte com 621 testes (serviços de backend
 cobertos com fakes em memória via `@visibleForTesting`). O plano detalhado
 está em [`BACKLOG.txt`](./BACKLOG.txt).
 

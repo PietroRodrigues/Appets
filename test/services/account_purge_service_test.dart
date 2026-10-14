@@ -1,6 +1,7 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,6 +12,7 @@ import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
 import 'package:appets/core/services/pet_service.dart';
+import 'package:appets/core/services/storage_service.dart';
 import 'package:appets/widgets/feedback/widget_process.dart';
 
 // Os mocks do firebase_auth_mocks já declaram campos não-finais.
@@ -69,16 +71,51 @@ class _FakeImageCache implements BaseCacheManager {
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
+/// Storage fake: registra as exclusões por URL (avatar e fotos dos pets).
+class _FakeStorage implements FirebaseStorage {
+  /// Quando definido, todo delete lança este erro (prova o best-effort).
+  Object? deleteError;
+
+  final List<String> deletedUrls = [];
+
+  @override
+  Reference refFromURL(String url) => _FakeReference(this, url);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+class _FakeReference implements Reference {
+  _FakeReference(this.storage, this.url);
+
+  @override
+  final _FakeStorage storage;
+  final String url;
+
+  @override
+  Future<void> delete() async {
+    final error = storage.deleteError;
+    if (error != null) throw error;
+    storage.deletedUrls.add(url);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
 void main() {
   late FakeFirebaseFirestore db;
+  late _FakeStorage storage;
   final service = AccountPurgeService.instance;
   final favorites = FavoritesService.instance;
   final myPublications = MyPublicationsService.instance;
 
   setUp(() {
     db = FakeFirebaseFirestore();
+    storage = _FakeStorage();
     FirestoreService.instance.debugDb = db;
     PetService.instance.debugDb = db;
+    StorageService.instance.debugStorage = storage;
     favorites.reset();
     myPublications.reset();
     AppImageCache.instance.debugManager = _FakeImageCache();
@@ -86,6 +123,7 @@ void main() {
 
   tearDown(() {
     AppImageCache.instance.debugManager = null;
+    StorageService.instance.debugStorage = null;
   });
 
   Future<_TrackingUser> seedUser({UserMetadata? metadata}) async {
@@ -264,6 +302,58 @@ void main() {
       expect(result.status, WGProcessStatus.success);
       expect(user.deleteCalls, 2);
       expect(reauthCalled, 1);
+    });
+
+    //617
+    test('exclui o avatar do Storage junto com os dados da conta', () async {
+      final user = await seedUser(metadata: _RecentUserMetadata());
+      await db.collection('users').doc('uid_test').update({
+        'photoUrl': 'https://cdn.example.com/avatar.webp',
+      });
+
+      final result = await service.deleteAccount(
+        user: user,
+        onReauthenticate: () async => const WGProcessResult.success(),
+      );
+
+      expect(result.status, WGProcessStatus.success);
+      // Tudo o que era do dono sai do Storage: as fotos dos pets e o
+      // avatar lido do documento antes da exclusão.
+      expect(
+        storage.deletedUrls,
+        contains('https://cdn.example.com/avatar.webp'),
+      );
+      expect(
+        storage.deletedUrls,
+        contains('https://firebasestorage/photo.jpg'),
+      );
+      expect(storage.deletedUrls, hasLength(2));
+    });
+
+    //618
+    test('falha nas exclusões do Storage não aborta a exclusão da conta',
+        () async {
+      final user = await seedUser(metadata: _RecentUserMetadata());
+      await db.collection('users').doc('uid_test').update({
+        'photoUrl': 'https://cdn.example.com/avatar.webp',
+      });
+      storage.deleteError = Exception('storage down');
+
+      final result = await service.deleteAccount(
+        user: user,
+        onReauthenticate: () async => const WGProcessResult.success(),
+      );
+
+      expect(result.status, WGProcessStatus.success);
+      expect(user.deleteCalls, 1);
+      expect(
+        await db
+            .collection('users')
+            .doc('uid_test')
+            .get()
+            .then((d) => d.exists),
+        isFalse,
+      );
     });
   });
 }

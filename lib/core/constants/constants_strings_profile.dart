@@ -14,7 +14,38 @@ class ProfileStrings {
 
   static const LOGOUT_MESSAGE = 'Deseja realmente sair da sua conta?';
 
-  static const CHANGE_AVATAR_FEATURE = 'Alterar avatar';
+  // ── Foto de perfil (avatar) ────────────────────────────
+
+  static const AVATAR_TITLE = 'Foto de perfil';
+
+  static const AVATAR_GALLERY_OPTION = 'Escolher da galeria';
+
+  static const AVATAR_REMOVE_OPTION = 'Remover foto';
+
+  static const AVATAR_REMOVE_TITLE = 'Remover foto?';
+
+  static const AVATAR_REMOVE_MESSAGE = 'Deseja remover sua foto de perfil?';
+
+  static const AVATAR_SUCCESS = 'Foto de perfil atualizada!';
+
+  static const AVATAR_REMOVE_SUCCESS = 'Foto de perfil removida.';
+
+  static const AVATAR_UPLOAD_ERROR =
+      'Não foi possível atualizar a foto. Tente novamente.';
+
+  // Falha ao abrir a galeria (permissão negada ou erro da plataforma).
+  static const AVATAR_PICK_ERROR =
+      'Não foi possível abrir a galeria. Tente novamente.';
+
+  // Mensagens da tela de carregamento do processo (pushProcess).
+  static const AVATAR_UPLOADING = 'Atualizando foto...';
+
+  static const AVATAR_REMOVING = 'Removendo foto...';
+
+  static const AVATAR_GOOGLE_TITLE = 'Foto gerenciada pelo Google';
+
+  static const AVATAR_GOOGLE_MESSAGE =
+      'Sua foto de perfil é a da sua conta Google e não pode ser alterada aqui.';
 
   // ── Dados da conta ─────────────────────────────────────
 

@@ -14,20 +14,26 @@ class _FakeStorage implements FirebaseStorage {
   String? lastPath;
   SettableMetadata? lastMetadata;
   bool putCalled = false;
+  final List<String> deletedUrls = [];
 
   @override
   Reference ref([String? path]) => _FakeReference(storage: this);
+
+  @override
+  Reference refFromURL(String url) =>
+      _FakeReference(storage: this, fromUrl: url);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
 class _FakeReference implements Reference {
-  _FakeReference({required this.storage, this.path});
+  _FakeReference({required this.storage, this.path, this.fromUrl});
 
   @override
   final _FakeStorage storage;
   final String? path;
+  final String? fromUrl;
 
   @override
   Reference child(String childPath) => _FakeReference(
@@ -41,6 +47,11 @@ class _FakeReference implements Reference {
     storage.lastMetadata = metadata;
     storage.putCalled = true;
     return _FakeUploadTask();
+  }
+
+  @override
+  Future<void> delete() async {
+    if (fromUrl != null) storage.deletedUrls.add(fromUrl!);
   }
 
   @override
@@ -175,6 +186,106 @@ void main() {
 
       expect(storage.lastPath, 'pets/dono_1/pet_1/photo_3.jpg');
       expect(storage.lastMetadata?.contentType, 'image/jpeg');
+    });
+
+    //612
+    test('caminho sem ponto não vira extensão (usa jpg, não o path)', () async {
+      final storage = _FakeStorage('https://cdn.example.com/foto.jpg');
+      service.debugStorage = storage;
+      addTearDown(() => service.debugStorage = null);
+
+      // Antes: split('.').last devolvia o path inteiro e sujava o destino.
+      await service.uploadPetImage(
+        'dono_1',
+        'pet_1',
+        0,
+        File('/tmp/image_picker_abc123'),
+      );
+
+      expect(storage.lastPath, 'pets/dono_1/pet_1/photo_0.jpg');
+      expect(storage.lastMetadata?.contentType, 'image/jpeg');
+    });
+  });
+
+  group('StorageService · avatar', () {
+    //605
+    test('avatarPath constrói avatars/{uid}/avatar_{versão}.ext', () {
+      expect(
+        StorageService.avatarPath('uid_1'),
+        matches(r'^avatars/uid_1/avatar_\d+\.webp$'),
+      );
+      expect(
+        StorageService.avatarPath('uid_1', 'png'),
+        matches(r'^avatars/uid_1/avatar_\d+\.png$'),
+      );
+    });
+
+    //606
+    test('uploadAvatar envia ao caminho do dono com contentType webp',
+        () async {
+      final storage = _FakeStorage('https://cdn.example.com/avatar.webp');
+      service.debugStorage = storage;
+      addTearDown(() => service.debugStorage = null);
+
+      final url = await service.uploadAvatar('uid_1', File('avatar.webp'));
+
+      expect(url, 'https://cdn.example.com/avatar.webp');
+      expect(storage.putCalled, isTrue);
+      expect(
+        storage.lastPath,
+        matches(r'^avatars/uid_1/avatar_\d+\.webp$'),
+      );
+      expect(storage.lastMetadata?.contentType, 'image/webp');
+    });
+
+    //613
+    test('uploadAvatar sem extensão usa webp', () async {
+      final storage = _FakeStorage('https://cdn.example.com/avatar.webp');
+      service.debugStorage = storage;
+      addTearDown(() => service.debugStorage = null);
+
+      await service.uploadAvatar('uid_1', File('/tmp/image_picker_abc123'));
+
+      expect(
+        storage.lastPath,
+        matches(r'^avatars/uid_1/avatar_\d+\.webp$'),
+      );
+      expect(storage.lastMetadata?.contentType, 'image/webp');
+    });
+
+    //619
+    test('avatarPath gera um caminho distinto a cada upload', () {
+      final first = StorageService.avatarPath('uid_1');
+      final second = StorageService.avatarPath('uid_1');
+
+      // Cada upload é um objeto novo no Storage: a troca da foto nunca
+      // sobrescreve o arquivo anterior (raiz do bug em que o delete da
+      // URL antiga apagava o avatar recém-enviado).
+      expect(first, isNot(second));
+      expect(first, matches(r'^avatars/uid_1/avatar_\d+\.webp$'));
+    });
+
+    //607
+    test('deleteAvatarByUrl apaga pela URL informada', () async {
+      final storage = _FakeStorage('https://cdn.example.com/avatar.webp');
+      service.debugStorage = storage;
+      addTearDown(() => service.debugStorage = null);
+
+      await service.deleteAvatarByUrl(
+        'https://firebasestorage.googleapis.com/avatar.webp',
+      );
+
+      expect(
+        storage.deletedUrls,
+        ['https://firebasestorage.googleapis.com/avatar.webp'],
+      );
+    });
+
+    //608
+    test('deleteAvatarByUrl engole URL inválida (melhor esforço)', () async {
+      // Sem Firebase inicializado, qualquer operação lança; o método deve
+      // engolir a falha e completar normalmente.
+      await service.deleteAvatarByUrl('url totalmente inválida');
     });
   });
 

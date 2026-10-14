@@ -57,6 +57,18 @@ class _WGAvatarState extends State<WGAvatar> {
   // Verdadeiro quando a imagem carregou com erro: mostra o fallback.
   bool _imageFailed = false;
 
+  // URL nova é uma nova tentativa: o estado de falha da URL anterior não
+  // pode ser herdado — sem isso, depois de um erro (ex.: troca que apagou
+  // o arquivo) o widget nunca mais carrega, mesmo com um upload novo
+  // bem-sucedido, e o avatar fica vazio para sempre.
+  @override
+  void didUpdateWidget(WGAvatar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _imageFailed = false;
+    }
+  }
+
   ImageProvider<Object>? _imageProvider() {
     final override = widget.debugImageProvider;
     if (override != null) return override;

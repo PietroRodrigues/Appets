@@ -42,9 +42,9 @@ class AccountPurgeService {
   ///    (antecipa o reauth para nunca apagar a base e, em seguida, o
   ///    usuário cancelar o reauth — conta viva sem dados).
   /// 1. Apaga os dados enquanto a credencial é válida: pets (imagens no
-  ///    Storage + documentos) e documento do usuário. Se a limpeza
-  ///    falhar, aborta ANTES de excluir a conta no Auth (nunca deixar
-  ///    pets órfãos).
+  ///    Storage + documentos), avatar e documento do usuário. Se a
+  ///    limpeza falhar, aborta ANTES de excluir a conta no Auth (nunca
+  ///    deixar pets órfãos).
   /// 2. Exclui a conta no Firebase Auth por último.
   /// 3. Garante que o aparelho fique deslogado e zera os estados locais.
   Future<WGProcessResult> deleteAccount({
@@ -86,15 +86,27 @@ class AccountPurgeService {
   }
 
   /// Apaga os dados do usuário no Firestore e no Storage: pets
-  /// (imagens e documentos) e o documento do usuário.
+  /// (imagens e documentos), avatar e o documento do usuário.
   ///
-  /// Imagens no Storage são apagadas em modo "melhor esforço": se o
-  /// Storage não estiver configurado ou uma imagem falhar, o fluxo
-  /// continua (cada falha é ignorada internamente). Já os documentos
-  /// (pets e usuário) são obrigatórios — se algum não puder ser
+  /// Arquivos no Storage (fotos dos pets e avatar) são apagados em modo
+  /// "melhor esforço": se o Storage não estiver configurado ou um arquivo
+  /// falhar, o fluxo continua (cada falha é ignorada internamente). Já os
+  /// documentos (pets e usuário) são obrigatórios — se algum não puder ser
   /// removido, devolve `false` para que a exclusão da conta seja
   /// abortada e nenhum pet fique órfão.
   Future<bool> deleteUserData(String uid) async {
+    // Lê o documento ANTES de apagar para capturar a URL do avatar: o
+    // arquivo no Storage só é conhecido por ela (a extensão do upload
+    // varia conforme a compressão) e o campo some com o documento.
+    String? avatarUrl;
+    try {
+      final user = await FirestoreService.instance.getUser(uid);
+      avatarUrl = user?.photoUrl;
+    } catch (_) {
+      // Best-effort: sem o documento não há avatar conhecido; a limpeza
+      // obrigatória (pets e usuário) segue normalmente.
+    }
+
     try {
       final petService = PetService.instance;
       final storageService = StorageService.instance;
@@ -113,6 +125,14 @@ class AccountPurgeService {
       await FirestoreService.instance.deleteUser(uid);
     } catch (_) {
       return false;
+    }
+
+    // Avatar por último, ainda best-effort: se o documento obrigatório
+    // falhar acima, a exclusão é abortada com o avatar no lugar; o
+    // arquivo só sai quando a conta realmente vai embora.
+    final url = avatarUrl;
+    if (url != null && url.isNotEmpty) {
+      await StorageService.instance.deleteAvatarByUrl(url);
     }
     return true;
   }

@@ -27,6 +27,28 @@ class UserModel {
   /// IDs dos pets publicados pelo usuário.
   final List<String> myPublishedPetIds;
 
+  // Cria uma cópia do usuário com os campos informados substituídos.
+  UserModel copyWith({
+    String? name,
+    String? email,
+    String? phone,
+    String? address,
+    String? photoUrl,
+    List<String>? favoritePetIds,
+    List<String>? myPublishedPetIds,
+  }) {
+    return UserModel(
+      id: id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      address: address ?? this.address,
+      photoUrl: photoUrl ?? this.photoUrl,
+      favoritePetIds: favoritePetIds ?? this.favoritePetIds,
+      myPublishedPetIds: myPublishedPetIds ?? this.myPublishedPetIds,
+    );
+  }
+
   // Converte o usuário em um mapa para persistência no Firestore.
   Map<String, dynamic> toMap() {
     return {

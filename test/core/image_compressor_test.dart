@@ -178,6 +178,84 @@ void main() {
     });
   });
 
+  group('compressAvatar', () {
+    late Directory tempDir;
+
+    setUp(() {
+      ImageCompressor.debugCompress = null;
+      tempDir = Directory.systemTemp.createTempSync('img_avatar_test_');
+    });
+
+    tearDown(() {
+      ImageCompressor.debugCompress = null;
+      try {
+        tempDir.deleteSync(recursive: true);
+      } catch (_) {
+        // Melhor esforço no ambiente de teste.
+      }
+    });
+
+    Future<File> createOriginal(int size) {
+      final file = File(
+        '${tempDir.path}${Platform.pathSeparator}avatar_$size.bin',
+      );
+      return file.writeAsBytes(Uint8List(size), flush: true);
+    }
+
+    //602
+    test('usa o teto menor: desce de qualidade onde a foto de pet pararia',
+        () async {
+      final original = await createOriginal(5 * 1024 * 1024);
+      final calls = <int>[];
+      ImageCompressor.debugCompress = (source, quality) async {
+        calls.add(quality);
+        switch (quality) {
+          case 70:
+            return Uint8List(60 * 1024); // cabe em 350 KB, não em 40 KB
+          case 55:
+            return Uint8List(30 * 1024); // cabe em 40 KB
+          case 40:
+            return Uint8List(20 * 1024);
+          default:
+            return Uint8List(0);
+        }
+      };
+
+      final result = await ImageCompressor.compressAvatar(original.path);
+
+      expect(calls, [70, 55]);
+      expect(result, isNotNull);
+      expect(result!.path, '${original.path}.webp');
+      expect(await result.length(), 30 * 1024);
+    });
+
+    //603
+    test('aplica a dimensão de 256px (menor que os 1280px das fotos)',
+        () async {
+      final original = await createOriginal(5 * 1024 * 1024);
+      ImageCompressor.debugCompress = (source, quality) async =>
+          Uint8List(20 * 1024);
+
+      await ImageCompressor.compressAvatar(original.path);
+      expect(ImageCompressor.debugLastMaxDimension, 256);
+
+      await ImageCompressor.compressForUpload(original.path);
+      expect(ImageCompressor.debugLastMaxDimension, 1280);
+    });
+
+    //604
+    test('nada reduz: devolve null (o chamador mantém o original)', () async {
+      final original = await createOriginal(20 * 1024);
+      ImageCompressor.debugCompress = (source, quality) async =>
+          Uint8List(25 * 1024); // compressão não reduz
+
+      final result = await ImageCompressor.compressAvatar(original.path);
+
+      expect(result, isNull);
+      expect(File('${original.path}.webp').existsSync(), isFalse);
+    });
+  });
+
   group('deleteTempWebpFiles', () {
     late Directory tempDir;
 

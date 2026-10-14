@@ -57,6 +57,8 @@ class WGProcessResult {
   static const List<String> _networkSigns = [
     'SocketException',
     '[cloud_firestore/unavailable]',
+    '[firebase_storage/unavailable]',
+    '[firebase_storage/network-request-failed]',
     '[firebase_auth/network-request-failed]',
     'Host not found',
     'Connection failed',
@@ -114,11 +116,20 @@ class WGProcessLoadingScreen extends StatefulWidget {
 }
 
 class _WGProcessLoadingScreenState extends State<WGProcessLoadingScreen> {
-  // Executa o processo assim que a tela é montada.
+  // Executa o processo logo após o primeiro frame da tela.
+  //
+  // O post-frame é obrigatório: a task pode abrir diálogos por cima do
+  // loading (ex.: reautenticação por senha na exclusão de conta), e tocar
+  // o Navigator durante o build prende o lock `_debugLocked` — o app
+  // congela com o diálogo ainda aberto e toda navegação seguinte falha
+  // (assert '!_debugLocked' do navigator.dart). Após o frame, o showDialog
+  // e os pops rodam fora do build, como numa ação comum de botão.
   @override
   void initState() {
     super.initState();
-    _runTask();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _runTask();
+    });
   }
 
   // Aguarda a operação e devolve o resultado ao chamador pela rota.

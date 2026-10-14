@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:appets/widgets/display/widget_avatar.dart';
 import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:flutter/material.dart';
@@ -22,8 +24,29 @@ class _FailingImageProvider extends ImageProvider<_FailingImageProvider> {
   }
 }
 
+/// Imagem que nunca conclui (nem sucesso, nem erro): mantém o widget no
+/// estado "carregando" de forma determinística, sem rede.
+class _PendingImageProvider extends ImageProvider<_PendingImageProvider> {
+  const _PendingImageProvider();
+
+  @override
+  Future<_PendingImageProvider> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture<_PendingImageProvider>(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _PendingImageProvider key,
+    ImageDecoderCallback decode,
+  ) {
+    return OneFrameImageStreamCompleter(
+      Completer<ImageInfo>().future,
+    );
+  }
+}
+
 void main() {
   final failingProvider = const _FailingImageProvider();
+  final pendingProvider = const _PendingImageProvider();
 
   Widget wrap({
     String? imageUrl,
@@ -103,6 +126,35 @@ void main() {
         wrap(imageUrl: 'https://lh3.googleusercontent.com/foto.jpg'),
       );
 
+      expect(avatarOf(tester).backgroundImage, isNotNull);
+      expect(find.byIcon(Icons.person), findsNothing);
+    });
+  });
+
+  group('WGAvatar → troca de URL', () {
+    //621
+    testWidgets('URL nova depois de uma falha volta a tentar a imagem',
+        (tester) async {
+      // Primeira URL falha: o widget cai no fallback (ícone de pessoa).
+      await tester.pumpWidget(
+        wrap(
+          imageUrl: 'https://cdn.example.com/quebrada.webp',
+          debugImageProvider: failingProvider,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(avatarOf(tester).backgroundImage, isNull);
+      expect(find.byIcon(Icons.person), findsOneWidget);
+
+      // URL nova: a falha anterior não é herdada — a imagem volta a ser
+      // tentada (background preenchido enquanto carrega, sem ícone).
+      await tester.pumpWidget(
+        wrap(
+          imageUrl: 'https://cdn.example.com/nova.webp',
+          debugImageProvider: pendingProvider,
+        ),
+      );
       expect(avatarOf(tester).backgroundImage, isNotNull);
       expect(find.byIcon(Icons.person), findsNothing);
     });
