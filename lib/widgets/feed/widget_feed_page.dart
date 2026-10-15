@@ -150,10 +150,7 @@ class WGFeedPageState extends State<WGFeedPage> {
               showSearchBar: widget.showSearchBar,
             ),
           Expanded(
-            child: WGPageLoading(
-              userName: widget.headerUserName,
-              title: widget.headerTitle,
-            ),
+            child: Center(child: const WGPetGridLoading()),
           ),
         ],
       );

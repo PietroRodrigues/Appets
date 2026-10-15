@@ -40,7 +40,7 @@ void main() {
   );
 
   //439
-  testWidgets('estado de carregamento mostra o WGPageLoading com o cabeçalho', (
+  testWidgets('estado de carregamento mostra o WGPetGridLoading com o cabeçalho', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -53,10 +53,10 @@ void main() {
         ),
       ),
     );
-    // Não usa pumpAndSettle: o WGLoading anima em loop.
+    // Não usa pumpAndSettle: o WGPetGridLoading anima em loop.
     await tester.pump();
 
-    expect(find.byType(WGPageLoading), findsOneWidget);
+    expect(find.byType(WGPetGridLoading), findsOneWidget);
     expect(find.text('Meus Pets'), findsWidgets);
   });
 
