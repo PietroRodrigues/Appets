@@ -17,26 +17,8 @@ void main() {
     await pumpSettings(tester);
 
     expect(find.text(SettingsStrings.SETTINGS_TITLE), findsOneWidget);
-    expect(find.text(SettingsStrings.SHARE_LOCATION_TITLE), findsOneWidget);
     expect(find.text(SettingsStrings.APP_ABOUT_TITLE), findsOneWidget);
-    expect(find.byType(WGOptionTile), findsNWidgets(2));
-  });
-
-  //238
-  testWidgets('"Compartilhar localização" avisa que está em desenvolvimento',
-      (tester) async {
-    await pumpSettings(tester);
-
-    await tester.tap(find.text(SettingsStrings.SHARE_LOCATION_TITLE));
-    await tester.pumpAndSettle();
-
-    expect(find.text(SharedStrings.DEVELOPMENT_TITLE), findsOneWidget);
-    expect(
-      find.text(
-        SharedStrings.featureInDevelopment(SettingsStrings.SHARE_LOCATION_FEATURE),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byType(WGOptionTile), findsNWidgets(1));
   });
 
   //239

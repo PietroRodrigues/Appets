@@ -44,18 +44,6 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 28, 20, 40),
               child: Column(
                 children: [
-                  WGOptionTile(
-                    icon: Icons.location_on_outlined,
-                    title: SettingsStrings.SHARE_LOCATION_TITLE,
-                    subtitle: SettingsStrings.SHARE_LOCATION_SUBTITLE,
-                    onTap: () => _showDevelopmentMessage(
-                      context,
-                      SettingsStrings.SHARE_LOCATION_FEATURE,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
                   // Versão lida dinamicamente do pubspec.yaml.
                   FutureBuilder<String>(
                     future: readAppVersion(),
