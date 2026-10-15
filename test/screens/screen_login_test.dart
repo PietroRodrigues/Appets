@@ -1,21 +1,47 @@
+import 'dart:math' as math;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:appets/core/constants/constants_strings_auth.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
+import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/screens/auth/screen_login.dart';
 import 'package:appets/widgets/feedback/widget_process.dart';
 
 // Os mocks do firebase_auth_mocks já declaram campos não-finais.
 // ignore_for_file: must_be_immutable
+
+/// Canais em intensidade linear (padrão WCAG), v em 0..1.
+double _channel(double v) {
+  return v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+}
+
+/// Luminância relativa (WCAG).
+double _luminance(Color c) {
+  return 0.2126 * _channel(c.r) +
+      0.7152 * _channel(c.g) +
+      0.0722 * _channel(c.b);
+}
+
+/// Contraste entre duas cores (WCAG).
+double _contrast(Color a, Color b) {
+  final l1 = _luminance(a);
+  final l2 = _luminance(b);
+  final lighter = math.max(l1, l2);
+  final darker = math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
 
 /// Firestore fake cuja gravação do documento de usuário sempre falha.
 class _CreateFailDb extends FakeFirebaseFirestore {
@@ -25,6 +51,21 @@ class _CreateFailDb extends FakeFirebaseFirestore {
   CollectionReference<Map<String, dynamic>> collection(String path) {
     throw StateError('firestore-write-failed');
   }
+}
+
+/// GoogleSignIn que encerra a sessão sem falhar (usado no teste do item 43).
+class _OkGoogleSignIn extends GoogleSignIn {
+  @override
+  Future<GoogleSignInAccount?> signOut() async => null;
+}
+
+/// Cache de imagens falso: não toca disco/plugin nos testes (item 43).
+class _FakeImageCache implements BaseCacheManager {
+  @override
+  Future<void> emptyCache() async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
 }
 
 /// Auth cujo login com e-mail/senha sempre falha com [code].
@@ -164,6 +205,8 @@ void main() {
   ) async {
     FirestoreService.instance.debugDb = _CreateFailDb();
     AuthService.instance.debugAuth = _auth();
+    AuthService.instance.debugGoogle = _OkGoogleSignIn();
+    AppImageCache.instance.debugManager = _FakeImageCache();
 
     await _pumpLogin(tester);
     await _fillForm(tester);
@@ -174,6 +217,24 @@ void main() {
 
     // Continua na tela de login, pronto para nova tentativa.
     expect(find.text(AuthStrings.LOGIN_BUTTON), findsOneWidget);
+  });
+
+  //623
+  testWidgets('falha no doc encerra a sessão (não fica perfil fantasma)', (
+    tester,
+  ) async {
+    FirestoreService.instance.debugDb = _CreateFailDb();
+    AuthService.instance.debugAuth = _auth();
+    AuthService.instance.debugGoogle = _OkGoogleSignIn();
+    AppImageCache.instance.debugManager = _FakeImageCache();
+
+    await _pumpLogin(tester);
+    await _fillForm(tester);
+    await _tapLogin(tester);
+
+    // Sessão do Auth deve ter sido encerrada: não fica logado sem doc.
+    expect(AuthService.instance.currentUser, isNull);
+    expect(find.text(AuthStrings.LOGIN_ACCOUNT_ERROR), findsOneWidget);
   });
 
   group('validação do formulário', () {
@@ -260,6 +321,36 @@ void main() {
       expect(find.text(SharedStrings.NOTICE_TITLE), findsOneWidget);
       expect(find.text(AuthStrings.GOOGLE_LOGIN_CANCELED), findsOneWidget);
       expect(find.text('payload_home'), findsNothing);
+    });
+  });
+
+  group('contraste do texto de erro', () {
+    //622
+    testWidgets('erro de validação usa a cor de erro visível sobre o campo', (
+      tester,
+    ) async {
+      await _pumpLogin(tester);
+      await _tapLogin(tester);
+
+      // O texto de erro é renderizado com o errorStyle da tela.
+      final error = tester.widget<Text>(
+        find.text(AuthStrings.EMAIL_REQUIRED),
+      );
+      final color = error.style?.color;
+
+      expect(color, isNotNull);
+      expect(
+        color,
+        AppColors.light.error,
+        reason: 'O erro deve usar colors.error (texto sobre o claro do campo), '
+            'não errorOnPrimary (#FFFFFF, invisível sobre #FFFFFF).',
+      );
+
+      // Contraste WCAG do par erro x surface (fundo do campo) >= 4.5 (AA).
+      expect(
+        _contrast(color!, AppColors.light.surface),
+        greaterThanOrEqualTo(4.5),
+      );
     });
   });
 

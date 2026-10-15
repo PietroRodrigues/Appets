@@ -37,10 +37,10 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
 
-  // Estilo do texto de erro legível sobre o fundo laranja.
+  // Estilo do texto de erro legível sobre o fundo dos campos.
   TextStyle _loginErrorStyle(AppColors colors) {
     return TextStyle(
-      color: colors.errorOnPrimary,
+      color: colors.error,
       fontSize: 12,
       fontWeight: FontWeight.w600,
     );
@@ -95,6 +95,11 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
               );
             } catch (e) {
               debugPrint('LoginDocError: $e');
+              // Desfaz a sessão para evitar perfil fantasma: logado no Auth
+              // mas sem documento no Firestore.
+              try {
+                await AuthService.instance.logout();
+              } catch (_) {}
               return WGProcessResult.failure(AuthStrings.LOGIN_ACCOUNT_ERROR);
             }
           }
@@ -145,9 +150,17 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
 
           final firebaseUser = googleResult.user;
           if (firebaseUser != null) {
-            await AuthService.instance.ensureUserDocument(
-              UserModel.fromFirebaseUser(firebaseUser),
-            );
+            try {
+              await AuthService.instance.ensureUserDocument(
+                UserModel.fromFirebaseUser(firebaseUser),
+              );
+            } catch (e) {
+              debugPrint('LoginDocError: $e');
+              try {
+                await AuthService.instance.logout();
+              } catch (_) {}
+              return WGProcessResult.failure(AuthStrings.LOGIN_ACCOUNT_ERROR);
+            }
           }
           return const WGProcessResult.success();
         } on Exception catch (e) {
