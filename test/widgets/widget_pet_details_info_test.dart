@@ -93,4 +93,29 @@ void main() {
     expect(find.text(SharedStrings.NOTICE_TITLE), findsOneWidget);
     expect(find.text(PetDetailsStrings.OWNER_PHONE_UNAVAILABLE), findsOneWidget);
   });
+
+  group('normalizeWhatsAppPhone (item 44)', () {
+    //497
+    test('prefixa 55 quando o telefone tem apenas DDD', () {
+      expect(normalizeWhatsAppPhone('(11) 98765-4321'), '5511987654321');
+      expect(normalizeWhatsAppPhone('11987654321'), '5511987654321');
+    });
+
+    //498
+    test('não duplica o 55 quando o telefone já tem DDI', () {
+      expect(normalizeWhatsAppPhone('+55 11 98765-4321'), '5511987654321');
+      expect(normalizeWhatsAppPhone('5511987654321'), '5511987654321');
+    });
+
+    //499
+    test('mantém apenas dígitos, ignorando máscara', () {
+      expect(normalizeWhatsAppPhone('(19) 9 8888-7777'), '5519988887777');
+    });
+
+    //500
+    test('retorna vazio quando não há telefone', () {
+      expect(normalizeWhatsAppPhone(''), '');
+      expect(normalizeWhatsAppPhone('   '), '');
+    });
+  });
 }

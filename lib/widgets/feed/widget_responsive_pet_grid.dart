@@ -345,6 +345,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     setState(() {
       _isOffline = true;
       _isLoading = false;
+      _isLoadingMore = false;
       _hasMore = false;
     });
   }
@@ -488,6 +489,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       _lastDoc = page.lastDoc;
       _hasMore = page.hasMore;
       _isLoading = false;
+      _isLoadingMore = false;
     });
     if (_shouldAutoAdvanceWhenEmpty) _loadMore();
   }
@@ -498,6 +500,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
       _items = [];
       _hasMore = false;
       _isLoading = false;
+      _isLoadingMore = false;
     });
   }
 
@@ -547,10 +550,14 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
           }
         case AppPetFilter.myPublications:
         case AppPetFilter.favorites:
+          _isLoadingMore = false;
           return;
       }
 
-      if (!mounted || id != _loadId) return;
+      if (!mounted || id != _loadId) {
+        _isLoadingMore = false;
+        return;
+      }
       setState(() {
         final filtered = _applyLocalFilters(page.pets);
         _items = _mergeDeduplicated(_items, filtered);

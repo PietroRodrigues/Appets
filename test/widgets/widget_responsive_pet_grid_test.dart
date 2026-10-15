@@ -669,4 +669,47 @@ void main() {
       },
     );
   });
+
+  group('WGResponsivePetGrid · reset de _isLoadingMore (item 45)', () {
+    //573
+    testWidgets('favoritos/publicações não travam o carregar mais', (
+      tester,
+    ) async {
+      await insertPet(
+        petDoc(
+          'meu_pet',
+          species: 'cachorro',
+          gender: 'macho',
+          createdAt: now,
+        ),
+      );
+      MyPublicationsService.instance.myPetIds.value = <String>{'meu_pet'};
+      AuthService.instance.debugAuth = MockFirebaseAuth(
+        signedIn: true,
+        mockUser: MockUser(uid: 'uid_test'),
+      );
+      await db.collection('users').doc('uid_test').set({
+        'name': 'Ana',
+        'favoritePetIds': <String>[],
+        'myPublishedPetIds': <String>['meu_pet'],
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: WGResponsivePetGrid(
+              filter: AppPetFilter.myPublications,
+              itemBuilder: (context, pet) => Text(pet.name),
+              emptyBuilder: (_) => const Text('VAZIO'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // O grid carrega os pets por ID e não fica com o _isLoadingMore preso
+      // (caminho do early-return de _loadMore, item 45).
+      expect(find.text('meu_pet'), findsOneWidget);
+    });
+  });
 }

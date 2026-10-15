@@ -10,6 +10,14 @@ import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+/// Normaliza o telefone para o WhatsApp: mantém apenas dígitos e prefixa
+/// `55` somente quando o número não começa já com o DDI do Brasil.
+String normalizeWhatsAppPhone(String phone) {
+  final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+  if (digits.isEmpty) return '';
+  return digits.startsWith('55') ? digits : '55$digits';
+}
+
 /// Painel de informações reutilizável da tela de detalhes do pet.
 ///
 /// Exibe nome, dados básicos (idade, gênero, cidade e
@@ -35,7 +43,8 @@ class WGPetDetailsInfo extends StatelessWidget {
         ),
 
         onPressed: () async {
-          if (pet.ownerPhone.isEmpty) {
+          final normalized = normalizeWhatsAppPhone(pet.ownerPhone);
+          if (normalized.isEmpty) {
             if (context.mounted) {
               WGDialog.showAction(
                 context,
@@ -46,11 +55,10 @@ class WGPetDetailsInfo extends StatelessWidget {
             return;
           }
 
-          final phone = pet.ownerPhone.replaceAll(RegExp(r'[^0-9]'), '');
           final message = Uri.encodeComponent(
             PetDetailsStrings.whatsAppMessage(pet.name),
           );
-          final url = Uri.parse('https://wa.me/55$phone?text=$message');
+          final url = Uri.parse('https://wa.me/$normalized?text=$message');
 
           if (await canLaunchUrl(url)) {
             await launchUrl(url, mode: LaunchMode.externalApplication);
