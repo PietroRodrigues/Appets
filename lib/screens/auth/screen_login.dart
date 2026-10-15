@@ -94,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
                 UserModel.fromFirebaseUser(firebaseUser),
               );
             } catch (e) {
-              debugPrint('LoginDocError: $e');
               // Desfaz a sessão para evitar perfil fantasma: logado no Auth
               // mas sem documento no Firestore.
               try {
@@ -155,7 +154,6 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
                 UserModel.fromFirebaseUser(firebaseUser),
               );
             } catch (e) {
-              debugPrint('LoginDocError: $e');
               try {
                 await AuthService.instance.logout();
               } catch (_) {}

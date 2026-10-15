@@ -167,7 +167,7 @@ class WGGoogleButton extends StatelessWidget {
           foregroundColor: context.appColors.secondary,
           side: BorderSide(color: context.appColors.secondary, width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(30),
           ),
           elevation: 4,
           shadowColor: context.appColors.shadowButton,

@@ -241,14 +241,12 @@ class _ProfileScreenState extends State<ProfileScreen>
           if (oldUrl.isNotEmpty && oldUrl != newUrl) {
             try {
               await StorageService.instance.deleteAvatarByUrl(oldUrl);
-            } on Exception catch (e) {
-              debugPrint('AvatarDeleteOldError: $e');
+            } on Exception catch (_) {
+              // Melhor esforço: não falha o fluxo se a exclusão antiga der erro.
             }
           }
           return const WGProcessResult.success();
         } on Exception catch (e, s) {
-          debugPrint('AvatarUploadError: $e');
-          debugPrint('$s');
           return WGProcessResult.failure(
             ProfileStrings.AVATAR_UPLOAD_ERROR,
             cause: e,
@@ -305,14 +303,12 @@ class _ProfileScreenState extends State<ProfileScreen>
           if (oldUrl.isNotEmpty) {
             try {
               await StorageService.instance.deleteAvatarByUrl(oldUrl);
-            } on Exception catch (e) {
-              debugPrint('AvatarDeleteError: $e');
+            } on Exception catch (_) {
+              // Melhor esforço: não falha o fluxo se a exclusão der erro.
             }
           }
           return const WGProcessResult.success();
         } on Exception catch (e, s) {
-          debugPrint('AvatarRemoveError: $e');
-          debugPrint('$s');
           return WGProcessResult.failure(
             ProfileStrings.AVATAR_UPLOAD_ERROR,
             cause: e,

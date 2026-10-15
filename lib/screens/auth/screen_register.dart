@@ -85,27 +85,23 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
           // falha aqui não pode bloquear o cadastro.
           try {
             await authService.updateDisplayName(name);
-          } catch (e) {
-            debugPrint('RegisterDisplayNameIgnored: $e');
+          } catch (_) {
+            // Nome do perfil do Auth é cosmético; falha não bloqueia o cadastro.
           }
           return const WGProcessResult.success();
         } on FirebaseAuthException catch (e) {
-          debugPrint('RegisterAuthError: ${e.code} — ${e.message}');
           if (created) {
             await _discardPhantomAccount();
             return WGProcessResult.failure(AuthStrings.REGISTER_SAVE_ERROR);
           }
           return WGProcessResult.failure(_authErrorMessage(e));
-        } on Exception catch (e) {
-          debugPrint('RegisterError: $e');
+        } on Exception catch (_) {
           if (created) {
             await _discardPhantomAccount();
           }
           return WGProcessResult.failure(AuthStrings.REGISTER_SAVE_ERROR);
-        } catch (e, s) {
+        } catch (_) {
           // Erros (ex.: TypeError) também não podem travar a tela de loading.
-          debugPrint('RegisterUnexpectedError: $e');
-          debugPrint('$s');
           if (created) {
             await _discardPhantomAccount();
           }
@@ -166,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
     try {
       await AuthService.instance.deleteAccount();
     } catch (e) {
-      debugPrint('RegisterCleanupError: $e');
+      // Ignora falha na própria exclusão; a conta já foi criada no Auth.
     }
   }
 

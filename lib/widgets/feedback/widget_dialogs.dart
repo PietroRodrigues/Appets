@@ -4,6 +4,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/fields/widget_text_field.dart';
+import 'package:appets/widgets/buttons/widget_buttons.dart';
 
 /// Janela de diálogo modal reutilizável do app (modular).
 ///
@@ -314,47 +315,20 @@ class _WGDialogState extends State<WGDialog> {
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton(
+          child: WGOutlinedButton(
+            text: widget.cancelLabel,
             onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(
-                color: context.appColors.textSecondary,
-                width: 1.5,
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              widget.cancelLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: ThemeTextStyles.button.copyWith(
-                color: context.appColors.textSecondary,
-              ),
-            ),
+            borderColor: context.appColors.textSecondary,
+            textColor: context.appColors.textSecondary,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: FilledButton(
+          child: WGButton(
+            text: widget.confirmLabel,
             onPressed: () => _hasField ? _submitField() : Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: confirmColor,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              widget.confirmLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: ThemeTextStyles.button.copyWith(color: onConfirm),
-            ),
+            backgroundColor: confirmColor,
+            foregroundColor: onConfirm,
           ),
         ),
       ],
@@ -364,34 +338,11 @@ class _WGDialogState extends State<WGDialog> {
   /// Botão único de ação, com texto (e ícone opcional) centralizado.
   Widget _buildSingleAction(Color confirmColor) {
     final onConfirm = context.appColors.onColor(confirmColor);
-    return FilledButton(
+    return WGButton(
+      text: widget.confirmLabel,
       onPressed: () => Navigator.pop(context, true),
-      style: FilledButton.styleFrom(
-        backgroundColor: confirmColor,
-        minimumSize: const Size(double.infinity, 48),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (widget.actionIcon != null) ...[
-            Icon(widget.actionIcon, color: onConfirm, size: 20),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Text(
-              widget.confirmLabel,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: ThemeTextStyles.button.copyWith(color: onConfirm),
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: confirmColor,
+      foregroundColor: onConfirm,
     );
   }
 }
