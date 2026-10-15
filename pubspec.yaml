@@ -74,6 +74,7 @@ flutter:
   assets:
     - assets/images/
     - assets/logos/
+    - pubspec.yaml
 
   fonts:
     - family: Poppins

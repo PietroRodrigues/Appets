@@ -14,7 +14,9 @@ class SettingsStrings {
 
   static const APP_ABOUT_TITLE = 'Sobre o APPets';
 
-  static const APP_ABOUT_SUBTITLE = 'Versão 1.0.0';
+  /// Versão exibida na tela "Sobre". Lida dinamicamente do pubspec.yaml
+  /// via [readAppVersion] para evitar divergência com o build number.
+  static const APP_ABOUT_SUBTITLE = 'Versão';
 
   static const APP_ABOUT_FEATURE = 'Sobre o app';
 }

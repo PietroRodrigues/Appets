@@ -97,5 +97,94 @@ void main() {
 
       expect(pressed, 1);
     });
+
+    //581
+    testWidgets('troca de controller interno para externo não duplica listener',
+        (tester) async {
+      final internal = TextEditingController();
+      final external = TextEditingController();
+
+      await tester.pumpWidget(
+        wrap(WGSearchBar(controller: internal, showFilterButton: false)),
+      );
+      await tester.pump();
+
+      // Digita no controller interno.
+      await tester.enterText(find.byType(TextField), 'interno');
+      await tester.pump();
+      expect(internal.text, 'interno');
+
+      // Troca para controller externo.
+      await tester.pumpWidget(
+        wrap(WGSearchBar(controller: external, showFilterButton: false)),
+      );
+      await tester.pump();
+
+      // Digita no campo: deve atualizar apenas o controller externo,
+      // não o interno (listener do antigo foi removido).
+      await tester.enterText(find.byType(TextField), ' anexo');
+      await tester.pump();
+      expect(external.text, ' anexo');
+      expect(internal.text, 'interno');
+
+      internal.dispose();
+      external.dispose();
+    });
+
+    //582
+    testWidgets('troca de searchQuery não duplica listener', (tester) async {
+      final a = SearchQueryController();
+      final b = SearchQueryController();
+      addTearDown(a.dispose);
+      addTearDown(b.dispose);
+
+      await tester.pumpWidget(
+        wrap(WGSearchBar(searchQuery: a, showFilterButton: false)),
+      );
+      await tester.pump();
+
+      // Digita e submete via searchQuery A.
+      await tester.enterText(find.byType(TextField), 'de A');
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pump();
+      expect(a.value, 'de A');
+
+      // Troca para searchQuery B: o campo deve refletir o valor de B (vazio).
+      await tester.pumpWidget(
+        wrap(WGSearchBar(searchQuery: b, showFilterButton: false)),
+      );
+      await tester.pump();
+      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, '');
+
+      // Digita e submete via searchQuery B: não contamina o anterior.
+      await tester.enterText(find.byType(TextField), 'de B');
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pump();
+      expect(a.value, 'de A');
+      expect(b.value, 'de B');
+    });
+
+    //583
+    testWidgets('mesmo controller reatribuído não acumula listener', (
+      tester,
+    ) async {
+      final controller = TextEditingController(text: 'fixo');
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        wrap(WGSearchBar(controller: controller, showFilterButton: false)),
+      );
+      await tester.pump();
+
+      // Reatribui o mesmo controller.
+      await tester.pumpWidget(
+        wrap(WGSearchBar(controller: controller, showFilterButton: false)),
+      );
+      await tester.pump();
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller, controller);
+      expect(controller.text, 'fixo');
+    });
   });
 }

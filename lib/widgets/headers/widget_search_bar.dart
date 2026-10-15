@@ -69,20 +69,28 @@ class _WGSearchBarState extends State<WGSearchBar> {
   void didUpdateWidget(covariant WGSearchBar oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.controller != oldWidget.controller) {
-      oldWidget.controller?.removeListener(_onTextChanged);
+    // Remover listener do controller anterior (interno ou externo).
+    final oldController = oldWidget.controller ?? _ownController;
+    if (oldController != null && oldController != _controller) {
+      oldController.removeListener(_onTextChanged);
+    }
 
+    if (widget.controller != oldWidget.controller) {
       if (widget.controller == null && _ownController == null) {
         _ownController = TextEditingController();
       }
 
       _controller.addListener(_onTextChanged);
       _hasText = _controller.text.trim().isNotEmpty;
+      // Força recriação do TextField para exibir o texto do novo controller.
+      setState(() {});
     }
 
     if (widget.searchQuery != oldWidget.searchQuery) {
       oldWidget.searchQuery?.removeListener(_syncFromQuery);
       widget.searchQuery?.addListener(_syncFromQuery);
+      // Sincroniza o campo com o novo searchQuery imediatamente.
+      _syncFromQuery();
     }
   }
 
@@ -151,61 +159,66 @@ class _WGSearchBarState extends State<WGSearchBar> {
           child: SizedBox(
             height: 48,
 
-            child: TextField(
-              controller: _controller,
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return TextField(
+                  key: ValueKey(_controller),
+                  controller: _controller,
 
-              textInputAction: TextInputAction.search,
+                  textInputAction: TextInputAction.search,
 
-              onChanged: widget.onChanged,
+                  onChanged: widget.onChanged,
 
-              onSubmitted: (_) => _submit(),
+                  onSubmitted: (_) => _submit(),
 
-              decoration: InputDecoration(
-                hintText: widget.hintText ?? HomeStrings.SEARCH_DEFAULT_HINT,
+                  decoration: InputDecoration(
+                    hintText: widget.hintText ?? HomeStrings.SEARCH_DEFAULT_HINT,
 
-                // Hint em cinza e um pouco menor para a frase inteira caber
-                // na caixa (o texto digitado segue no tamanho padrão).
-                hintStyle: ThemeTextStyles.body(context.appColors).copyWith(
-                  fontSize: 12,
-                  color: const Color(0xFF9E9E9E),
-                ),
-
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_hasText)
-                      IconButton(
-                        onPressed: _clear,
-                        tooltip: HomeStrings.CLEAR_SEARCH,
-                        icon: Icon(
-                          Icons.close,
-                          size: 20,
-                          color: context.appColors.hint,
-                        ),
-                      ),
-                    IconButton(
-                      onPressed: _submit,
-                      tooltip: HomeStrings.SUBMIT_SEARCH,
-                      icon: Icon(
-                        Icons.search,
-                        color: context.appColors.primary,
-                      ),
+                    // Hint em cinza e um pouco menor para a frase inteira caber
+                    // na caixa (o texto digitado segue no tamanho padrão).
+                    hintStyle: ThemeTextStyles.body(context.appColors).copyWith(
+                      fontSize: 12,
+                      color: const Color(0xFF9E9E9E),
                     ),
-                  ],
-                ),
 
-                filled: true,
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_hasText)
+                          IconButton(
+                            onPressed: _clear,
+                            tooltip: HomeStrings.CLEAR_SEARCH,
+                            icon: Icon(
+                              Icons.close,
+                              size: 20,
+                              color: context.appColors.hint,
+                            ),
+                          ),
+                        IconButton(
+                          onPressed: _submit,
+                          tooltip: HomeStrings.SUBMIT_SEARCH,
+                          icon: Icon(
+                            Icons.search,
+                            color: context.appColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
 
-                fillColor: context.appColors.surface,
+                    filled: true,
 
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    fillColor: context.appColors.surface,
 
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
 
-                  borderSide: BorderSide.none,
-                ),
-              ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),

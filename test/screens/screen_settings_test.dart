@@ -55,4 +55,14 @@ void main() {
       findsOneWidget,
     );
   });
+
+  //240
+  testWidgets('exibe a versão real do pubspec (incluindo build number)', (
+    tester,
+  ) async {
+    await pumpSettings(tester);
+
+    // O subtítulo do "Sobre o APPets" deve começar com "Versão".
+    expect(find.textContaining('Versão'), findsOneWidget);
+  });
 }

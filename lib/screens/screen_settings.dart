@@ -1,5 +1,6 @@
 import 'package:appets/core/constants/constants_strings_settings.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/utils/app_version.dart';
 import 'package:appets/widgets/display/widget_option_tile.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
@@ -55,14 +56,21 @@ class SettingsScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  WGOptionTile(
-                    icon: Icons.info_outline,
-                    title: SettingsStrings.APP_ABOUT_TITLE,
-                    subtitle: SettingsStrings.APP_ABOUT_SUBTITLE,
-                    onTap: () => _showDevelopmentMessage(
-                      context,
-                      SettingsStrings.APP_ABOUT_FEATURE,
-                    ),
+                  // Versão lida dinamicamente do pubspec.yaml.
+                  FutureBuilder<String>(
+                    future: readAppVersion(),
+                    builder: (context, snapshot) {
+                      return WGOptionTile(
+                        icon: Icons.info_outline,
+                        title: SettingsStrings.APP_ABOUT_TITLE,
+                        subtitle:
+                            '${SettingsStrings.APP_ABOUT_SUBTITLE} ${snapshot.data ?? ''}',
+                        onTap: () => _showDevelopmentMessage(
+                          context,
+                          SettingsStrings.APP_ABOUT_FEATURE,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
