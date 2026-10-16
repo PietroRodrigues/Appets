@@ -234,23 +234,25 @@ mixin WGProcessMixin<T extends StatefulWidget> on State<T> {
     required Future<WGProcessResult> Function() task,
   }) async {
     if (_isSubmitting) return null;
-
-    // Mutação offline não pode nem começar: avisa e aborta antes de abrir
-    // a tela de carregamento (que ficaria presa tentando a rede).
-    if (!await ensureOnline(context)) return null;
-    if (!mounted) return null;
-
     _isSubmitting = true;
-    FocusManager.instance.primaryFocus?.unfocus();
+    try {
+      // Mutação offline não pode nem começar: avisa e aborta antes de abrir
+      // a tela de carregamento (que ficaria presa tentando a rede).
+      if (!await ensureOnline(context)) return null;
+      if (!mounted) return null;
 
-    final result = await Navigator.push<WGProcessResult>(
-      context,
-      MaterialPageRoute<WGProcessResult>(
-        builder: (_) => WGProcessLoadingScreen(message: message, task: task),
-      ),
-    );
+      FocusManager.instance.primaryFocus?.unfocus();
 
-    _isSubmitting = false;
-    return result;
+      final result = await Navigator.push<WGProcessResult>(
+        context,
+        MaterialPageRoute<WGProcessResult>(
+          builder: (_) => WGProcessLoadingScreen(message: message, task: task),
+        ),
+      );
+
+      return result;
+    } finally {
+      _isSubmitting = false;
+    }
   }
 }

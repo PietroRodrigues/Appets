@@ -78,12 +78,16 @@ class _WGPageHeaderState extends State<WGPageHeader> {
 
   double _lastHeight = 0;
 
+  /// Evita acumular addPostFrameCallback a cada build.
+  bool _heightMeasurementScheduled = false;
+
   @override
   void initState() {
     super.initState();
     // Limpa os filtros sempre que há troca de página no menu.
     AppNavigation.selectedPage.addListener(_clearFilters);
     widget.filters?.addListener(_onFiltersChanged);
+    _scheduleHeightMeasurement();
   }
 
   @override
@@ -105,7 +109,10 @@ class _WGPageHeaderState extends State<WGPageHeader> {
   // Rebuilda o cabeçalho quando o controller muda para remensurar a
   // altura (chips aparecem/somem) e notificar as telas.
   void _onFiltersChanged() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+      _scheduleHeightMeasurement();
+    }
   }
 
   void _clearFilters() {
@@ -151,9 +158,13 @@ class _WGPageHeaderState extends State<WGPageHeader> {
     setState(() => _logoPressed = pressed);
   }
 
-  @override
-  Widget build(BuildContext context) {
+  /// Agenda a medição de altura uma única vez por frame, evitando
+  /// acumular addPostFrameCallback a cada rebuild.
+  void _scheduleHeightMeasurement() {
+    if (_heightMeasurementScheduled) return;
+    _heightMeasurementScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _heightMeasurementScheduled = false;
       if (!mounted) return;
       final height = context.size?.height ?? 0;
       if (height > 0 && height != _lastHeight) {
@@ -161,7 +172,10 @@ class _WGPageHeaderState extends State<WGPageHeader> {
         widget.onHeightChanged?.call(height);
       }
     });
+  }
 
+  @override
+  Widget build(BuildContext context) {
     final activeFilters = widget.filters?.value ?? _activeFilters;
 
     return Column(
@@ -218,21 +232,25 @@ class _WGPageHeaderState extends State<WGPageHeader> {
                 Positioned(
                   top: 12,
                   right: -10,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTapDown: (_) => _setLogoPressed(true),
-                    onTapUp: (_) => _setLogoPressed(false),
-                    onTapCancel: () => _setLogoPressed(false),
-                    onTap: () => AppNavigation.goHome(context),
-                    child: AnimatedScale(
-                      scale: _logoPressed ? _logoScale : 1.0,
-                      duration: const Duration(milliseconds: 150),
-                      curve: Curves.easeOut,
-                      child: Image.asset(
-                        AppAssets.LOGO_HEADER,
-                        height: 52,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                  child: Semantics(
+                    label: 'Voltar à Home',
+                    button: true,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapDown: (_) => _setLogoPressed(true),
+                      onTapUp: (_) => _setLogoPressed(false),
+                      onTapCancel: () => _setLogoPressed(false),
+                      onTap: () => AppNavigation.goHome(context),
+                      child: AnimatedScale(
+                        scale: _logoPressed ? _logoScale : 1.0,
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOut,
+                        child: Image.asset(
+                          AppAssets.LOGO_HEADER,
+                          height: 52,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        ),
                       ),
                     ),
                   ),

@@ -10,6 +10,7 @@ import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/display/widget_pet_image.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -58,6 +59,9 @@ class _WGPetCardState extends State<WGPetCard>
   // apenas na transição do valor do PRÓPRIO pet.
   late bool _lastFavorited;
 
+  // Listenable do favorito deste pet, para animar fora do build.
+  ValueListenable<bool>? _favoriteListenable;
+
   @override
   void initState() {
     super.initState();
@@ -79,9 +83,28 @@ class _WGPetCardState extends State<WGPetCard>
     if (_lastFavorited) {
       _starController.value = 1.0;
     }
+
+    // Escuta mudanças de favorito fora do build para disparar a animação.
+    _favoriteListenable =
+        FavoritesService.instance.isFavoriteListenable(widget.pet.id);
+    _favoriteListenable?.addListener(_onFavoriteChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant WGPetCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.pet.id != oldWidget.pet.id) {
+      _favoriteListenable?.removeListener(_onFavoriteChanged);
+      _favoriteListenable =
+          FavoritesService.instance.isFavoriteListenable(widget.pet.id);
+      _lastFavorited = _isFavorited;
+      _starController.value = _lastFavorited ? 1.0 : 0.0;
+      _favoriteListenable?.addListener(_onFavoriteChanged);
+    }
   }
 
   // Dispara a animação somente quando o favorito deste pet transita.
+  // Chamado por listener dedicado, nunca durante o build.
   void _syncStar(bool favorited) {
     if (favorited == _lastFavorited) return;
     _lastFavorited = favorited;
@@ -92,9 +115,15 @@ class _WGPetCardState extends State<WGPetCard>
     }
   }
 
+  void _onFavoriteChanged() {
+    if (!mounted) return;
+    _syncStar(_favoriteListenable!.value);
+  }
+
   // Libera o controlador da animação da estrela.
   @override
   void dispose() {
+    _favoriteListenable?.removeListener(_onFavoriteChanged);
     _starController.dispose();
     super.dispose();
   }
@@ -160,7 +189,6 @@ class _WGPetCardState extends State<WGPetCard>
                         valueListenable: FavoritesService.instance
                             .isFavoriteListenable(widget.pet.id),
                         builder: (context, favorited, _) {
-                          _syncStar(favorited);
                           return _PetCardImage(
                             url: widget.pet.images.isNotEmpty
                                 ? widget.pet.images.first
@@ -361,28 +389,32 @@ class _PetCardEditButton extends StatelessWidget {
     return Positioned(
       bottom: 10,
       right: 10,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: context.appColors.primary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: context.appColors.shadowCard,
-                  blurRadius: 6,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.edit_outlined,
-              color: context.appColors.onPrimary,
-              size: 22,
+      child: Semantics(
+        label: 'Editar publicação',
+        button: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: context.appColors.primary,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: context.appColors.shadowCard,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.edit_outlined,
+                color: context.appColors.onPrimary,
+                size: 22,
+              ),
             ),
           ),
         ),
