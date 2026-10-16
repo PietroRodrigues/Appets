@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
+import 'package:appets/core/extensions/extension_pet_publication_type.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
@@ -9,15 +12,15 @@ import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
-import 'package:appets/widgets/pet/widget_pet_details_info.dart';
+import 'package:appets/widgets/pet/widget_pet_details_info.dart'
+    show normalizeWhatsAppPhone;
 import 'package:appets/widgets/pet/widget_pet_gallery.dart';
 import 'package:appets/widgets/pet/widget_pet_full_screen_gallery.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Tela de detalhes com imagens e informações do pet selecionado.
-///
-/// Permite favoritar o pet e compartilhar.
 class PetDetailsScreen extends StatefulWidget {
   const PetDetailsScreen({super.key, required this.pet});
 
@@ -105,39 +108,58 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
   }
 
-  Widget _buildOwnerHeader(BuildContext context) {
-    if (_isLoadingOwner) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundImage: _ownerPhotoUrl != null &&
-                    _ownerPhotoUrl!.isNotEmpty
-                ? NetworkImage(_ownerPhotoUrl!)
-                : null,
-            child: _ownerPhotoUrl == null ||
-                    _ownerPhotoUrl!.isEmpty
-                ? const Icon(Icons.person, size: 26, color: Colors.white70)
-                : null,
+  /// Linha de informação: ícone + valor.
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String value,
+    Color? iconColor,
+    Color? valueColor,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: iconColor ?? context.appColors.primary,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: valueColor,
+                  fontWeight:
+                      valueColor != null ? FontWeight.w600 : FontWeight.w400,
+                ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _ownerName ?? 'Usuário',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  /// Largura do cabeçalho suficiente para exibir o nome completo do
+  /// usuário, respeitando o espaço dos botões de ação da barra.
+  double _ownerHeaderWidth(BuildContext context) {
+    const avatarSize = 32.0; // CircleAvatar de raio 16
+    const leftPadding = 6.0;
+    const gap = 8.0;
+    const reservedForActions = 112.0; // 2 botões (2 × 48) + respiro
+
+    final name = _ownerName ?? 'Usuário';
+    final style = Theme.of(context).textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w600,
+        );
+    final painter = TextPainter(
+      text: TextSpan(text: name, style: style),
+      textScaler: MediaQuery.textScalerOf(context),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final measured = leftPadding + avatarSize + gap + painter.size.width;
+    final available = MediaQuery.sizeOf(context).width - reservedForActions;
+
+    return math.min(measured, math.max(44.0, available));
   }
 
   @override
@@ -148,7 +170,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         backgroundColor: context.appColors.primary,
         foregroundColor: context.appColors.onPrimary,
         elevation: 0,
-        leadingWidth: 70,
+        leadingWidth: _isLoadingOwner ? 44 : _ownerHeaderWidth(context),
         leading: _isLoadingOwner
             ? const SizedBox(width: 44)
             : Padding(
@@ -169,7 +191,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                           : null,
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
+                    Flexible(
                       child: Text(
                         _ownerName ?? 'Usuário',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -211,15 +233,20 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildOwnerHeader(context),
-              const SizedBox(height: 8),
-              if (!_isLoadingOwner)
-                Divider(
-                  height: 1,
-                  color: context.appColors.divider.withValues(alpha: 0.3),
-                  indent: 16,
-                  endIndent: 16,
+              // NOME DO PET
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  widget.pet.name,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // FOTOS DO PET (galeria)
               GestureDetector(
                 onTap: () {
                   if (widget.pet.images.isEmpty) return;
@@ -232,11 +259,148 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 },
                 child: WGPetGallery(images: widget.pet.images),
               ),
-              WGPetDetailsInfo(pet: widget.pet),
+
+              const SizedBox(height: 10),
+
+              // BOTÃO DE ENTRAR EM CONTATO
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton.icon(
+                    onPressed: _onContactPressed,
+                    icon: const Icon(Icons.phone, size: 20),
+                    label: const Text(
+                      PetDetailsStrings.CONTACT_BUTTON,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: context.appColors.primary,
+                      foregroundColor: context.appColors.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // INFORMAÇÕES DO PET
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoRow(
+                      icon: widget.pet.publicationType.icon,
+                      iconColor:
+                          widget.pet.publicationType.color(context.appColors),
+                      value: widget.pet.publicationType.label,
+                      valueColor:
+                          widget.pet.publicationType.color(context.appColors),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildInfoRow(
+                      icon: Icons.pets_outlined,
+                      value: widget.pet.species.label,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildInfoRow(
+                      icon: Icons.label_outline,
+                      value: widget.pet.race.isNotEmpty
+                          ? widget.pet.race
+                          : PetDetailsStrings.UNKNOWN,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildInfoRow(
+                      icon: Icons.cake_outlined,
+                      value: widget.pet.ageLabel,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildInfoRow(
+                      icon: widget.pet.genderIcon,
+                      iconColor: widget.pet.genderColor(context.appColors),
+                      value: widget.pet.genderLabel,
+                    ),
+                    if (widget.pet.weight != null) ...[
+                      const SizedBox(height: 10),
+                      _buildInfoRow(
+                        icon: Icons.monitor_weight_outlined,
+                        value: widget.pet.weightLabel!,
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    _buildInfoRow(
+                      icon: Icons.location_on_outlined,
+                      value: widget.pet.address,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // SOBRE O PET
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      PetDetailsStrings.ABOUT_SECTION,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      widget.pet.description ??
+                          PetDetailsStrings.DESCRIPTION_NOT_INFORMED,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _onContactPressed() async {
+    final normalized = normalizeWhatsAppPhone(widget.pet.ownerPhone);
+    if (normalized.isEmpty) {
+      if (!mounted) return;
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.NOTICE_TITLE,
+        message: PetDetailsStrings.OWNER_PHONE_UNAVAILABLE,
+      );
+      return;
+    }
+
+    final message = Uri.encodeComponent(
+      PetDetailsStrings.whatsAppMessage(widget.pet.name),
+    );
+    final url = Uri.parse('https://wa.me/$normalized?text=$message');
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (!mounted) return;
+      WGDialog.showAction(
+        context,
+        title: SharedStrings.ERROR_TITLE,
+        message: PetDetailsStrings.WHATSAPP_ERROR,
+        actionColor: context.appColors.error,
+      );
+    }
   }
 }

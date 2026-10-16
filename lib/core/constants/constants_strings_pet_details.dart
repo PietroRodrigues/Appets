@@ -31,6 +31,8 @@ class PetDetailsStrings {
 
   static const SHARE_ERROR = 'Não foi possível compartilhar. Tente novamente.';
 
+  static const UNKNOWN = 'Não informado';
+
   static const SHARE_FOOTER = '📲 Entre em contato direto no APPets';
 
   static const SHARE_ADOPTION_HEADING = '💰 Adoção';
