@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:appets/core/constants/constants_strings_shared.dart';
-import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/widgets/display/widget_pet_image.dart';
 
 /// Altura da área de imagem no visualizador flutuante.
@@ -69,7 +68,6 @@ class _WGPetFullScreenGalleryState extends State<WGPetFullScreenGallery> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final hasMultipleImages = widget.images.length > 1;
 
     return Dialog(
@@ -92,7 +90,7 @@ class _WGPetFullScreenGalleryState extends State<WGPetFullScreenGallery> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: colors.error.withValues(alpha: 0.5),
+                    color: Colors.black.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -140,7 +138,7 @@ class _WGPetFullScreenGalleryState extends State<WGPetFullScreenGallery> {
                 style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
               style: TextButton.styleFrom(
-                backgroundColor: colors.error,
+                backgroundColor: Colors.black.withValues(alpha: 0.5),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
