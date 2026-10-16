@@ -3,6 +3,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
@@ -27,13 +28,17 @@ class PetDetailsScreen extends StatefulWidget {
 }
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
-  // Estado de favorito derivado da fonte global de favoritos.
   bool get _isFavorited => FavoritesService.instance.isFavorite(widget.pet.id);
+
+  String? _ownerName;
+  String? _ownerPhotoUrl;
+  bool _isLoadingOwner = true;
 
   @override
   void initState() {
     super.initState();
     FavoritesService.instance.favoriteIds.addListener(_onFavoritesChanged);
+    _loadOwnerData();
   }
 
   @override
@@ -46,16 +51,31 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     if (mounted) setState(() {});
   }
 
-  // Alterna o estado de favorito do pet, persistindo no Firestore
-  // por meio do serviço global.
+  Future<void> _loadOwnerData() async {
+    if (widget.pet.ownerId.isEmpty) {
+      setState(() => _isLoadingOwner = false);
+      return;
+    }
+
+    try {
+      final user = await FirestoreService.instance.getUser(widget.pet.ownerId);
+      if (mounted) {
+        setState(() {
+          _ownerName = user?.name;
+          _ownerPhotoUrl = user?.photoUrl;
+          _isLoadingOwner = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingOwner = false);
+    }
+  }
+
   Future<void> _toggleFavorite() async {
     final authUser = AuthService.instance.currentUser;
     if (authUser == null || widget.pet.id.isEmpty) return;
 
-    // Sem rede não há como salvar o favorito: avisa e aborta.
-    if (!await ensureOnline(context)) {
-      return;
-    }
+    if (!await ensureOnline(context)) return;
 
     final service = FavoritesService.instance;
     final wasFavorited = _isFavorited;
@@ -69,8 +89,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
   }
 
-  // Abre o share sheet com o texto do pet. Em falha (ex.: sem apps de
-  // compartilhamento), mostra um diálogo de erro.
   Future<void> _sharePet() async {
     try {
       await SharePlus.instance.share(
@@ -87,21 +105,83 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
   }
 
-  // Constrói a tela de detalhes com galeria, informações e ações.
+  Widget _buildOwnerHeader(BuildContext context) {
+    if (_isLoadingOwner) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundImage: _ownerPhotoUrl != null &&
+                    _ownerPhotoUrl!.isNotEmpty
+                ? NetworkImage(_ownerPhotoUrl!)
+                : null,
+            child: _ownerPhotoUrl == null ||
+                    _ownerPhotoUrl!.isEmpty
+                ? const Icon(Icons.person, size: 26, color: Colors.white70)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _ownerName ?? 'Usuário',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.appColors.background,
-
       appBar: AppBar(
         backgroundColor: context.appColors.primary,
-
         foregroundColor: context.appColors.onPrimary,
-
         elevation: 0,
-
-        title: Text(widget.pet.name),
-
+        leadingWidth: 70,
+        leading: _isLoadingOwner
+            ? const SizedBox(width: 44)
+            : Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundImage: _ownerPhotoUrl != null &&
+                              _ownerPhotoUrl!.isNotEmpty
+                          ? NetworkImage(_ownerPhotoUrl!)
+                          : null,
+                      child: _ownerPhotoUrl == null ||
+                              _ownerPhotoUrl!.isEmpty
+                          ? const Icon(Icons.person, size: 18,
+                              color: Colors.white70)
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _ownerName ?? 'Usuário',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
         actions: [
           IconButton(
             onPressed: _toggleFavorite,
@@ -125,15 +205,21 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           ),
         ],
       ),
-
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-
             children: [
-              // ÁREA DAS FOTOS
+              _buildOwnerHeader(context),
+              const SizedBox(height: 8),
+              if (!_isLoadingOwner)
+                Divider(
+                  height: 1,
+                  color: context.appColors.divider.withValues(alpha: 0.3),
+                  indent: 16,
+                  endIndent: 16,
+                ),
               GestureDetector(
                 onTap: () {
                   if (widget.pet.images.isEmpty) return;
@@ -141,14 +227,11 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     context: context,
                     builder: (_) => WGPetFullScreenGallery(
                       images: widget.pet.images,
-                      initialIndex: 0,
                     ),
                   );
                 },
                 child: WGPetGallery(images: widget.pet.images),
               ),
-
-              // INFORMAÇÕES DO PET
               WGPetDetailsInfo(pet: widget.pet),
             ],
           ),

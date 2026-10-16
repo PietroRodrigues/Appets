@@ -90,7 +90,8 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow create: if isOwner(userId) && isValidUserCreate();
-      allow read, delete: if isOwner(userId);
+      allow read: if isSignedIn();
+      allow delete: if isOwner(userId);
       allow update: if isOwner(userId) && hasValidUserFields(request.resource.data);
     }
 

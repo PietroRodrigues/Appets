@@ -24,6 +24,8 @@ class Pet {
     required this.images,
     this.ownerPhone = '',
     this.ownerAddress = '',
+    this.ownerName,
+    this.ownerPhotoUrl,
     this.description,
     this.ageUnit = AppPetAgeUnit.years,
     this.publicationType = AppPetPublicationType.adoption,
@@ -58,6 +60,12 @@ class Pet {
   /// Endereço do dono, "carimbo" copiado da conta no momento
   /// da publicação.
   final String ownerAddress;
+
+  /// Nome do dono, buscado no documento do usuário no momento da exibição.
+  final String? ownerName;
+
+  /// URL da foto de perfil do dono, buscada no documento do usuário.
+  final String? ownerPhotoUrl;
 
   final List<String> images;
 
@@ -154,6 +162,8 @@ class Pet {
       address: data['address'] as String? ?? data['city'] as String? ?? '',
       ownerPhone: data['ownerPhone'] as String? ?? '',
       ownerAddress: data['ownerAddress'] as String? ?? '',
+      ownerName: data['ownerName'] as String?,
+      ownerPhotoUrl: data['ownerPhotoUrl'] as String?,
       description: data['description'] as String?,
       publicationType: publicationTypeFromStored(data['publicationType']),
       species: speciesFromStored(data['species']),

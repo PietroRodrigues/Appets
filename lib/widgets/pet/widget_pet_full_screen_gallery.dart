@@ -22,7 +22,7 @@ class WGPetFullScreenGallery extends StatefulWidget {
   const WGPetFullScreenGallery({
     super.key,
     required this.images,
-    required this.initialIndex,
+    this.initialIndex = 0,
     this.onClose,
   });
 
