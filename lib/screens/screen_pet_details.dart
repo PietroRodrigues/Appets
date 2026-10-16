@@ -10,6 +10,7 @@ import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
 import 'package:appets/widgets/pet/widget_pet_details_info.dart';
 import 'package:appets/widgets/pet/widget_pet_gallery.dart';
+import 'package:appets/widgets/pet/widget_pet_full_screen_gallery.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -133,7 +134,19 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
             children: [
               // ÁREA DAS FOTOS
-              WGPetGallery(images: widget.pet.images),
+              GestureDetector(
+                onTap: () {
+                  if (widget.pet.images.isEmpty) return;
+                  showDialog<void>(
+                    context: context,
+                    builder: (_) => WGPetFullScreenGallery(
+                      images: widget.pet.images,
+                      initialIndex: 0,
+                    ),
+                  );
+                },
+                child: WGPetGallery(images: widget.pet.images),
+              ),
 
               // INFORMAÇÕES DO PET
               WGPetDetailsInfo(pet: widget.pet),

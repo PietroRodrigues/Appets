@@ -68,83 +68,79 @@ class _WGPetGalleryState extends State<WGPetGallery> {
     return SizedBox(
       width: double.infinity,
       height: 280,
-      child: Container(
-        color: context.appColors.surface,
-        padding: const EdgeInsets.all(24),
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: widget.images.isEmpty
-                      // Galeria sem fotos: mesmo placeholder dos cards.
-                      ? const WGPetImage(url: '')
-                      : PageView.builder(
-                          controller: _pageController,
-                          itemCount: widget.images.length,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentImage = index;
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            return WGPetImage(
-                              url: widget.images[index],
-                              memCacheWidth: 1080,
-                            );
-                          },
-                        ),
+      child: Stack(
+        children: [
+          // IMAGEM / GALERIA (preenche todo o quadro)
+          widget.images.isEmpty
+              // Galeria sem fotos: mesmo placeholder dos cards.
+              ? const WGPetImage(url: '')
+              : PageView.builder(
+                  controller: _pageController,
+                  itemCount: widget.images.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentImage = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return WGPetImage(
+                      url: widget.images[index],
+                      memCacheWidth: 1080,
+                      fit: BoxFit.cover,
+                    );
+                  },
                 ),
-                const SizedBox(height: 12),
 
-                // INDICADORES (DOTS)
-                if (widget.images.isNotEmpty)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(widget.images.length, (index) {
-                      final isActive = index == _currentImage;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: isActive ? 12 : 8,
-                        height: isActive ? 12 : 8,
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? context.appColors.primary
-                              : context.appColors.secondarySoft,
-                          shape: BoxShape.circle,
-                        ),
-                      );
-                    }),
-                  ),
-              ],
+          // INDICADORES (DOTS) — sobrepostos à imagem, na parte inferior
+          if (widget.images.isNotEmpty)
+            Positioned(
+              bottom: 12,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(widget.images.length, (index) {
+                  final isActive = index == _currentImage;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: isActive ? 12 : 8,
+                    height: isActive ? 12 : 8,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? context.appColors.primary
+                          : context.appColors.secondarySoft,
+                      shape: BoxShape.circle,
+                    ),
+                  );
+                }),
+              ),
             ),
 
-            // CONTADOR DE FOTOS
-            if (widget.images.length > 1)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.appColors.overlayCounter,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${_currentImage + 1}/${widget.images.length}',
-                    style: ThemeTextStyles.caption(context.appColors).copyWith(
-                      color: context.appColors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+          // CONTADOR DE FOTOS
+          if (widget.images.length > 1)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: context.appColors.overlayCounter,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_currentImage + 1}/${widget.images.length}',
+                  style: ThemeTextStyles.caption(context.appColors).copyWith(
+                    color: context.appColors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

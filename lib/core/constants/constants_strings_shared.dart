@@ -15,6 +15,8 @@ class SharedStrings {
 
   static const OK = 'OK';
 
+  static const FECHAR = 'Fechar';
+
   static const SUCCESS_TITLE = 'Sucesso';
 
   static const ERROR_TITLE = 'Erro';
