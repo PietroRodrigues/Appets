@@ -1,0 +1,11 @@
+# Configuração do flutter_launcher_icons
+# Docs: https://pub.dev/packages/flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/logos/app_icon.png"
+  android: true
+  ios: false
+
+  adaptive_icon_background: "#F2A93B"
+  adaptive_icon_foreground: "assets/logos/adaptive_icon_foreground.png"
+
+  min_sdk_android: 21
