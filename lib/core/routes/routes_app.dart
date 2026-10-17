@@ -1,6 +1,7 @@
 import 'package:appets/screens/auth/screen_forgot_password.dart';
 import 'package:appets/screens/auth/screen_login.dart';
 import 'package:appets/screens/auth/screen_register.dart';
+import 'package:appets/screens/screen_about.dart';
 import 'package:appets/screens/screen_account_data.dart';
 import 'package:appets/screens/screen_home.dart';
 import 'package:appets/screens/screen_settings.dart';
@@ -22,6 +23,7 @@ class AppRoutes {
   static const home = '/home';
   static const settings = '/settings';
   static const accountData = '/account-data';
+  static const about = '/about';
 
   /// Mapa de rotas usado pelo `MaterialApp`. Cobre todas as constantes
   /// declaradas acima.
@@ -33,5 +35,6 @@ class AppRoutes {
         home: (_) => const HomeScreen(),
         settings: (_) => const SettingsScreen(),
         accountData: (_) => const AccountDataScreen(),
+        about: (_) => const AboutScreen(),
       };
 }

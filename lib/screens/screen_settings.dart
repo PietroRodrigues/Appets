@@ -1,8 +1,7 @@
 import 'package:appets/core/constants/constants_strings_settings.dart';
-import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/utils/app_version.dart';
 import 'package:appets/widgets/display/widget_option_tile.dart';
-import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/headers/widget_page_header.dart';
 import 'package:appets/widgets/layout/widget_layout.dart';
 import 'package:flutter/material.dart';
@@ -13,17 +12,6 @@ import 'package:flutter/material.dart';
 /// configurar opções gerais do app.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
-  // ACTIONS
-
-  /// Exibe aviso de recurso em desenvolvimento.
-  void _showDevelopmentMessage(BuildContext context, String feature) {
-    WGDialog.showAction(
-      context,
-      title: SharedStrings.DEVELOPMENT_TITLE,
-      message: SharedStrings.featureInDevelopment(feature),
-    );
-  }
 
   // UI
 
@@ -53,10 +41,8 @@ class SettingsScreen extends StatelessWidget {
                         title: SettingsStrings.APP_ABOUT_TITLE,
                         subtitle:
                             '${SettingsStrings.APP_ABOUT_SUBTITLE} ${snapshot.data ?? ''}',
-                        onTap: () => _showDevelopmentMessage(
-                          context,
-                          SettingsStrings.APP_ABOUT_FEATURE,
-                        ),
+                        onTap: () =>
+                            Navigator.pushNamed(context, AppRoutes.about),
                       );
                     },
                   ),

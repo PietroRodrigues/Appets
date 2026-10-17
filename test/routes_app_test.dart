@@ -16,10 +16,11 @@ void main() {
           AppRoutes.home,
           AppRoutes.settings,
           AppRoutes.accountData,
+          AppRoutes.about,
         ]),
       );
       // Sem rotas declaradas mas não registradas (nem o contrário).
-      expect(AppRoutes.routes, hasLength(7));
+      expect(AppRoutes.routes, hasLength(8));
     });
   });
 }
