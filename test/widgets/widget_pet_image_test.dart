@@ -42,14 +42,14 @@ void main() {
     //510
     testWidgets('usa Image.asset para caminhos que não são URL', (tester) async {
       await tester.pumpWidget(
-        wrap(const WGPetImage(url: 'assets/images/dog.png')),
+        wrap(const WGPetImage(url: 'assets/logos/appets_logo.png')),
       );
 
       final image = tester.widget<Image>(find.byType(Image));
       expect(image.image, isA<AssetImage>());
       expect(
         (image.image as AssetImage).assetName,
-        'assets/images/dog.png',
+        'assets/logos/appets_logo.png',
       );
     });
   });

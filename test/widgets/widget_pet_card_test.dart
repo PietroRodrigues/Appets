@@ -33,7 +33,7 @@ Pet _createTestPet({
     address: address,
     description: 'Pet de teste.',
     publicationType: publicationType,
-    images: ['assets/images/dog.png'],
+    images: ['assets/logos/appets_logo.png'],
   );
 }
 

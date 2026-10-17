@@ -17,7 +17,7 @@ void main() {
         age: 3,
         gender: AppPetGender.male,
         address: 'São Paulo',
-        images: ['assets/images/dog.png'],
+        images: ['dog.png'],
       );
 
       expect(pet.id, 'pet_001');
@@ -26,7 +26,7 @@ void main() {
       expect(pet.age, 3);
       expect(pet.gender, AppPetGender.male);
       expect(pet.address, 'São Paulo');
-      expect(pet.images, ['assets/images/dog.png']);
+      expect(pet.images, ['dog.png']);
       expect(pet.description, isNull);
       expect(pet.ageUnit, AppPetAgeUnit.years);
       expect(pet.publicationType, AppPetPublicationType.adoption);
@@ -50,7 +50,7 @@ void main() {
         publicationType: AppPetPublicationType.lost,
         species: AppPetSpecies.cat,
         race: 'Persa',
-        images: ['assets/images/cat.png'],
+        images: ['cat.png'],
       );
 
       expect(pet.description, 'Luna é muito carinhosa.');

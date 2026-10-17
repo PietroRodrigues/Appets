@@ -110,7 +110,7 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  // Constrói a tela de abertura com logo, slogan e carregamento.
+  // Constrói a tela de abertura com logo e carregamento.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -124,15 +124,7 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 const Spacer(),
 
-                WGLogo(width: 240),
-
-                const SizedBox(height: 24),
-
-                Text(
-                  SharedStrings.SLOGAN,
-                  textAlign: TextAlign.center,
-                  style: ThemeTextStyles.slogan,
-                ),
+                WGLogo(width: 312),
 
                 const Spacer(),
 

@@ -64,12 +64,4 @@ class ThemeTextStyles {
     color: AppColors.light.white, // Referência neutra, igual nas paletas
     letterSpacing: 0.5, // Dá um leve respiro às letras dentro de botões
   );
-
-  // Slogan exibido nas telas iniciais (sobre a cor primária).
-  static TextStyle get slogan => GoogleFonts.poppins(
-    fontSize: 17,
-    fontWeight: FontWeight.w400,
-    color: AppColors.light.onPrimary, // Igual nas duas paletas (sobre laranja)
-    letterSpacing: 0.3,
-  );
 }
