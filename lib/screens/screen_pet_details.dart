@@ -9,16 +9,14 @@ import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/utils/offline_guard.dart';
+import 'package:appets/core/utils/whatsapp_launcher.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
-import 'package:appets/widgets/pet/widget_pet_details_info.dart'
-    show normalizeWhatsAppPhone;
 import 'package:appets/widgets/pet/widget_pet_gallery.dart';
 import 'package:appets/widgets/pet/widget_pet_full_screen_gallery.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Tela de detalhes com imagens e informações do pet selecionado.
 class PetDetailsScreen extends StatefulWidget {
@@ -374,33 +372,9 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     );
   }
 
-  Future<void> _onContactPressed() async {
-    final normalized = normalizeWhatsAppPhone(widget.pet.ownerPhone);
-    if (normalized.isEmpty) {
-      if (!mounted) return;
-      WGDialog.showAction(
+  Future<void> _onContactPressed() => openWhatsAppContact(
         context,
-        title: SharedStrings.NOTICE_TITLE,
-        message: PetDetailsStrings.OWNER_PHONE_UNAVAILABLE,
+        ownerPhone: widget.pet.ownerPhone,
+        petName: widget.pet.name,
       );
-      return;
-    }
-
-    final message = Uri.encodeComponent(
-      PetDetailsStrings.whatsAppMessage(widget.pet.name),
-    );
-    final url = Uri.parse('https://wa.me/$normalized?text=$message');
-
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      if (!mounted) return;
-      WGDialog.showAction(
-        context,
-        title: SharedStrings.ERROR_TITLE,
-        message: PetDetailsStrings.WHATSAPP_ERROR,
-        actionColor: context.appColors.error,
-      );
-    }
-  }
 }

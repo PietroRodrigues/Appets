@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/utils/whatsapp_launcher.dart';
 import 'package:appets/models/enums/enums_app.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/display/widget_info_row.dart';
@@ -92,6 +94,77 @@ void main() {
 
     expect(find.text(SharedStrings.NOTICE_TITLE), findsOneWidget);
     expect(find.text(PetDetailsStrings.OWNER_PHONE_UNAVAILABLE), findsOneWidget);
+  });
+
+  /// Canal legado do url_launcher, usado quando nenhum plugin nativo
+  /// está registrado (caso dos testes Dart).
+  const urlLauncherChannel = MethodChannel('plugins.flutter.io/url_launcher');
+
+  /// Simula a resposta da plataforma ao `launch` do url_launcher.
+  void mockLaunch(Future<Object?> Function(MethodCall call) handler) {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(urlLauncherChannel, (call) => handler(call));
+  }
+
+  /// Rola até o botão de contato e o toca, estabilizando a UI.
+  Future<void> tapContactButton(WidgetTester tester) async {
+    await tester.ensureVisible(find.text(PetDetailsStrings.CONTACT_BUTTON));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(PetDetailsStrings.CONTACT_BUTTON));
+    await tester.pumpAndSettle();
+  }
+
+  group('contato via WhatsApp', () {
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(urlLauncherChannel, null);
+    });
+
+    //624
+    testWidgets('abre o WhatsApp com a URL normalizada, sem diálogos', (
+      tester,
+    ) async {
+      Object? launchedUrl;
+      mockLaunch((call) async {
+        launchedUrl = call.arguments['url'];
+        return true;
+      });
+
+      await tester.pumpWidget(wrap(WGPetDetailsInfo(pet: buildPet())));
+      await tapContactButton(tester);
+
+      expect(find.text(SharedStrings.NOTICE_TITLE), findsNothing);
+      expect(find.text(SharedStrings.ERROR_TITLE), findsNothing);
+      expect(find.text(PetDetailsStrings.WHATSAPP_ERROR), findsNothing);
+      expect(launchedUrl, isA<String>());
+      expect(launchedUrl as String, contains('wa.me/5511987654321'));
+    });
+
+    //625
+    testWidgets('mostra o erro quando a plataforma não abre o link', (
+      tester,
+    ) async {
+      mockLaunch((call) async => false);
+
+      await tester.pumpWidget(wrap(WGPetDetailsInfo(pet: buildPet())));
+      await tapContactButton(tester);
+
+      expect(find.text(SharedStrings.ERROR_TITLE), findsOneWidget);
+      expect(find.text(PetDetailsStrings.WHATSAPP_ERROR), findsOneWidget);
+    });
+
+    //626
+    testWidgets('mostra o erro quando a plataforma lança exceção', (
+      tester,
+    ) async {
+      mockLaunch((call) async => throw PlatformException(code: 'Error'));
+
+      await tester.pumpWidget(wrap(WGPetDetailsInfo(pet: buildPet())));
+      await tapContactButton(tester);
+
+      expect(find.text(SharedStrings.ERROR_TITLE), findsOneWidget);
+      expect(find.text(PetDetailsStrings.WHATSAPP_ERROR), findsOneWidget);
+    });
   });
 
   group('normalizeWhatsAppPhone (item 44)', () {

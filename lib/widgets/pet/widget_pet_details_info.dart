@@ -1,22 +1,12 @@
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
-import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
+import 'package:appets/core/utils/whatsapp_launcher.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/display/widget_info_row.dart';
-import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-/// Normaliza o telefone para o WhatsApp: mantém apenas dígitos e prefixa
-/// `55` somente quando o número não começa já com o DDI do Brasil.
-String normalizeWhatsAppPhone(String phone) {
-  final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
-  if (digits.isEmpty) return '';
-  return digits.startsWith('55') ? digits : '55$digits';
-}
 
 /// Painel de informações reutilizável da tela de detalhes do pet.
 ///
@@ -42,37 +32,11 @@ class WGPetDetailsInfo extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
 
-        onPressed: () async {
-          final normalized = normalizeWhatsAppPhone(pet.ownerPhone);
-          if (normalized.isEmpty) {
-            if (context.mounted) {
-              WGDialog.showAction(
-                context,
-                title: SharedStrings.NOTICE_TITLE,
-                message: PetDetailsStrings.OWNER_PHONE_UNAVAILABLE,
-              );
-            }
-            return;
-          }
-
-          final message = Uri.encodeComponent(
-            PetDetailsStrings.whatsAppMessage(pet.name),
-          );
-          final url = Uri.parse('https://wa.me/$normalized?text=$message');
-
-          if (await canLaunchUrl(url)) {
-            await launchUrl(url, mode: LaunchMode.externalApplication);
-          } else {
-            if (context.mounted) {
-              WGDialog.showAction(
-                context,
-                title: SharedStrings.ERROR_TITLE,
-                message: PetDetailsStrings.WHATSAPP_ERROR,
-                actionColor: context.appColors.error,
-              );
-            }
-          }
-        },
+        onPressed: () => openWhatsAppContact(
+          context,
+          ownerPhone: pet.ownerPhone,
+          petName: pet.name,
+        ),
 
         child: Text(
           PetDetailsStrings.CONTACT_BUTTON,

@@ -38,6 +38,14 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Visibilidade de apps capazes de abrir links https (ex.: WhatsApp
+             via wa.me). Necessária a partir do Android 11 (API 30) para que o
+             url_launcher consulte/abra o link no app externo. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
