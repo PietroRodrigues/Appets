@@ -4,6 +4,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/widgets/fields/widget_text_field.dart';
+import 'package:appets/widgets/fields/widget_dropdown_field.dart';
 import 'package:appets/widgets/buttons/widget_buttons.dart';
 
 /// Janela de diálogo modal reutilizável do app (modular).
@@ -56,6 +57,11 @@ class WGDialog extends StatefulWidget {
     this.obscureText = false,
     this.fieldValidator,
     this.errorMessage,
+    this.dropdownItems,
+    this.dropdownValue,
+    this.dropdownLabel,
+    this.dropdownValidator,
+    this.dropdownOnChanged,
   });
 
   //══════════════════════════════════════════════════════════════
@@ -101,6 +107,26 @@ class WGDialog extends StatefulWidget {
 
   /// Erro exibido inline sob o campo (ex.: senha incorreta).
   final String? errorMessage;
+
+  //═══════════════════════════════════════════════════════════════
+  // DROPDOWN MODE
+  //═══════════════════════════════════════════════════════════════
+
+  /// Lista de opções para um dropdown de seleção (ex.: motivos de denúncia).
+  /// Quando fornecido, um DropdownButtonFormField é exibido no conteúdo.
+  final List<String>? dropdownItems;
+
+  /// Valor atualmente selecionado no dropdown.
+  final String? dropdownValue;
+
+  /// Rótulo exibido no campo do dropdown.
+  final String? dropdownLabel;
+
+  /// Validador do campo dropdown.
+  final FormFieldValidator<String>? dropdownValidator;
+
+  /// Callback disparado quando o valor do dropdown é alterado.
+  final ValueChanged<String>? dropdownOnChanged;
 
   //══════════════════════════════════════════════════════════════
   // STATIC HELPERS (APIs tipadas)
@@ -198,6 +224,9 @@ class _WGDialogState extends State<WGDialog> {
   late final TextEditingController _controller;
   late final GlobalKey<FormState> _formKey;
 
+  /// Valor selecionado no dropdown, usado quando [widget.dropdownItems] é informado.
+  String? _dropdownValue;
+
   bool get _hasField => widget.hintText != null;
 
   @override
@@ -223,6 +252,10 @@ class _WGDialogState extends State<WGDialog> {
   Widget build(BuildContext context) {
     final confirmColor = widget.confirmColor ?? context.appColors.error;
     return AlertDialog(
+      // 10% a mais de largura para os botões: a margem lateral padrão (40)
+      // passa a 27, liberando ~26px divididos entre os dois botões. Em telas
+      // estreitas o `Dialog` aplica clamp e nada estoura.
+      insetPadding: const EdgeInsets.symmetric(horizontal: 27, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text(widget.title, style: ThemeTextStyles.heading(context.appColors)),
       content: _buildContent(),
@@ -235,9 +268,35 @@ class _WGDialogState extends State<WGDialog> {
     );
   }
 
-  /// Constrói o corpo: mensagem e, opcionalmente, o campo de texto.
+  /// Constrói o corpo: mensagem e, opcionalmente, o campo de texto ou dropdown.
   Widget _buildContent() {
     final message = _buildMessage();
+
+    // Se houver dropdown de itens, exibe o WGDropdownField (widget próprio,
+    // responsivo e sem overflow).
+    if (widget.dropdownItems != null && widget.dropdownItems!.isNotEmpty) {
+      return Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            message,
+            const SizedBox(height: 16),
+            WGDropdownField(
+              items: widget.dropdownItems!,
+              hintText: widget.dropdownLabel ?? '',
+              validator: widget.dropdownValidator,
+              onChanged: (value) {
+                setState(() => _dropdownValue = value);
+                if (value != null) widget.dropdownOnChanged?.call(value);
+              },
+            ),
+          ],
+        ),
+      );
+    }
 
     if (!_hasField) return message;
 
@@ -310,6 +369,9 @@ class _WGDialogState extends State<WGDialog> {
 
   /// Linha com dois botões iguais, lado a lado: cancelar (contorno) e
   /// confirmar (preenchido).
+  ///
+  /// Cada botão ocupa metade da linha (largura do diálogo com 10% a mais,
+  /// definida em [_kDialogMinWidth]) e o rótulo fica centralizado.
   Widget _buildButtonsRow(Color confirmColor) {
     final onConfirm = context.appColors.onColor(confirmColor);
     return Row(
@@ -320,15 +382,27 @@ class _WGDialogState extends State<WGDialog> {
             onPressed: () => Navigator.pop(context),
             borderColor: context.appColors.textSecondary,
             textColor: context.appColors.textSecondary,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: WGButton(
             text: widget.confirmLabel,
-            onPressed: () => _hasField ? _submitField() : Navigator.pop(context, true),
+            onPressed: () {
+              if (widget.dropdownItems != null &&
+                  widget.dropdownItems!.isNotEmpty) {
+                if (!(_formKey.currentState?.validate() ?? false)) return;
+                Navigator.pop(context, _dropdownValue);
+              } else if (_hasField) {
+                _submitField();
+              } else {
+                Navigator.pop(context, true);
+              }
+            },
             backgroundColor: confirmColor,
             foregroundColor: onConfirm,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
           ),
         ),
       ],

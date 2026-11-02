@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:appets/models/user_model.dart';
+import 'package:appets/core/constants/constants_strings_legal.dart';
 
 /// Opera sobre o documento `users` no Firestore.
 class FirestoreService {
@@ -52,6 +53,20 @@ class FirestoreService {
   // Atualiza campos do documento do usuário.
   Future<void> updateUser(String uid, Map<String, dynamic> data) async {
     await _db.collection('users').doc(uid).update(data);
+  }
+
+  /// Registra o aceite da versão atual dos documentos legais no servidor.
+  Future<void> acceptCurrentTerms(String uid) async {
+    await updateUser(uid, {
+      'termsVersion': LegalStrings.TERMS_VERSION,
+      'termsAcceptedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Indica se o documento ainda não registra o aceite da versão atual.
+  Future<bool> needsCurrentTermsAcceptance(String uid) async {
+    final user = await getUser(uid);
+    return user?.termsVersion != LegalStrings.TERMS_VERSION;
   }
 
   // Adiciona um pet aos favoritos do usuário.

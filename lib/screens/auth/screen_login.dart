@@ -3,6 +3,7 @@ import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_auth_error.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/validators/validators.dart';
@@ -76,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
       return;
     }
 
+    var needsTermsAcceptance = false;
     final result = await pushProcess(
       message: AuthStrings.LOGIN_LOADING,
       task: () async {
@@ -93,6 +95,10 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
               await AuthService.instance.ensureUserDocument(
                 UserModel.fromFirebaseUser(firebaseUser),
               );
+              needsTermsAcceptance =
+                  await FirestoreService.instance.needsCurrentTermsAcceptance(
+                    firebaseUser.uid,
+                  );
             } catch (e) {
               // Desfaz a sessão para evitar perfil fantasma: logado no Auth
               // mas sem documento no Firestore.
@@ -119,7 +125,10 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
 
     switch (result?.status) {
       case WGProcessStatus.success:
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushReplacementNamed(
+          context,
+          needsTermsAcceptance ? AppRoutes.termsAcceptance : AppRoutes.home,
+        );
       case WGProcessStatus.failure:
         if (mounted) {
           await WGDialog.showAction(
@@ -138,6 +147,7 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
   /// Autentica o usuário com a conta Google, garante o cadastro no
   /// Firestore e navega para a Home.
   void _loginWithGoogle() async {
+    var needsTermsAcceptance = false;
     final result = await pushProcess(
       message: AuthStrings.GOOGLE_LOGIN_LOADING,
       task: () async {
@@ -153,6 +163,10 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
               await AuthService.instance.ensureUserDocument(
                 UserModel.fromFirebaseUser(firebaseUser),
               );
+              needsTermsAcceptance =
+                  await FirestoreService.instance.needsCurrentTermsAcceptance(
+                    firebaseUser.uid,
+                  );
             } catch (e) {
               try {
                 await AuthService.instance.logout();
@@ -175,7 +189,10 @@ class _LoginScreenState extends State<LoginScreen> with WGProcessMixin {
 
     switch (result?.status) {
       case WGProcessStatus.success:
-        Navigator.pushReplacementNamed(context, AppRoutes.home);
+        Navigator.pushReplacementNamed(
+          context,
+          needsTermsAcceptance ? AppRoutes.termsAcceptance : AppRoutes.home,
+        );
       case WGProcessStatus.canceled:
         if (mounted) {
           await WGDialog.showAction(

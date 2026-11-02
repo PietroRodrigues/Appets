@@ -1,15 +1,18 @@
 import 'package:appets/core/constants/constants_strings_home.dart';
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
+import 'package:appets/core/constants/constants_strings_report.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
+import 'package:appets/core/services/report_service.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/theme/theme_text_styles.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/display/widget_pet_image.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
+import 'package:appets/widgets/feedback/widget_report_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -85,8 +88,9 @@ class _WGPetCardState extends State<WGPetCard>
     }
 
     // Escuta mudanças de favorito fora do build para disparar a animação.
-    _favoriteListenable =
-        FavoritesService.instance.isFavoriteListenable(widget.pet.id);
+    _favoriteListenable = FavoritesService.instance.isFavoriteListenable(
+      widget.pet.id,
+    );
     _favoriteListenable?.addListener(_onFavoriteChanged);
   }
 
@@ -95,8 +99,9 @@ class _WGPetCardState extends State<WGPetCard>
     super.didUpdateWidget(oldWidget);
     if (widget.pet.id != oldWidget.pet.id) {
       _favoriteListenable?.removeListener(_onFavoriteChanged);
-      _favoriteListenable =
-          FavoritesService.instance.isFavoriteListenable(widget.pet.id);
+      _favoriteListenable = FavoritesService.instance.isFavoriteListenable(
+        widget.pet.id,
+      );
       _lastFavorited = _isFavorited;
       _starController.value = _lastFavorited ? 1.0 : 0.0;
       _favoriteListenable?.addListener(_onFavoriteChanged);
@@ -157,6 +162,41 @@ class _WGPetCardState extends State<WGPetCard>
     HapticFeedback.mediumImpact();
   }
 
+  Future<void> _reportPet() async {
+    final author = AuthService.instance.currentUser;
+    if (author == null ||
+        author.uid == widget.pet.ownerId ||
+        widget.pet.id.isEmpty) {
+      return;
+    }
+    if (!await ensureOnline(context)) return;
+
+    if (!mounted) return;
+    final reason = await showReportDialog(context);
+    if (!mounted || reason == null) return;
+
+    try {
+      await ReportService.instance.createReport(
+        authorId: author.uid,
+        targetId: widget.pet.id,
+        reason: reason,
+      );
+      if (mounted) {
+        WGSnackBar.showSuccess(context, ReportStrings.REPORT_SUCCESS);
+      }
+    } catch (_) {
+      if (mounted) {
+        WGSnackBar.showError(context, ReportStrings.REPORT_ERROR);
+      }
+    }
+  }
+
+  /// Wrapper para disparar a denúncia sem aguardar, usado como tearoff
+  /// no callback `onTap` do botão de banderinha.
+  void _onReportTap() {
+    _reportPet();
+  }
+
   // Constrói o layout do card com imagem, informações e botão de edição.
   @override
   Widget build(BuildContext context) {
@@ -214,7 +254,8 @@ class _WGPetCardState extends State<WGPetCard>
         if (widget.isMyPublication) ...[
           _PetCardEditButton(onTap: widget.onEdit),
           _PetCardDeleteButton(onTap: widget.onDelete),
-        ],
+        ] else
+          _PetCardReportButton(onTap: _onReportTap),
       ],
     );
   }
@@ -240,11 +281,7 @@ class _PetCardImage extends StatelessWidget {
       children: [
         // Imagem do pet (cobre toda a área do card, sem molduras brancas).
         Positioned.fill(
-          child: WGPetImage(
-            url: url,
-            memCacheWidth: 480,
-            fit: BoxFit.cover,
-          ),
+          child: WGPetImage(url: url, memCacheWidth: 480, fit: BoxFit.cover),
         ),
 
         // Estrela de favorito (canto superior esquerdo).
@@ -255,10 +292,7 @@ class _PetCardImage extends StatelessWidget {
             scale: scale,
             child: IconButton(
               onPressed: onFavoritePressed,
-              constraints: const BoxConstraints(
-                minWidth: 48,
-                minHeight: 48,
-              ),
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               tooltip: favorited
                   ? PetDetailsStrings.REMOVE_FROM_FAVORITES
                   : PetDetailsStrings.ADD_TO_FAVORITES,
@@ -269,10 +303,7 @@ class _PetCardImage extends StatelessWidget {
                     : context.appColors.hint,
                 size: 30,
                 shadows: [
-                  Shadow(
-                    color: context.appColors.shadowCard,
-                    blurRadius: 4,
-                  ),
+                  Shadow(color: context.appColors.shadowCard, blurRadius: 4),
                 ],
               ),
             ),
@@ -308,8 +339,9 @@ class _PetCardInfo extends StatelessWidget {
               pet.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: ThemeTextStyles.subtitle(context.appColors)
-                  .copyWith(fontSize: 16),
+              style: ThemeTextStyles.subtitle(
+                context.appColors,
+              ).copyWith(fontSize: 16),
             ),
             if (pet.speciesRaceLabel.isNotEmpty) ...[
               const SizedBox(height: 2),
@@ -340,8 +372,9 @@ class _PetCardInfo extends StatelessWidget {
                     const SizedBox(width: 3),
                     Text(
                       pet.ageLabel,
-                      style: ThemeTextStyles.body(context.appColors)
-                          .copyWith(fontSize: 12),
+                      style: ThemeTextStyles.body(
+                        context.appColors,
+                      ).copyWith(fontSize: 12),
                     ),
                   ],
                 ),
@@ -358,8 +391,9 @@ class _PetCardInfo extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: _publicationTypeColor(context.appColors)
-                    .withValues(alpha: 0.12),
+                color: _publicationTypeColor(
+                  context.appColors,
+                ).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -464,6 +498,33 @@ class _PetCardDeleteButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Botão flutuante para denunciar um anúncio que não pertence ao usuário.
+/// Reduzido em 30% e posicionado no canto inferior direito do card.
+class _PetCardReportButton extends StatelessWidget {
+  const _PetCardReportButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    // 30% menor que o tamanho padrão (24.0 * 0.7 ≈ 16.8)
+    final double reportIconSize = 16;
+
+    return Positioned(
+      bottom: 10,
+      right: 10,
+      child: IconButton.filledTonal(
+        onPressed: onTap,
+        tooltip: ReportStrings.REPORT_ACTION,
+        icon: const Icon(Icons.flag_outlined),
+        iconSize: reportIconSize,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.all(4),
       ),
     );
   }

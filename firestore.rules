@@ -35,7 +35,15 @@ service cloud.firestore {
         && (!('address' in request.resource.data)
           || isNonEmptyString(request.resource.data.address))
         && (!('photoUrl' in request.resource.data)
-          || request.resource.data.photoUrl is string);
+          || request.resource.data.photoUrl is string)
+        && (!('termsVersion' in request.resource.data)
+          || (isNonEmptyString(request.resource.data.termsVersion)
+            && 'termsAcceptedAt' in request.resource.data
+            && request.resource.data.termsAcceptedAt is timestamp))
+        && (!('termsAcceptedAt' in request.resource.data)
+          || ('termsVersion' in request.resource.data
+            && isNonEmptyString(request.resource.data.termsVersion)
+            && request.resource.data.termsAcceptedAt is timestamp));
     }
 
     // Valida o update do usuário por CAMPO PRESENTE no doc resultante.
@@ -48,7 +56,15 @@ service cloud.firestore {
         && (!('photoUrl' in doc) || doc.photoUrl is string)
         && (!('favoritePetIds' in doc) || isList(doc.favoritePetIds))
         && (!('myPublishedPetIds' in doc) || isList(doc.myPublishedPetIds))
-        && (!('createdAt' in doc) || doc.createdAt is timestamp);
+        && (!('createdAt' in doc) || doc.createdAt is timestamp)
+        && (!('termsVersion' in doc)
+          || (isNonEmptyString(doc.termsVersion)
+            && 'termsAcceptedAt' in doc
+            && doc.termsAcceptedAt is timestamp))
+        && (!('termsAcceptedAt' in doc)
+          || ('termsVersion' in doc
+            && isNonEmptyString(doc.termsVersion)
+            && doc.termsAcceptedAt is timestamp));
     }
 
     // Valida o update do pet por CAMPO PRESENTE no doc resultante.

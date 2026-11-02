@@ -1,4 +1,5 @@
 import 'package:appets/core/constants/constants_strings_auth.dart';
+import 'package:appets/core/constants/constants_strings_legal.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/auth_service.dart';
@@ -34,6 +35,7 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _hasAcceptedTerms = false;
 
   // Libera os controladores ao sair da tela.
   @override
@@ -77,7 +79,11 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
           final name = _nameController.text.trim();
           final user = credential.user;
           if (user != null) {
-            final userModel = UserModel.fromFirebaseUser(user, name: name);
+            final userModel = UserModel.fromFirebaseUser(
+              user,
+              name: name,
+              termsVersion: LegalStrings.TERMS_VERSION,
+            );
             await AuthService.instance.ensureUserDocument(userModel);
           }
 
@@ -235,8 +241,82 @@ class _RegisterScreenState extends State<RegisterScreen> with WGProcessMixin {
 
           const SizedBox(height: 12),
 
+          FormField<bool>(
+            initialValue: _hasAcceptedTerms,
+            validator: (accepted) => accepted == true
+                ? null
+                : LegalStrings.ACCEPT_TERMS_REQUIRED,
+            builder: (field) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: _hasAcceptedTerms,
+                      onChanged: (value) {
+                        final accepted = value ?? false;
+                        setState(() => _hasAcceptedTerms = accepted);
+                        field.didChange(accepted);
+                      },
+                    ),
+                    Expanded(
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            LegalStrings.ACCEPT_TERMS_PREFIX,
+                            style: ThemeTextStyles.caption(context.appColors),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.terms,
+                            ),
+                            child: const Text(LegalStrings.TERMS_TITLE),
+                          ),
+                          Text(
+                            LegalStrings.ACCEPT_TERMS_AND,
+                            style: ThemeTextStyles.caption(context.appColors),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.privacyPolicy,
+                            ),
+                            child: const Text(LegalStrings.PRIVACY_TITLE),
+                          ),
+                          Text(
+                            '.',
+                            style: ThemeTextStyles.caption(context.appColors),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (field.errorText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Text(
+                      field.errorText!,
+                      style: TextStyle(
+                        color: context.appColors.error,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           // Botão Criar Conta
-          WGAuthButton(text: AuthStrings.CREATE_ACCOUNT, onPressed: _register),
+          WGAuthButton(
+            text: AuthStrings.CREATE_ACCOUNT,
+            onPressed: _hasAcceptedTerms ? _register : null,
+          ),
 
           const SizedBox(height: 12),
 

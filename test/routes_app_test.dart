@@ -17,10 +17,13 @@ void main() {
           AppRoutes.settings,
           AppRoutes.accountData,
           AppRoutes.about,
+          AppRoutes.privacyPolicy,
+          AppRoutes.terms,
+          AppRoutes.termsAcceptance,
         ]),
       );
       // Sem rotas declaradas mas não registradas (nem o contrário).
-      expect(AppRoutes.routes, hasLength(8));
+      expect(AppRoutes.routes, hasLength(11));
     });
   });
 }

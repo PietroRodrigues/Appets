@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_shared.dart';
+import 'package:appets/core/constants/constants_strings_legal.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/auth_service.dart';
@@ -37,8 +39,11 @@ class _FakeImageCache implements BaseCacheManager {
 }
 
 void main() {
+  late FakeFirebaseFirestore db;
+
   setUp(() {
-    FirestoreService.instance.debugDb = FakeFirebaseFirestore();
+    db = FakeFirebaseFirestore();
+    FirestoreService.instance.debugDb = db;
     AuthService.instance.debugAuthStateError = null;
     HomeDataService.instance.reset();
     AppImageCache.instance.debugManager = _FakeImageCache();
@@ -60,6 +65,8 @@ void main() {
         AppRoutes.splash: (_) => const SplashScreen(),
         AppRoutes.home: (_) => const Scaffold(body: Text('TELA HOME')),
         AppRoutes.login: (_) => const Scaffold(body: Text('TELA LOGIN')),
+        AppRoutes.termsAcceptance: (_) =>
+            const Scaffold(body: Text('TELA TERMOS')),
       },
     );
   }
@@ -71,6 +78,12 @@ void main() {
 
   //240
   testWidgets('usuário logado é encaminhado para o Home', (tester) async {
+    await db.collection('users').doc('uid_1').set({
+      'name': 'Ana',
+      'email': 'ana@test.com',
+      'termsVersion': LegalStrings.TERMS_VERSION,
+      'termsAcceptedAt': Timestamp.now(),
+    });
     await pumpSplash(
       tester,
       MockFirebaseAuth(signedIn: true, mockUser: MockUser(uid: 'uid_1')),
@@ -80,6 +93,17 @@ void main() {
     expect(find.text('TELA HOME'), findsOneWidget);
     // A splash pré-carrega os dados da Home antes de navegar.
     expect(HomeDataService.instance.loaded, isTrue);
+  });
+
+  testWidgets('conta sem a versão atual vai para o reaceite', (tester) async {
+    await pumpSplash(
+      tester,
+      MockFirebaseAuth(signedIn: true, mockUser: MockUser(uid: 'uid_1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('TELA TERMOS'), findsOneWidget);
+    expect(find.text('TELA HOME'), findsNothing);
   });
 
   //241
@@ -123,6 +147,12 @@ void main() {
       signedIn: true,
       mockUser: MockUser(uid: 'uid_1'),
     );
+    await db.collection('users').doc('uid_1').set({
+      'name': 'Ana',
+      'email': 'ana@test.com',
+      'termsVersion': LegalStrings.TERMS_VERSION,
+      'termsAcceptedAt': Timestamp.now(),
+    });
 
     await pumpSplash(tester, auth);
     await tester.pumpAndSettle();

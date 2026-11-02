@@ -12,6 +12,7 @@ class UserModel {
     this.photoUrl = '',
     this.favoritePetIds = const [],
     this.myPublishedPetIds = const [],
+    this.termsVersion,
   });
 
   final String id;
@@ -27,6 +28,9 @@ class UserModel {
   /// IDs dos pets publicados pelo usuário.
   final List<String> myPublishedPetIds;
 
+  /// Versão dos documentos legais aceita pela pessoa usuária.
+  final String? termsVersion;
+
   // Cria uma cópia do usuário com os campos informados substituídos.
   UserModel copyWith({
     String? name,
@@ -36,6 +40,7 @@ class UserModel {
     String? photoUrl,
     List<String>? favoritePetIds,
     List<String>? myPublishedPetIds,
+    String? termsVersion,
   }) {
     return UserModel(
       id: id,
@@ -46,6 +51,7 @@ class UserModel {
       photoUrl: photoUrl ?? this.photoUrl,
       favoritePetIds: favoritePetIds ?? this.favoritePetIds,
       myPublishedPetIds: myPublishedPetIds ?? this.myPublishedPetIds,
+      termsVersion: termsVersion ?? this.termsVersion,
     );
   }
 
@@ -75,6 +81,10 @@ class UserModel {
       if (phone.isNotEmpty) 'phone': phone,
       if (address.isNotEmpty) 'address': address,
       if (photoUrl.isNotEmpty) 'photoUrl': photoUrl,
+      if (termsVersion != null) ...{
+        'termsVersion': termsVersion,
+        'termsAcceptedAt': FieldValue.serverTimestamp(),
+      },
     };
   }
 
@@ -91,16 +101,22 @@ class UserModel {
       favoritePetIds: List<String>.from(data['favoritePetIds'] as List? ?? const []),
       myPublishedPetIds:
           List<String>.from(data['myPublishedPetIds'] as List? ?? const []),
+      termsVersion: data['termsVersion'] as String?,
     );
   }
 
   // Cria um usuário a partir da conta autenticada do Firebase Auth.
-  factory UserModel.fromFirebaseUser(fb.User user, {String? name}) {
+  factory UserModel.fromFirebaseUser(
+    fb.User user, {
+    String? name,
+    String? termsVersion,
+  }) {
     return UserModel(
       id: user.uid,
       name: name ?? user.displayName ?? '',
       email: user.email ?? '',
       photoUrl: user.photoURL ?? '',
+      termsVersion: termsVersion,
     );
   }
 }

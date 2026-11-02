@@ -14,6 +14,11 @@ class SettingsStrings {
 
   static const APP_ABOUT_TITLE = 'Sobre o APPets';
 
+  static const PRIVACY_POLICY_TITLE = 'Política de Privacidade';
+  static const PRIVACY_POLICY_SUBTITLE = 'Como tratamos seus dados';
+  static const TERMS_TITLE = 'Termos de Uso';
+  static const TERMS_SUBTITLE = 'Regras para usar o APPets';
+
   /// Versão exibida na tela "Sobre". Lida dinamicamente do pubspec.yaml
   /// via [readAppVersion] para evitar divergência com o build number.
   static const APP_ABOUT_SUBTITLE = 'Versão';

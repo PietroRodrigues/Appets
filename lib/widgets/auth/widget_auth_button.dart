@@ -9,7 +9,7 @@ class WGAuthButton extends StatelessWidget {
   const WGAuthButton({super.key, required this.text, required this.onPressed});
 
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {

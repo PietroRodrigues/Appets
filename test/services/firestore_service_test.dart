@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/constants/constants_strings_legal.dart';
 import 'package:appets/models/user_model.dart';
 
 void main() {
@@ -76,6 +78,29 @@ void main() {
 
       final doc = await db.collection('users').doc('uid_1').get();
       expect(doc.get('phone'), '(11) 99999-0000');
+    });
+
+    test('acceptCurrentTerms grava versão e data do aceite', () async {
+      await service.createUser(user);
+
+      await service.acceptCurrentTerms('uid_1');
+
+      final doc = await db.collection('users').doc('uid_1').get();
+      expect(doc.get('termsVersion'), LegalStrings.TERMS_VERSION);
+      expect(doc.get('termsAcceptedAt'), isNotNull);
+      expect(await service.needsCurrentTermsAcceptance('uid_1'), isFalse);
+    });
+
+    test('needsCurrentTermsAcceptance exige aceite ausente ou desatualizado',
+        () async {
+      await service.createUser(user);
+      expect(await service.needsCurrentTermsAcceptance('uid_1'), isTrue);
+
+      await db.collection('users').doc('uid_1').update({
+        'termsVersion': 'versão-antiga',
+        'termsAcceptedAt': Timestamp.now(),
+      });
+      expect(await service.needsCurrentTermsAcceptance('uid_1'), isTrue);
     });
 
     //327

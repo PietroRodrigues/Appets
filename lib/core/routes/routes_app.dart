@@ -6,6 +6,9 @@ import 'package:appets/screens/screen_account_data.dart';
 import 'package:appets/screens/screen_home.dart';
 import 'package:appets/screens/screen_settings.dart';
 import 'package:appets/screens/screen_splash.dart';
+import 'package:appets/screens/screen_privacy_policy.dart';
+import 'package:appets/screens/screen_terms.dart';
+import 'package:appets/screens/screen_terms_acceptance.dart';
 import 'package:flutter/material.dart';
 
 /// Rotas nomeadas do aplicativo.
@@ -24,6 +27,9 @@ class AppRoutes {
   static const settings = '/settings';
   static const accountData = '/account-data';
   static const about = '/about';
+  static const privacyPolicy = '/privacy-policy';
+  static const terms = '/terms';
+  static const termsAcceptance = '/terms-acceptance';
 
   /// Mapa de rotas usado pelo `MaterialApp`. Cobre todas as constantes
   /// declaradas acima.
@@ -36,5 +42,8 @@ class AppRoutes {
         settings: (_) => const SettingsScreen(),
         accountData: (_) => const AccountDataScreen(),
         about: (_) => const AboutScreen(),
+        privacyPolicy: (_) => const PrivacyPolicyScreen(),
+        terms: (_) => const TermsScreen(),
+        termsAcceptance: (_) => const TermsAcceptanceScreen(),
       };
 }

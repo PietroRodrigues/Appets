@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:appets/core/constants/constants_strings_auth.dart';
+import 'package:appets/core/constants/constants_strings_legal.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/app_image_cache.dart';
@@ -103,6 +104,8 @@ Widget _buildApp() {
     routes: {
       AppRoutes.login: (_) => const LoginScreen(),
       AppRoutes.home: (_) => const Scaffold(body: Text('payload_home')),
+      AppRoutes.termsAcceptance: (_) =>
+          const Scaffold(body: Text('payload_terms_acceptance')),
       AppRoutes.register: (_) => const Scaffold(body: Text('payload_register')),
       AppRoutes.forgotPassword: (_) =>
           const Scaffold(body: Text('payload_forgot')),
@@ -155,7 +158,7 @@ void main() {
     await _fillForm(tester);
     await _tapLogin(tester);
 
-    expect(find.text('payload_home'), findsOneWidget);
+    expect(find.text('payload_terms_acceptance'), findsOneWidget);
 
     // Sem doc prévio, o login cria o documento do usuário (fim do fantasma).
     final doc = await db.collection('users').doc('uid_1').get();
@@ -179,6 +182,8 @@ void main() {
       'address': 'Rua A',
       'favoritePetIds': ['pet_a', 'pet_b'],
       'myPublishedPetIds': ['pet_b'],
+      'termsVersion': LegalStrings.TERMS_VERSION,
+      'termsAcceptedAt': Timestamp.now(),
     });
 
     await _pumpLogin(tester);

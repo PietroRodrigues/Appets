@@ -7,6 +7,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:appets/core/constants/constants_strings_auth.dart';
+import 'package:appets/core/constants/constants_strings_legal.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/services/app_image_cache.dart';
 import 'package:appets/core/services/auth_service.dart';
@@ -115,6 +116,11 @@ Future<void> _tapCreate(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> _acceptTerms(WidgetTester tester) async {
+  await tester.tap(find.byType(Checkbox));
+  await tester.pumpAndSettle();
+}
+
 /// Cache de imagens falso: não toca disco/plugin nos testes.
 class _FakeImageCache implements BaseCacheManager {
   @override
@@ -136,15 +142,14 @@ void main() {
   });
 
   //231
-  testWidgets('formulário vazio mostra os erros antes de chamar o Firebase',
+  testWidgets('botão de cadastro fica bloqueado sem o aceite dos termos',
       (tester) async {
     await _pumpRegister(tester);
 
-    await _tapCreate(tester);
-
-    expect(find.text(AuthStrings.NAME_REQUIRED), findsOneWidget);
-    expect(find.text(AuthStrings.EMAIL_REQUIRED), findsOneWidget);
-    expect(find.text(AuthStrings.PASSWORD_REQUIRED), findsNWidgets(2));
+    expect(
+      tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
+      isNull,
+    );
     expect(find.byType(WGProcessLoadingScreen), findsNothing);
   });
 
@@ -154,6 +159,7 @@ void main() {
     await _pumpRegister(tester);
 
     await _fillForm(tester, confirm: '654321');
+    await _acceptTerms(tester);
     await _tapCreate(tester);
 
     expect(find.text(AuthStrings.PASSWORD_MISMATCH), findsOneWidget);
@@ -168,6 +174,7 @@ void main() {
 
     await _pumpRegister(tester);
     await _fillForm(tester);
+    await _acceptTerms(tester);
     await _tapCreate(tester);
 
     expect(find.text(AuthStrings.EMAIL_ALREADY_IN_USE), findsOneWidget);
@@ -182,6 +189,7 @@ void main() {
 
     await _pumpRegister(tester);
     await _fillForm(tester);
+    await _acceptTerms(tester);
     await _tapCreate(tester);
 
     expect(find.text(AuthStrings.ACCOUNT_CREATED), findsOneWidget);
@@ -195,6 +203,8 @@ void main() {
     final docs = await db.collection('users').get();
     expect(docs.docs, hasLength(1));
     expect(docs.docs.first.get('name'), 'Ana Teste');
+    expect(docs.docs.first.get('termsVersion'), LegalStrings.TERMS_VERSION);
+    expect(docs.docs.first.get('termsAcceptedAt'), isNotNull);
   });
 
   //235
@@ -211,6 +221,7 @@ void main() {
 
     await _pumpRegister(tester);
     await _fillForm(tester);
+    await _acceptTerms(tester);
     await _tapCreate(tester);
 
     expect(find.text(AuthStrings.ACCOUNT_CREATED), findsOneWidget);
@@ -240,6 +251,7 @@ void main() {
 
     await _pumpRegister(tester);
     await _fillForm(tester);
+    await _acceptTerms(tester);
     await _tapCreate(tester);
 
     expect(

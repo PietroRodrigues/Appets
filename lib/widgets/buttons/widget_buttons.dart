@@ -19,6 +19,7 @@ class WGButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.borderColor,
+    this.padding,
   });
 
   final String text;
@@ -31,6 +32,9 @@ class WGButton extends StatelessWidget {
 
   /// Cor da borda do botão. Quando nula, o botão não tem borda.
   final Color? borderColor;
+
+  /// Espaçamento interno do rótulo. Quando nulo, usa o padrão do tema.
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +53,7 @@ class WGButton extends StatelessWidget {
           backgroundColor: backgroundColor ?? context.appColors.secondary,
           foregroundColor: buttonForeground,
           elevation: 3,
+          padding: padding,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
             side: borderColor != null
@@ -87,6 +92,7 @@ class WGOutlinedButton extends StatelessWidget {
     this.borderColor,
     this.textColor,
     this.iconColor,
+    this.padding,
   });
 
   final String text;
@@ -99,6 +105,9 @@ class WGOutlinedButton extends StatelessWidget {
   final Color? textColor;
   final Color? iconColor;
 
+  /// Espaçamento interno do rótulo. Quando nulo, usa o padrão do tema.
+  final EdgeInsetsGeometry? padding;
+
   @override
   Widget build(BuildContext context) {
     final effectiveBackground = backgroundColor ?? context.appColors.transparent;
@@ -106,27 +115,47 @@ class WGOutlinedButton extends StatelessWidget {
     final effectiveText = textColor ?? context.appColors.primary;
     final effectiveIcon = iconColor ?? context.appColors.primary;
 
+    // Sem ícone, um OutlinedButton comum centraliza o rótulo (o .icon
+    // reservaria o slot do ícone e deslocaria o texto para a direita).
+    final buttonChild = icon != null
+        ? OutlinedButton.icon(
+            onPressed: onPressed,
+            icon: Icon(icon, size: 20, color: effectiveIcon),
+            label: Text(
+              text,
+              style: ThemeTextStyles.button.copyWith(color: effectiveText),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: effectiveBorder, width: 2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              backgroundColor: effectiveBackground,
+              elevation: 0,
+              padding: padding,
+            ),
+          )
+        : OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: effectiveBorder, width: 2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              backgroundColor: effectiveBackground,
+              elevation: 0,
+              padding: padding,
+            ),
+            child: Text(
+              text,
+              style: ThemeTextStyles.button.copyWith(color: effectiveText),
+            ),
+          );
+
     return SizedBox(
       width: width,
       height: height,
-      child: OutlinedButton.icon(
-        onPressed: onPressed,
-        icon: icon != null
-            ? Icon(icon, size: 20, color: effectiveIcon)
-            : const SizedBox.shrink(),
-        label: Text(
-          text,
-          style: ThemeTextStyles.button.copyWith(color: effectiveText),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: effectiveBorder, width: 2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          backgroundColor: effectiveBackground,
-          elevation: 0,
-        ),
-      ),
+      child: buttonChild,
     );
   }
 }

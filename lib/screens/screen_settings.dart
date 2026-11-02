@@ -46,6 +46,23 @@ class SettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
+                  const SizedBox(height: 12),
+                  WGOptionTile(
+                    icon: Icons.privacy_tip_outlined,
+                    title: SettingsStrings.PRIVACY_POLICY_TITLE,
+                    subtitle: SettingsStrings.PRIVACY_POLICY_SUBTITLE,
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.privacyPolicy,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  WGOptionTile(
+                    icon: Icons.description_outlined,
+                    title: SettingsStrings.TERMS_TITLE,
+                    subtitle: SettingsStrings.TERMS_SUBTITLE,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.terms),
+                  ),
                 ],
               ),
             ),

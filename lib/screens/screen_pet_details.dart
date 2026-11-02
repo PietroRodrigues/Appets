@@ -1,18 +1,21 @@
 import 'dart:math' as math;
 
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
+import 'package:appets/core/constants/constants_strings_report.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
 import 'package:appets/core/services/auth_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
+import 'package:appets/core/services/report_service.dart';
 import 'package:appets/core/theme/app_colors.dart';
 import 'package:appets/core/utils/offline_guard.dart';
 import 'package:appets/core/utils/whatsapp_launcher.dart';
 import 'package:appets/models/model_pet.dart';
 import 'package:appets/widgets/feedback/widget_dialogs.dart';
 import 'package:appets/widgets/feedback/widget_snackbar.dart';
+import 'package:appets/widgets/feedback/widget_report_dialog.dart';
 import 'package:appets/widgets/pet/widget_pet_gallery.dart';
 import 'package:appets/widgets/pet/widget_pet_full_screen_gallery.dart';
 import 'package:flutter/material.dart';
@@ -92,9 +95,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
   Future<void> _sharePet() async {
     try {
-      await SharePlus.instance.share(
-        ShareParams(text: widget.pet.shareText),
-      );
+      await SharePlus.instance.share(ShareParams(text: widget.pet.shareText));
     } catch (_) {
       if (!mounted) return;
       WGDialog.showAction(
@@ -103,6 +104,36 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         message: PetDetailsStrings.SHARE_ERROR,
         actionColor: context.appColors.error,
       );
+    }
+  }
+
+  /// Solicita o motivo e envia uma denúncia para este anúncio.
+  Future<void> _reportPet() async {
+    final author = AuthService.instance.currentUser;
+    if (author == null ||
+        author.uid == widget.pet.ownerId ||
+        widget.pet.id.isEmpty) {
+      return;
+    }
+    if (!await ensureOnline(context)) return;
+
+    if (!mounted) return;
+    final reason = await showReportDialog(context);
+    if (!mounted || reason == null) return;
+
+    try {
+      await ReportService.instance.createReport(
+        authorId: author.uid,
+        targetId: widget.pet.id,
+        reason: reason,
+      );
+      if (mounted) {
+        WGSnackBar.showSuccess(context, ReportStrings.REPORT_SUCCESS);
+      }
+    } catch (_) {
+      if (mounted) {
+        WGSnackBar.showError(context, ReportStrings.REPORT_ERROR);
+      }
     }
   }
 
@@ -116,20 +147,17 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: iconColor ?? context.appColors.primary,
-        ),
+        Icon(icon, size: 20, color: iconColor ?? context.appColors.primary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: valueColor,
-                  fontWeight:
-                      valueColor != null ? FontWeight.w600 : FontWeight.w400,
-                ),
+              color: valueColor,
+              fontWeight: valueColor != null
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+            ),
           ),
         ),
       ],
@@ -142,12 +170,12 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     const avatarSize = 32.0; // CircleAvatar de raio 16
     const leftPadding = 6.0;
     const gap = 8.0;
-    const reservedForActions = 112.0; // 2 botões (2 × 48) + respiro
+    const reservedForActions = 160.0; // 3 botões (3 × 48) + respiro
 
     final name = _ownerName ?? 'Usuário';
-    final style = Theme.of(context).textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-        );
+    final style = Theme.of(
+      context,
+    ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600);
     final painter = TextPainter(
       text: TextSpan(text: name, style: style),
       textScaler: MediaQuery.textScalerOf(context),
@@ -178,14 +206,16 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundImage: _ownerPhotoUrl != null &&
-                              _ownerPhotoUrl!.isNotEmpty
+                      backgroundImage:
+                          _ownerPhotoUrl != null && _ownerPhotoUrl!.isNotEmpty
                           ? NetworkImage(_ownerPhotoUrl!)
                           : null,
-                      child: _ownerPhotoUrl == null ||
-                              _ownerPhotoUrl!.isEmpty
-                          ? const Icon(Icons.person, size: 18,
-                              color: Colors.white70)
+                      child: _ownerPhotoUrl == null || _ownerPhotoUrl!.isEmpty
+                          ? const Icon(
+                              Icons.person,
+                              size: 18,
+                              color: Colors.white70,
+                            )
                           : null,
                     ),
                     const SizedBox(width: 8),
@@ -193,8 +223,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                       child: Text(
                         _ownerName ?? 'Usuário',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                          fontWeight: FontWeight.w600,
+                        ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
@@ -223,6 +253,15 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               size: 24,
             ),
           ),
+          IconButton(
+            onPressed: _reportPet,
+            tooltip: ReportStrings.REPORT_ACTION,
+            icon: Icon(
+              Icons.flag_outlined,
+              color: context.appColors.onPrimary,
+              size: 24,
+            ),
+          ),
         ],
       ),
       body: SafeArea(
@@ -237,8 +276,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 child: Text(
                   widget.pet.name,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
 
@@ -250,9 +289,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   if (widget.pet.images.isEmpty) return;
                   showDialog<void>(
                     context: context,
-                    builder: (_) => WGPetFullScreenGallery(
-                      images: widget.pet.images,
-                    ),
+                    builder: (_) =>
+                        WGPetFullScreenGallery(images: widget.pet.images),
                   );
                 },
                 child: WGPetGallery(images: widget.pet.images),
@@ -297,11 +335,13 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   children: [
                     _buildInfoRow(
                       icon: widget.pet.publicationType.icon,
-                      iconColor:
-                          widget.pet.publicationType.color(context.appColors),
+                      iconColor: widget.pet.publicationType.color(
+                        context.appColors,
+                      ),
                       value: widget.pet.publicationType.label,
-                      valueColor:
-                          widget.pet.publicationType.color(context.appColors),
+                      valueColor: widget.pet.publicationType.color(
+                        context.appColors,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     _buildInfoRow(
@@ -353,8 +393,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     Text(
                       PetDetailsStrings.ABOUT_SECTION,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 7),
                     Text(
@@ -373,8 +413,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   }
 
   Future<void> _onContactPressed() => openWhatsAppContact(
-        context,
-        ownerPhone: widget.pet.ownerPhone,
-        petName: widget.pet.name,
-      );
+    context,
+    ownerPhone: widget.pet.ownerPhone,
+    petName: widget.pet.name,
+  );
 }
