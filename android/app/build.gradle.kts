@@ -5,6 +5,25 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+import java.util.Properties
+
+// O keystore de release e a sua senha ficam fora do git (ignorados).
+// Configuracao: android/key.properties (copiar de android/key.properties.example).
+val keystorePropertiesFile = rootProject.file("key.properties")
+
+if (!keystorePropertiesFile.exists()) {
+    throw GradleException(
+        "Arquivo 'android/key.properties' não encontrado. " +
+        "Copie 'android/key.properties.example' para 'android/key.properties' " +
+        "e preencha storeFile, storePassword, keyAlias e keyPassword " +
+        "antes de gerar builds de release."
+    )
+}
+
+val keystoreProperties = Properties().apply {
+    keystorePropertiesFile.inputStream().use { load(it) }
+}
+
 android {
     namespace = "com.pietrorodriguesdev.appets"
     compileSdk = flutter.compileSdkVersion
@@ -16,21 +35,37 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // applicationId definitivo: não alterar após o primeiro envio à Play Store.
         applicationId = "com.pietrorodriguesdev.appets"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // versionName/versionCode são propagados pelo Flutter a partir do
+        // pubspec.yaml (version: X.Y.Z+BUILD). Política de versionamento no pubspec.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties.getProperty("keyAlias")?.trim()?.takeIf { it.isNotEmpty() }
+                ?: throw GradleException("Propriedade 'keyAlias' ausente ou vazia em android/key.properties")
+            keyPassword = keystoreProperties.getProperty("keyPassword")?.trim()?.takeIf { it.isNotEmpty() }
+                ?: throw GradleException("Propriedade 'keyPassword' ausente ou vazia em android/key.properties")
+            storeFile = file(
+                keystoreProperties.getProperty("storeFile")?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: throw GradleException("Propriedade 'storeFile' ausente ou vazia em android/key.properties")
+            )
+            storePassword = keystoreProperties.getProperty("storePassword")?.trim()?.takeIf { it.isNotEmpty() }
+                ?: throw GradleException("Propriedade 'storePassword' ausente ou vazia em android/key.properties")
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Item 80: habilitar minifyEnabled/shrinkResources aqui.
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

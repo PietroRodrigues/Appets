@@ -1,0 +1,17 @@
+# Template para android/key.properties (NAO commite o arquivo preenchido).
+# 1) Copie este arquivo para android/key.properties
+# 2) Gere o keystore (ver BACKLOG/Plano item 62)
+# 3) Preencha as senhas reais
+#
+# Caminho do keystore: relativo a android/app/ ou absoluto.
+storeFile=appets-release.jks
+
+# Senha do keystore
+storePassword=TROCAR_POR_SENHA_REAL
+
+# Alias da chave
+keyAlias=appets
+
+# Senha da chave
+keyPassword=TROCAR_POR_SENHA_REAL
+```

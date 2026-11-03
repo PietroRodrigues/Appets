@@ -1,3 +1,4 @@
+import 'package:appets/core/constants/constants_strings_block.dart';
 import 'package:appets/core/constants/constants_strings_settings.dart';
 import 'package:appets/core/routes/routes_app.dart';
 import 'package:appets/core/utils/app_version.dart';
@@ -62,6 +63,16 @@ class SettingsScreen extends StatelessWidget {
                     title: SettingsStrings.TERMS_TITLE,
                     subtitle: SettingsStrings.TERMS_SUBTITLE,
                     onTap: () => Navigator.pushNamed(context, AppRoutes.terms),
+                  ),
+                  const SizedBox(height: 12),
+                  WGOptionTile(
+                    icon: Icons.block,
+                    title: BlockStrings.blockedUsersTitle,
+                    subtitle: BlockStrings.blockedUsersSubtitle,
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.blockedUsers,
+                    ),
                   ),
                 ],
               ),

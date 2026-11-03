@@ -126,5 +126,39 @@ service cloud.firestore {
       allow delete: if isSignedIn()
         && resource.data.ownerId == request.auth.uid;
     }
+
+    // Denúncias de conteúdo (UGC). Qualquer autenticado cria a sua própria
+    // denúncia; a leitura fica restrita (apenas Console/Admin/Functions).
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && request.resource.data.autorId == request.auth.uid
+        && isNonEmptyString(request.resource.data.alvoId)
+        && isNonEmptyString(request.resource.data.motivo)
+        && (!('timestamp' in request.resource.data)
+            || request.resource.data.timestamp is timestamp);
+
+      allow read: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Bloqueios de usuários (UGC). Só o dono cria, lê e remove o próprio
+    // bloqueio; a lista é consultada por `where('blockerId', isEqualTo: uid)`.
+    match /blocks/{blockId} {
+      allow create: if isSignedIn()
+        && request.resource.data.blockerId == request.auth.uid
+        && isNonEmptyString(request.resource.data.blockedId)
+        && request.resource.data.blockerId != request.resource.data.blockedId
+        && (!('createdAt' in request.resource.data)
+            || request.resource.data.createdAt is timestamp);
+
+      allow read: if isSignedIn()
+        && resource.data.blockerId == request.auth.uid;
+
+      allow delete: if isSignedIn()
+        && resource.data.blockerId == request.auth.uid;
+
+      allow update: if false;
+    }
   }
 }

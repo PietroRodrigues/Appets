@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/block_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/home_data_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
@@ -42,6 +43,7 @@ class SessionStateCleaner {
     HomeDataService.instance.reset();
     FavoritesService.instance.reset();
     MyPublicationsService.instance.reset();
+    BlockService.instance.reset();
   }
 
   /// Considera a mesma sessão quando o usuário não mudou (ou quando não há

@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 
+import 'package:appets/core/constants/constants_strings_block.dart';
 import 'package:appets/core/constants/constants_strings_pet_details.dart';
 import 'package:appets/core/constants/constants_strings_report.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/extensions/extension_pet_display.dart';
 import 'package:appets/core/extensions/extension_pet_publication_type.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/block_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/firestore_service.dart';
 import 'package:appets/core/services/report_service.dart';
@@ -37,17 +39,29 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   String? _ownerName;
   String? _ownerPhotoUrl;
   bool _isLoadingOwner = true;
+  bool _isBlocked = false;
 
   @override
   void initState() {
     super.initState();
     FavoritesService.instance.favoriteIds.addListener(_onFavoritesChanged);
     _loadOwnerData();
+    _initBlockState();
   }
 
   @override
   void dispose() {
     FavoritesService.instance.favoriteIds.removeListener(_onFavoritesChanged);
+    try {
+      final authUser = AuthService.instance.currentUser;
+      if (authUser != null &&
+          widget.pet.ownerId.isNotEmpty &&
+          widget.pet.ownerId != authUser.uid) {
+        BlockService.instance.blockedIds.removeListener(_onBlockedIdsChanged);
+      }
+    } catch (_) {
+      // Sem Firebase inicializado (ex.: testes): nada a remover.
+    }
     super.dispose();
   }
 
@@ -75,9 +89,38 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
   }
 
+  void _onBlockedIdsChanged() {
+    if (!mounted) return;
+    final blocked = BlockService.instance.isBlocked(widget.pet.ownerId);
+    if (blocked != _isBlocked) {
+      setState(() => _isBlocked = blocked);
+    }
+  }
+
+  Future<void> _initBlockState() async {
+    try {
+      final authUser = AuthService.instance.currentUser;
+      if (authUser == null ||
+          widget.pet.ownerId.isEmpty ||
+          widget.pet.ownerId == authUser.uid) {
+        return;
+      }
+
+      await BlockService.instance.init(authUser.uid).catchError((_) {});
+      if (!mounted) return;
+      _isBlocked = BlockService.instance.isBlocked(widget.pet.ownerId);
+      BlockService.instance.blockedIds.addListener(_onBlockedIdsChanged);
+      if (mounted) setState(() {});
+    } catch (_) {
+      // Sem Firebase inicializado (ex.: testes) ou falha de auth:
+      // o botão de bloqueio simplesmente não aparece.
+    }
+  }
+
   Future<void> _toggleFavorite() async {
     final authUser = AuthService.instance.currentUser;
     if (authUser == null || widget.pet.id.isEmpty) return;
+    if (_isBlocked) return;
 
     if (!await ensureOnline(context)) return;
 
@@ -137,6 +180,56 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
   }
 
+  /// Alterna o bloqueio do dono deste anúncio.
+  Future<void> _toggleBlock() async {
+    final authUser = AuthService.instance.currentUser;
+    if (authUser == null ||
+        widget.pet.ownerId.isEmpty ||
+        widget.pet.ownerId == authUser.uid) {
+      return;
+    }
+
+    if (!await ensureOnline(context)) return;
+    if (!mounted) return;
+
+    final willBlock = !_isBlocked;
+    final confirmed = await WGDialog.showConfirm(
+      context,
+      title: BlockStrings.blockConfirmTitle,
+      message: BlockStrings.blockConfirmMessage,
+      confirmLabel: willBlock
+          ? BlockStrings.blockAction
+          : BlockStrings.unblockAction,
+      confirmColor: context.appColors.error,
+    );
+    if (!confirmed || !mounted) return;
+
+    bool ok;
+    if (willBlock) {
+      // Evita manter favorito de um usuário que acaba de ser bloqueado.
+      if (_isFavorited) {
+        await FavoritesService.instance.remove(authUser.uid, widget.pet.id);
+      }
+      ok = await BlockService.instance.block(authUser.uid, widget.pet.ownerId);
+    } else {
+      ok = await BlockService.instance.unblock(authUser.uid, widget.pet.ownerId);
+    }
+
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _isBlocked = willBlock);
+      WGSnackBar.showSuccess(
+        context,
+        willBlock ? BlockStrings.blockSuccess : BlockStrings.unblockSuccess,
+      );
+    } else {
+      WGSnackBar.showError(
+        context,
+        willBlock ? BlockStrings.blockError : BlockStrings.unblockError,
+      );
+    }
+  }
+
   /// Linha de informação: ícone + valor.
   Widget _buildInfoRow({
     required IconData icon,
@@ -170,7 +263,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     const avatarSize = 32.0; // CircleAvatar de raio 16
     const leftPadding = 6.0;
     const gap = 8.0;
-    const reservedForActions = 160.0; // 3 botões (3 × 48) + respiro
+    const reservedForActions = 208.0; // 4 botões (4 × 48) + respiro
 
     final name = _ownerName ?? 'Usuário';
     final style = Theme.of(
@@ -262,6 +355,19 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               size: 24,
             ),
           ),
+          IconButton(
+            onPressed: _toggleBlock,
+            tooltip: _isBlocked
+                ? BlockStrings.unblockAction
+                : BlockStrings.blockAction,
+            icon: Icon(
+              Icons.block,
+              color: _isBlocked
+                  ? context.appColors.error
+                  : context.appColors.onPrimary,
+              size: 24,
+            ),
+          ),
         ],
       ),
       body: SafeArea(
@@ -298,32 +404,69 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
               const SizedBox(height: 10),
 
-              // BOTÃO DE ENTRAR EM CONTATO
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton.icon(
-                    onPressed: _onContactPressed,
-                    icon: const Icon(Icons.phone, size: 20),
-                    label: const Text(
-                      PetDetailsStrings.CONTACT_BUTTON,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+              const SizedBox(height: 10),
+
+              // AVISO DE USUÁRIO BLOQUEADO
+              if (_isBlocked)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: context.appColors.error.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: context.appColors.error),
                     ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: context.appColors.primary,
-                      foregroundColor: context.appColors.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          BlockStrings.blockedUserBannerTitle,
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: context.appColors.error,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          BlockStrings.blockedUserBannerDescription,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              if (_isBlocked) const SizedBox(height: 12),
+
+              // BOTÃO DE ENTRAR EM CONTATO
+              if (!_isBlocked)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed: _onContactPressed,
+                      icon: const Icon(Icons.phone, size: 20),
+                      label: const Text(
+                        PetDetailsStrings.CONTACT_BUTTON,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: context.appColors.primary,
+                        foregroundColor: context.appColors.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
               const SizedBox(height: 12),
 

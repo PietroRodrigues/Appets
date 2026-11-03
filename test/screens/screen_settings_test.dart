@@ -26,7 +26,7 @@ void main() {
     expect(find.text(SettingsStrings.APP_ABOUT_TITLE), findsOneWidget);
     expect(find.text(SettingsStrings.PRIVACY_POLICY_TITLE), findsOneWidget);
     expect(find.text(SettingsStrings.TERMS_TITLE), findsOneWidget);
-    expect(find.byType(WGOptionTile), findsNWidgets(3));
+    expect(find.byType(WGOptionTile), findsNWidgets(4));
   });
 
   //239

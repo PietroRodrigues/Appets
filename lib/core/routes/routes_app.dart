@@ -3,6 +3,7 @@ import 'package:appets/screens/auth/screen_login.dart';
 import 'package:appets/screens/auth/screen_register.dart';
 import 'package:appets/screens/screen_about.dart';
 import 'package:appets/screens/screen_account_data.dart';
+import 'package:appets/screens/screen_blocked_users.dart';
 import 'package:appets/screens/screen_home.dart';
 import 'package:appets/screens/screen_settings.dart';
 import 'package:appets/screens/screen_splash.dart';
@@ -27,6 +28,7 @@ class AppRoutes {
   static const settings = '/settings';
   static const accountData = '/account-data';
   static const about = '/about';
+  static const blockedUsers = '/blocked-users';
   static const privacyPolicy = '/privacy-policy';
   static const terms = '/terms';
   static const termsAcceptance = '/terms-acceptance';
@@ -42,6 +44,7 @@ class AppRoutes {
         settings: (_) => const SettingsScreen(),
         accountData: (_) => const AccountDataScreen(),
         about: (_) => const AboutScreen(),
+        blockedUsers: (_) => const BlockedUsersScreen(),
         privacyPolicy: (_) => const PrivacyPolicyScreen(),
         terms: (_) => const TermsScreen(),
         termsAcceptance: (_) => const TermsAcceptanceScreen(),

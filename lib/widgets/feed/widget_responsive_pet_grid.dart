@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:appets/core/constants/constants_strings_shared.dart';
 import 'package:appets/core/navigation/navigation_app.dart';
 import 'package:appets/core/services/auth_service.dart';
+import 'package:appets/core/services/block_service.dart';
 import 'package:appets/core/services/connectivity_service.dart';
 import 'package:appets/core/services/favorites_service.dart';
 import 'package:appets/core/services/my_publications_service.dart';
@@ -113,6 +114,10 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   /// correto em vez de recomeçar do zero (evita o dobro de leituras).
   bool _isSuppressingOwnReload = false;
 
+  /// Evita agendar mais de um `_setup` por frame quando os bloqueados
+  /// mudam enquanto o grid já está em construção.
+  bool _blockedReloadScheduled = false;
+
   /// Listenable de filtros atualmente observado.
   ValueListenable<List<PetFilterOption>>? _filterListenable;
 
@@ -160,6 +165,15 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     );
     FavoritesService.instance.favoriteIds.addListener(_onFavoritesChanged);
     MyPublicationsService.instance.myPetIds.addListener(_onMyPublicationsChanged);
+    BlockService.instance.blockedIds.addListener(_onBlockedUsersChanged);
+    try {
+      final authUser = AuthService.instance.currentUser;
+      if (authUser != null) {
+        BlockService.instance.init(authUser.uid).catchError((_) {});
+      }
+    } catch (_) {
+      // Sem Firebase inicializado (ex.: testes).
+    }
     _filterListenable = widget.filterOptions;
     _filterListenable?.addListener(_onFiltersChanged);
     AppNavigation.selectedPage.addListener(_onTabChanged);
@@ -197,6 +211,7 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
     FavoritesService.instance.favoriteIds.removeListener(_onFavoritesChanged);
     MyPublicationsService.instance.myPetIds
         .removeListener(_onMyPublicationsChanged);
+    BlockService.instance.blockedIds.removeListener(_onBlockedUsersChanged);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -235,6 +250,18 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
         !_suspended &&
         !_isSuppressingOwnReload) {
       _setup();
+    }
+  }
+
+  void _onBlockedUsersChanged() {
+    if (mounted && !_suspended && !_isLoading && !_blockedReloadScheduled) {
+      _blockedReloadScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _blockedReloadScheduled = false;
+        if (mounted && !_suspended && !_isLoading) {
+          _setup();
+        }
+      });
     }
   }
 
@@ -461,8 +488,12 @@ class WGResponsivePetGridState extends State<WGResponsivePetGrid> {
   /// Autoridade final do resultado: aplica a busca (quando há termo)
   /// e o AND exato por categoria dos filtros às páginas recebidas.
   List<Pet> _applyLocalFilters(List<Pet> pets) {
+    final blocked = BlockService.instance.blockedIds.value;
+    final visible = blocked.isEmpty
+        ? pets
+        : pets.where((pet) => !blocked.contains(pet.ownerId)).toList();
     return applyLocalFilters(
-      pets: pets,
+      pets: visible,
       searchQuery: _isSearching ? widget.searchQuery : '',
       filterOptions: _activeFilterOptions,
     );
