@@ -1,184 +1,114 @@
-# 🐾 APPets
+# APPets
 
-> Aplicativo **Flutter** para publicação de pets — **adoção** e **pets perdidos** — com backend **Firebase** integrado.
+Aplicativo mobile desenvolvido em **Flutter** para conectar pessoas interessadas em adoção de animais e facilitar a divulgação de pets perdidos.
 
-O **APPets** é um projeto de estudo de engenharia de software mobile: um
-aplicativo onde responsáveis publicam pets disponíveis para adoção ou que
-perderam, e interessados exploram, buscam e salvam como favoritos os pets.
-Tudo em tempo real, com autenticação, controle de conta e um feed
-responsivo e paginado.
+O APPets reúne publicações de animais em um único lugar, permitindo explorar anúncios, pesquisar por pets, aplicar filtros, salvar favoritos e entrar em contato com os responsáveis.
 
----
+## Objetivo
 
-## Sobre o projeto
-
-O app resolve um problema real: hoje, anúncios de adoção e *pets perdidos*
-se espalham por grupos de WhatsApp e posts que se perdem rápido. O APPets
-centraliza isso em um lugar só, com:
-
-- **Publicação simples** — nome, idade, gênero, espécie, raça, endereço,
-  telefone do responsável e fotos (com validação de telefone BR);
-- **Busca inteligente** — digite qualquer termo do nome ou da descrição;
-  o app encontra o pet mesmo com acentos ou letras diferentes. A busca
-  é parcial a partir de **3 letras** no servidor ("poo" → "poodle");
-- **Favoritos reativos** — salve pets e veja a lista atualizar em todas as
-  telas na hora;
-- **Resposta rápida** — contato direto via WhatsApp usando o telefone
-  carimbado no anúncio.
-
-Tecnicamente, é um exercício de arquitetura em camadas, estado reativo,
-integração com o ecossistema Firebase e UI responsiva em Flutter.
-
----
+Centralizar anúncios de adoção e de animais perdidos em uma plataforma simples e acessível, facilitando a descoberta de pets e o contato entre quem publica e quem procura.
 
 ## Funcionalidades
 
-| Módulo | O que faz |
+- **Feed de animais** — visualização de publicações em cards, com carregamento paginado.
+- **Busca** — pesquisa de pets por termos relacionados ao nome e à descrição, com tratamento de acentos e variações de texto.
+- **Filtros** — refinamento dos resultados por tipo de publicação, espécie, gênero e idade.
+- **Detalhes do pet** — galeria de imagens, informações do animal, localização, descrição e opções de contato.
+- **Publicação de anúncios** — cadastro de pets para adoção ou divulgação de animais perdidos, com informações e fotos.
+- **Favoritos** — possibilidade de salvar publicações e acompanhar os animais selecionados.
+- **Minhas publicações** — gerenciamento dos anúncios criados pela conta.
+- **Perfil e conta** — edição de dados pessoais e configurações da conta.
+- **Autenticação** — cadastro e login por e-mail e senha, além de autenticação com Google.
+- **Contato e compartilhamento** — acesso ao contato do responsável pelo anúncio via WhatsApp e compartilhamento de publicações.
+
+## Tecnologias utilizadas
+
+| Tecnologia | Utilização |
 |---|---|
-| 🔐 **Autenticação** | E-mail/senha, **Google**, recuperação de senha, reautenticação e exclusão de conta. Perfil é criado automaticamente no Firestore |
-| 🏠 **Feed** | Lista paginada de todos os pets (stream + *load more* ao rolar), pull-to-refresh e estados de vazio/busca |
-| 🔎 **Busca por tokens** | Home busca no servidor (`arrayContainsAny` sobre `searchTokens`, sem dependência de texto exato); Favoritos e Minhas Publicações filtram client-side |
-| 🎛️ **Filtros** | Espécie, gênero, faixa de idade e tipo (adoção/perdido) em janela (diálogo); pré-filtro no servidor + filtro exato no cliente (`petMatchesFilters`); chips ativos com limpeza |
-| 🐕 **Detalhes** | Galeria de fotos, espécie · raça, idade, gênero, endereço, descrição e contato via WhatsApp |
-| ➕ **Publicar** | Formulário com validação, tipo de publicação (adoção/perdido), espécie (9 opções) e gestão de fotos (mínimo 1, com compressão no upload) |
-| 🖼️ **Imagens otimizadas** | Fotos comprimidas no fluxo (1280px · webp ~150–350KB) com guarda de 5MB alinhada ao `storage.rules`; cache em disco (300 objetos/30d) e miniaturas via `memCacheWidth` (cards 480 · galeria 1080) em feed, favoritos, galeria e detalhe |
-| ✏️ **Editar / Excluir publicação** | Edição no mesmo formulário (dados e fotos) e exclusão com confirmação em Minhas Publicações |
-| ⭐ **Favoritos** | Estado global reativo com atualização otimista, rollback e limpeza de órfãos |
-| 📤 **Compartilhar** | Botão em Detalhes abre o share sheet com um anúncio do pet; o texto varia conforme o tipo (adoção → novo lar; perdido → dono procurando) |
-| 📄 **Minhas publicações** | Aba dedicada com FAB de publicar, busca local e sincronização reativa (backfill automático) |
-| 👤 **Perfil / Conta** | Edição inline de nome, telefone e endereço; exclusão de conta com confirmação em duas etapas e sem deixar pets órfãos |
-| 📷 **Foto de perfil (avatar)** | Troca/remoção da foto pela galeria (webp ~40 KB, 256px) numa tela de loading que bloqueia a interface; regras próprias no Storage; contas Google veem aviso de que a foto é do provedor |
+| **Flutter** | Desenvolvimento da interface mobile |
+| **Dart** | Linguagem principal |
+| **Firebase Authentication** | Cadastro e autenticação de usuários |
+| **Cloud Firestore** | Armazenamento de usuários, pets, favoritos e publicações |
+| **Firebase Storage** | Armazenamento das imagens |
+| **Google Sign-In** | Autenticação com conta Google |
+| **image_picker** | Seleção de imagens do dispositivo |
+| **flutter_image_compress** | Compressão de imagens antes do envio |
+| **cached_network_image** | Carregamento e cache de imagens |
+| **url_launcher** | Abertura de contato via WhatsApp |
+| **share_plus** | Compartilhamento de anúncios |
+| **Poppins** | Tipografia da interface |
 
----
+## Capturas de tela
 
-## Stack
+As telas principais do aplicativo incluem:
 
-| Tecnologia | Versão | Uso |
-|---|---|---|
-| Flutter / Dart | SDK ^3.12.0 | Framework principal |
-| firebase_core / firebase_auth | ^3.12.1 / ^5.5.4 | Inicialização e autenticação |
-| cloud_firestore | ^5.6.9 | Persistência de usuários, pets, favoritos e publicações |
-| firebase_storage | ^12.4.1 | Upload de imagens dos pets |
-| google_sign_in | ^6.2.2 | Login com conta Google |
-| image_picker | ^1.1.2 | Seleção de fotos no formulário |
-| flutter_image_compress | ^2.3.0 | Compressão das fotos antes do upload (webp) |
-| cached_network_image | ^3.4.1 | Exibição das fotos com cache em memória |
-| flutter_cache_manager | ^3.4.1 | Cache em disco das fotos (AppImageCache) |
-| url_launcher | ^6.3.1 | Contato via WhatsApp |
-| google_fonts | ^8.1.0 | Fonte Poppins (empacotada, sem fetch em runtime) |
-| share_plus | ^13.3.0 | Compartilhamento de pets (share sheet) |
-| flutter_lints | ^6.0.0 | Qualidade de código |
-| flutter_test | SDK | 621 testes automatizados |
+- **Início** — feed de animais disponíveis para adoção ou divulgação.
+- **Filtros** — seleção de critérios para refinar a busca.
+- **Detalhes do pet** — informações completas e opção de contato com o responsável.
 
-Versão atual do app: **1.0.0+1** · Orientação fixa **retrato**.
+> A imagem de demonstração enviada para esta documentação ainda precisa estar hospedada no GitHub para ser exibida aqui. O repositório não contém esse arquivo, e esta atualização foi limitada ao README.md, conforme solicitado.
 
----
+## Estrutura do projeto
 
-## Arquitetura
-
-Padrão de camadas com **serviços singleton** e estado reativo via
-`ValueNotifier`:
+O código está organizado em camadas para separar configuração, modelos de dados, telas e componentes reutilizáveis.
 
 ```
 lib/
-├── core/
-│   ├── constants/      # strings e assets por domínio (auth, home, publish…)
-│   ├── extensions/     # exibição formatada do Pet (idade, gênero, espécie·raça)
-│   ├── navigation/     # navegação por abas
-│   ├── services/       # Auth, Firestore, Pet, Storage, Favorites, MyPublications
-│   ├── theme/          # cores e tema
-│   ├── utils/          # busca e filtros: tokens, controladores e storage_tokens (PT)
-│   └── validators/     # validação de telefone BR com máscara
-├── models/             # Pet, UserModel e enums (espécie, tipo, filtro, gênero)
-├── screens/            # telas (login, home, favoritos, publicações, perfil…)
-└── widgets/            # componentes por tema (auth, feed, fields, filters, feedback…)
+├── core/       # Configurações, serviços, tema e recursos compartilhados
+├── models/     # Modelos e estruturas de dados
+├── screens/    # Telas e fluxos da aplicação
+├── widgets/    # Componentes reutilizáveis da interface
+├── app.dart    # Configuração principal do aplicativo
+└── main.dart   # Ponto de entrada
 ```
-
-### Decisões técnicas que merecem destaque
-
-- **Feed paginado com cursor** — a Home lê o feed do Firestore em páginas de
-  10 itens (`startAfterDocument`), detectando `hasMore` com um pedido de
-  +1 item. Nada de carregar a coleção inteira.
-- **Busca sem depender do texto exato** — tokens normalizados
-  (minúsculas + sem acento) gravados no documento; a Home consulta com
-  `arrayContainsAny` e as outras abas filtram localmente.
-- **Favoritos e publicações reativos** — estado global em memória com
-  atualização otimista, rollback em falha, limpeza de órfãos e reset ao
-  deslogar. Todas as telas reagem instantaneamente.
-- **Exclusão de conta segura** — apaga pets (Firestore + Storage) **antes**
-  do Auth; se a limpeza falhar, a exclusão é abortada para nunca deixar
-  dados órfãos.
-- **Filtros híbridos** — a Home pré-filtra no servidor com
-  `arrayContainsAny` sobre `specifications` (superset) e o cliente aplica o
-  AND exato por categoria (`petMatchesFilters`); evita trazer a coleção
-  inteira sem perder precisão.
-- **Dados padronizados em PT‑BR** — species, gender, ageUnit,
-  publicationType e specifications são persistidos em PT normalizado (sem
-  acento); a leitura tolera valores legados em inglês e um backfill isolado
-  (`lib/core/backfill/pet_tokens_*`) migra os pets do dono a cada login.
-- **Imagens leves no storage** — as fotos passam pelo picker em 1280px e são
-  comprimidas para webp (melhor qualidade que caiba no teto de ~350KB);
-  arquivos acima de 5MB são bloqueados com aviso, alinhado ao
-  `storage.rules`.
-- **Cache de leitura em duas camadas** — `AppImageCache` (via
-  flutter_cache_manager, 300 objetos com validade de 30 dias) no disco +
-  `CachedNetworkImage` com `memCacheWidth` por superfície (cards 480 ·
-  galeria 1080), evitando re-download e reduzindo a RAM das miniaturas. O
-  cache em disco é esvaziado ao encerrar a sessão (logout, exclusão de conta
-  ou sessão revogada), para não vazar fotos num aparelho compartilhado.
-- **UI responsiva** — grid que alterna 1/2/3 colunas conforme a largura,
-  tipografia Poppins e widgets reutilizáveis por tema.
-
----
 
 ## Como executar
 
+### Requisitos
+
+- Flutter SDK compatível com Dart **3.12.0** ou superior.
+- Android Studio ou VS Code com as ferramentas Flutter.
+- Projeto Firebase configurado para o aplicativo Android.
+
+### Instalação
+
+Clone o repositório:
+
+```bash
+git clone https://github.com/PietroRodrigues/Appets.git
+cd Appets
+```
+
+Instale as dependências:
+
 ```bash
 flutter pub get
+```
+
+Configure o Firebase para o ambiente Android e execute:
+
+```bash
 flutter run
 ```
 
-> Requisitos: Flutter SDK ^3.12.0 e um **Projeto Firebase** configurado
-> (GoogleService-Info / google-services.json, planos gratuitos de Auth,
-> Firestore e Storage). O app roda em **Android**; as pastas web/windows/
-> linux/macos existem apenas pela geração padrão do template.
+## Testes
 
-### Testes
+Execute os testes automatizados com:
 
 ```bash
-flutter test        # 621 testes
-flutter analyze     # sem issues
+flutter test
 ```
 
----
+Para verificar problemas de análise estática:
+
+```bash
+flutter analyze
+```
 
 ## Status do projeto
 
-Em desenvolvimento ativo. O backbone (auth, backend, feed paginado, busca,
-filtros, edição/exclusão de pets e compartilhamento), o **Storage de fotos**
-(caminho por dono, foto obrigatória, edição de imagens), as **imagens
-otimizadas** (upload 1280px/webp + cache de leitura) e as **regras de
-segurança e índices versionados** (deploy via Firebase CLI) já estão
-funcionais — inclusive rodando em debug direto no aparelho (o bug de layout
-da aba Perfil que travava a interface em debug foi corrigido, eliminando o
-ANR). Já é possível também **alterar a senha** (reauth + validação em duas
-etapas; contas Google veem o botão bloqueado) e o **cadastro de conta** é
-robusto (validação por campo, mensagens específicas por erro, Firestore
-primeiro com o nome do Auth como best-effort e remoção de conta fantasma
-quando a persistência falha). Já é possível **trocar o e-mail**
-(reauth por senha; contas Google veem o campo bloqueado) e **trocar/remover a
-foto de perfil (avatar)** pela galeria (webp 256px/~40 KB, regras próprias em
-`avatars/{uid}` — deploy via `firebase deploy --only storage`; contas Google
-ficam bloqueadas). A troca/remoção roda numa **tela de loading full-screen**
-(`pushProcess`) que bloqueia toda a interface — inclusive as abas — enquanto
-comprime, envia e grava, com mensagens de erro contextualizadas (permissão,
-rede ou genérica). Faltam: GPS e permissão de câmera.
-Suíte com 621 testes (serviços de backend
-cobertos com fakes em memória via `@visibleForTesting`). O plano detalhado
-está em [`BACKLOG.txt`](./BACKLOG.txt).
+O APPets está em desenvolvimento contínuo. O projeto já conta com autenticação, integração com Firebase, feed paginado, busca, filtros, detalhes dos pets, publicação e gerenciamento de anúncios, favoritos e recursos de perfil e conta.
 
 ---
 
-## Licença
-
-Projeto de estudo/portfólio, sem vínculo comercial.
+Projeto desenvolvido como estudo prático de desenvolvimento mobile e engenharia de software.
