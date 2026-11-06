@@ -46,7 +46,8 @@ As telas principais do aplicativo incluem:
 - **Filtros** — seleção de critérios para refinar a busca.
 - **Detalhes do pet** — informações completas e opção de contato com o responsável.
 
-![Image](https://github.com/user-attachments/assets/d7b5b5a0-665c-46a1-928a-d922792f8af1Gameplay).
+<img width="2248" height="1640" alt="Image" src="https://github.com/user-attachments/assets/d7b5b5a0-665c-46a1-928a-d922792f8af1" />
+
 
 ## Estrutura do projeto
 
