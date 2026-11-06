@@ -46,7 +46,7 @@ As telas principais do aplicativo incluem:
 - **Filtros** — seleção de critérios para refinar a busca.
 - **Detalhes do pet** — informações completas e opção de contato com o responsável.
 
-> A imagem de demonstração enviada para esta documentação ainda precisa estar hospedada no GitHub para ser exibida aqui. O repositório não contém esse arquivo, e esta atualização foi limitada ao README.md, conforme solicitado.
+![Image](https://github.com/user-attachments/assets/d7b5b5a0-665c-46a1-928a-d922792f8af1Gameplay).
 
 ## Estrutura do projeto
 
