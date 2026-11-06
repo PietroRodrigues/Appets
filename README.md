@@ -38,7 +38,7 @@ Centralizar anúncios de adoção e de animais perdidos em uma plataforma simple
 | **share_plus** | Compartilhamento de anúncios |
 | **Poppins** | Tipografia da interface |
 
-## Capturas de tela
+## Tela
 
 As telas principais do aplicativo incluem:
 
@@ -63,53 +63,6 @@ lib/
 └── main.dart   # Ponto de entrada
 ```
 
-## Como executar
-
-### Requisitos
-
-- Flutter SDK compatível com Dart **3.12.0** ou superior.
-- Android Studio ou VS Code com as ferramentas Flutter.
-- Projeto Firebase configurado para o aplicativo Android.
-
 ### Instalação
 
-Clone o repositório:
-
-```bash
-git clone https://github.com/PietroRodrigues/Appets.git
-cd Appets
-```
-
-Instale as dependências:
-
-```bash
-flutter pub get
-```
-
-Configure o Firebase para o ambiente Android e execute:
-
-```bash
-flutter run
-```
-
-## Testes
-
-Execute os testes automatizados com:
-
-```bash
-flutter test
-```
-
-Para verificar problemas de análise estática:
-
-```bash
-flutter analyze
-```
-
-## Status do projeto
-
-O APPets está em desenvolvimento contínuo. O projeto já conta com autenticação, integração com Firebase, feed paginado, busca, filtros, detalhes dos pets, publicação e gerenciamento de anúncios, favoritos e recursos de perfil e conta.
-
----
-
-Projeto desenvolvido como estudo prático de desenvolvimento mobile e engenharia de software.
+Google Play: https://play.google.com/store/apps/details?id=com.pietrorodriguesdev.appets
